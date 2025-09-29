@@ -687,7 +687,7 @@ export function AutomationBuilder({
                               step.type === "type" ||
                               step.type === "extract") && (
                               <div className="space-y-2">
-                                <Label className="text-xs">Xpath</Label>
+                                <Label className="text-xs">CSS Selector</Label>
                                 <Input
                                   value={step.selector || ""}
                                   onChange={(e) =>
