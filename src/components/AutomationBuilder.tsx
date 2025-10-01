@@ -392,7 +392,9 @@ export function AutomationBuilder({
                             variant="ghost"
                             size="sm"
                             onClick={() => moveStep(step.id, "up")}
-                            disabled={index === 0 || isAutomationRunning}
+                            disabled={
+                              index === 0 || index === 1 || isAutomationRunning
+                            }
                           >
                             <ArrowUp className="h-3 w-3" />
                           </Button>
@@ -401,7 +403,9 @@ export function AutomationBuilder({
                             size="sm"
                             onClick={() => moveStep(step.id, "down")}
                             disabled={
-                              index === steps.length - 1 || isAutomationRunning
+                              index === steps.length - 1 ||
+                              isAutomationRunning ||
+                              index === 0
                             }
                           >
                             <ArrowDown className="h-3 w-3" />
@@ -410,7 +414,7 @@ export function AutomationBuilder({
                             variant="ghost"
                             size="sm"
                             onClick={() => removeStep(step.id)}
-                            disabled={isAutomationRunning}
+                            disabled={isAutomationRunning || index === 0}
                           >
                             <Trash2 className="h-3 w-3" />
                           </Button>
