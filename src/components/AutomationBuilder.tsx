@@ -11,6 +11,7 @@ import ReactFlow, {
   useEdgesState,
   Handle,
   Position,
+  OnSelectionChangeParams,
 } from "reactflow";
 import "reactflow/dist/style.css";
 import { Button } from "./ui/button";
@@ -58,15 +59,14 @@ import {
 import { set } from "react-hook-form/dist";
 
 // Define types to bridge reactflow and custom Node/Edge
-type ReactFlowNode = FlowNode<
-  Node["data"] & {
-    onAddNode: (
-      sourceId: string,
-      type: AutomationStep["type"] | "conditional"
-    ) => void;
-  },
-  Node["type"]
->;
+type NodeData = Node["data"] & {
+  onAddNode: (
+    sourceId: string,
+    type: AutomationStep["type"] | "conditional" | "update" | "delete",
+    updates?: Partial<Node["data"]>
+  ) => void;
+};
+type ReactFlowNode = FlowNode<NodeData, Node["type"]>;
 type ReactFlowEdge = FlowEdge;
 
 const stepTypes = [
@@ -97,45 +97,34 @@ const stepTypes = [
   },
 ];
 
-// Custom Node Component
-const AutomationNode = ({
-  data,
-  id,
+// Extracted component for node details panel
+const NodeDetails = ({
+  node,
+  onUpdate,
 }: {
-  data: Node["data"] & {
-    onAddNode: (
-      sourceId: string,
-      type: AutomationStep["type"] | "conditional" | "update" | "delete",
-      updates?: Partial<Node["data"]>
-    ) => void;
-  };
-  id: string;
+  node: ReactFlowNode;
+  onUpdate: (
+    sourceId: string,
+    type: "update" | "delete",
+    updates?: Partial<Node["data"]>
+  ) => void;
 }) => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { data, id } = node;
+  const isConditional = !data.step;
 
   return (
-    <Card className="w-64">
-      {id !== "1" && <Handle type="target" position={Position.Top} />}
+    <Card className="w-80 max-h-[80vh] overflow-y-auto">
       <CardHeader className="p-3">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            {data.step &&
-              (() => {
-                const Icon = stepTypes.find(
-                  (s) => s.value === data.step.type
-                )?.icon;
-                return Icon ? <Icon className="h-4 w-4" /> : null;
-              })()}
-            <span className="text-sm font-medium capitalize">
-              {data.step ? data.step.type : "Conditional"}
-            </span>
-          </div>
+          <span className="text-sm font-medium capitalize">
+            {data.step ? data.step.type : "Conditional"}
+          </span>
           {id !== "1" && (
             <Button
               variant="ghost"
               size="sm"
               onClick={() => {
-                data.onAddNode(id, "delete");
+                onUpdate(id, "delete");
               }}
             >
               <Trash2 className="h-3 w-3" />
@@ -143,15 +132,15 @@ const AutomationNode = ({
           )}
         </div>
       </CardHeader>
-      <CardContent className="p-3">
+      <CardContent className="p-3 space-y-4">
         {data.step ? (
           <>
             <div className="space-y-2">
               <Label className="text-xs">Description</Label>
               <Input
-                value={data.step.description}
+                value={data.step.description || ""}
                 onChange={(e) => {
-                  data.onAddNode(id, "update", {
+                  onUpdate(id, "update", {
                     step: { ...data.step, description: e.target.value },
                   });
                 }}
@@ -166,7 +155,7 @@ const AutomationNode = ({
                   value={data.step.value || ""}
                   placeholder="https://google.com"
                   onChange={(e) => {
-                    data.onAddNode(id, "update", {
+                    onUpdate(id, "update", {
                       step: { ...data.step, value: e.target.value },
                     });
                   }}
@@ -183,7 +172,7 @@ const AutomationNode = ({
                   value={data.step.selector || ""}
                   placeholder="CSS Selector"
                   onChange={(e) => {
-                    data.onAddNode(id, "update", {
+                    onUpdate(id, "update", {
                       step: { ...data.step, selector: e.target.value },
                     });
                   }}
@@ -198,7 +187,7 @@ const AutomationNode = ({
                   value={data.step.value || ""}
                   placeholder="Text to type"
                   onChange={(e) => {
-                    data.onAddNode(id, "update", {
+                    onUpdate(id, "update", {
                       step: { ...data.step, value: e.target.value },
                     });
                   }}
@@ -214,7 +203,7 @@ const AutomationNode = ({
                   value={data.step.value || "1"}
                   placeholder="Milliseconds to wait"
                   onChange={(e) => {
-                    data.onAddNode(id, "update", {
+                    onUpdate(id, "update", {
                       step: { ...data.step, value: e.target.value },
                     });
                   }}
@@ -227,10 +216,10 @@ const AutomationNode = ({
                 <Label className="text-xs">Filename</Label>
                 <Input
                   type="text"
-                  value={data.step.value}
+                  value={data.step.value || ""}
                   placeholder="filename"
                   onChange={(e) => {
-                    data.onAddNode(id, "update", {
+                    onUpdate(id, "update", {
                       step: { ...data.step, value: e.target.value },
                     });
                   }}
@@ -246,7 +235,7 @@ const AutomationNode = ({
               <Select
                 value={data.conditionType || "elementExists"}
                 onValueChange={(value) => {
-                  data.onAddNode(id, "update", {
+                  onUpdate(id, "update", {
                     conditionType: value as any,
                   });
                 }}
@@ -259,101 +248,144 @@ const AutomationNode = ({
                   <SelectItem value="valueMatches">Value Matches</SelectItem>
                 </SelectContent>
               </Select>
-              <div className="space-y-2">
-                <Label className="text-xs">Selector</Label>
-                <Input
-                  value={data.selector || ""}
-                  onChange={(e) => {
-                    data.onAddNode(id, "update", {
-                      selector: e.target.value,
-                    });
-                  }}
-                  placeholder="CSS Selector"
-                  className="text-xs"
-                />
-              </div>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-xs">Selector</Label>
+              <Input
+                value={data.selector || ""}
+                onChange={(e) => {
+                  onUpdate(id, "update", {
+                    selector: e.target.value,
+                  });
+                }}
+                placeholder="CSS Selector"
+                className="text-xs"
+              />
             </div>
             {data.conditionType === "valueMatches" && (
-              <div className="space-y-2">
-                <Label className="text-xs">Condition</Label>
-                <Select
-                  value={data.condition || "equals"}
-                  onValueChange={(value) => {
-                    data.onAddNode(id, "update", {
-                      condition: value as any,
-                    });
-                  }}
-                >
-                  <SelectTrigger className="text-xs">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="equals">Equals</SelectItem>
-                    <SelectItem value="contains">Contains</SelectItem>
-                    <SelectItem value="greaterThan">Greater Than</SelectItem>
-                    <SelectItem value="lessThan">Less Than</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Label className="text-xs">Expected Value</Label>
-                <Input
-                  value={data.expectedValue || ""}
-                  onChange={(e) => {
-                    data.onAddNode(id, "update", {
-                      expectedValue: e.target.value,
-                    });
-                  }}
-                  placeholder="Expected value"
-                  className="text-xs"
-                />
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label className="text-xs">Condition</Label>
+                  <Select
+                    value={data.condition || "equals"}
+                    onValueChange={(value) => {
+                      onUpdate(id, "update", {
+                        condition: value as any,
+                      });
+                    }}
+                  >
+                    <SelectTrigger className="text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="equals">Equals</SelectItem>
+                      <SelectItem value="contains">Contains</SelectItem>
+                      <SelectItem value="greaterThan">Greater Than</SelectItem>
+                      <SelectItem value="lessThan">Less Than</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs">Expected Value</Label>
+                  <Input
+                    value={data.expectedValue || ""}
+                    onChange={(e) => {
+                      onUpdate(id, "update", {
+                        expectedValue: e.target.value,
+                      });
+                    }}
+                    placeholder="Expected value"
+                    className="text-xs"
+                  />
+                </div>
               </div>
             )}
           </>
         )}
-        <div className="relative mt-2">
-          <Button
-            variant="outline"
-            size="sm"
-            className="w-full"
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-          >
-            {isMenuOpen ? <>Close</> : <>Add Step</>}
-          </Button>
-          {isMenuOpen && (
-            <div className="absolute z-10 mt-4 w-full bg-white border border-gray-200 rounded-md shadow-lg">
-              {stepTypes.map((stepType) => (
-                <Button
-                  key={stepType.value}
-                  variant="ghost"
-                  className="w-full text-left justify-start text-xs py-1 px-2"
-                  onClick={() => {
-                    data.onAddNode(
-                      id,
-                      stepType.value as AutomationStep["type"]
-                    );
-                    setIsMenuOpen(false);
-                  }}
-                >
-                  <stepType.icon className="h-4 w-4 mr-2" />
-                  {stepType.label}
-                </Button>
-              ))}
-              <Button
-                variant="ghost"
-                className="w-full text-left justify-start text-xs py-1 px-2"
-                onClick={() => {
-                  data.onAddNode(id, "conditional");
-                  setIsMenuOpen(false);
-                }}
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Conditional
-              </Button>
-            </div>
-          )}
-        </div>
       </CardContent>
-      <Handle type="source" position={Position.Bottom} id="default" />
     </Card>
+  );
+};
+
+// Extracted component for node addition popup
+const AddStepPopup = ({
+  onAdd,
+}: {
+  onAdd: (type: AutomationStep["type"] | "conditional") => void;
+}) => {
+  return (
+    <Card className="w-48">
+      <CardHeader className="p-3">
+        <h3 className="text-sm font-medium">Add Next Step</h3>
+      </CardHeader>
+      <CardContent className="p-3 space-y-1">
+        {stepTypes.map((stepType) => (
+          <Button
+            key={stepType.value}
+            variant="ghost"
+            className="w-full text-left justify-start text-xs py-1 px-2"
+            onClick={() => {
+              onAdd(stepType.value as AutomationStep["type"]);
+            }}
+          >
+            <stepType.icon className="h-4 w-4 mr-2" />
+            {stepType.label}
+          </Button>
+        ))}
+        <Button
+          variant="ghost"
+          className="w-full text-left justify-start text-xs py-1 px-2"
+          onClick={() => {
+            onAdd("conditional");
+          }}
+        >
+          <Plus className="h-4 w-4 mr-2" />
+          Conditional
+        </Button>
+      </CardContent>
+    </Card>
+  );
+};
+
+// Simplified AutomationNode to be small and circular, with selection highlighting
+// Removed in-node inputs, add menu, and delete button (moved to details panel)
+const AutomationNode = (props: ReactFlowNode) => {
+  const { id, data, selected = false } = props;
+  const isConditional = !data.step;
+
+  return (
+    <div className="relative">
+      {id !== "1" && <Handle type="target" position={Position.Top} style={{ top: -4 }} />}
+      <div
+        className={`w-16 h-16 rounded-full flex items-center justify-center border-2 shadow-sm text-xs font-medium capitalize text-center cursor-pointer
+          ${selected ? "border-blue-500 bg-blue-50" : "border-gray-200 bg-white"}`}
+      >
+        {data.step ? data.step.type : "Conditional"}
+      </div>
+      {isConditional ? (
+        <>
+          <Handle
+            type="source"
+            position={Position.Bottom}
+            id="if"
+            style={{ left: 8, bottom: -5 }}
+          />
+          <Handle
+            type="source"
+            position={Position.Bottom}
+            id="else"
+            style={{ right: 8, bottom: -5 }}
+          />
+        </>
+      ) : (
+        <Handle
+          type="source"
+          position={Position.Bottom}
+          id="default"
+          style={{ left: "50%", bottom: -5, transform: "translateX(-50%)" }}
+        />
+      )}
+    </div>
   );
 };
 
@@ -377,16 +409,10 @@ export function AutomationBuilder({
 }: AutomationBuilderProps) {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [nodes, setNodes, onNodesChange] = useNodesState<
-    Node["data"] & {
-      onAddNode: (
-        sourceId: string,
-        type: AutomationStep["type"] | "conditional" | "update" | "delete",
-        updates?: Partial<Node["data"]>
-      ) => void;
-    }
-  >([]);
-  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+  const [nodes, setNodes, onNodesChange] = useNodesState<NodeData>([]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState<ReactFlowEdge[]>([]);
+  // State for tracking selected node
+  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [schedule, setSchedule] = useState({
     type: "manual" as "interval" | "fixed" | "manual",
     interval: 30,
@@ -396,6 +422,228 @@ export function AutomationBuilder({
   const [isBrowserOpen, setIsBrowserOpen] = useState(false);
   const [isAutomationRunning, setIsAutomationRunning] = useState(false);
   const [currentNodeId, setCurrentNodeId] = useState<string | null>(null);
+
+  // Enhanced onConnect with connection restrictions and labels for "if"/"else"
+  const onConnect = useCallback(
+    (params: Connection) => {
+      if (!params.source || !params.target) return null;
+
+      const sourceNode = nodes.find((n) => n.id === params.source);
+      if (!sourceNode) return null;
+
+      let sourceHandle: "if" | "else" | undefined = params.sourceHandle as "if" | "else" | undefined;
+
+      if (sourceNode.type !== "conditional") {
+        // Non-conditional: only one outgoing edge
+        const outgoing = edges.filter(
+          (e) => e.source === params.source && !e.sourceHandle
+        ).length;
+        if (outgoing >= 1) {
+          alert("Cannot add more than one outgoing edge to a non-conditional node");
+          return null;
+        }
+        sourceHandle = undefined;
+      } else {
+        // Conditional: up to two specific branches
+        if (sourceHandle === "if") {
+          const existing = edges.find(
+            (e) => e.source === params.source && e.sourceHandle === "if"
+          );
+          if (existing) {
+            alert("The 'if' branch is already connected");
+            return null;
+          }
+        } else if (sourceHandle === "else") {
+          const existing = edges.find(
+            (e) => e.source === params.source && e.sourceHandle === "else"
+          );
+          if (existing) {
+            alert("The 'else' branch is already connected");
+            return null;
+          }
+        } else {
+          // No specific handle: assign to available branch
+          const ifExisting = edges.find(
+            (e) => e.source === params.source && e.sourceHandle === "if"
+          );
+          const elseExisting = edges.find(
+            (e) => e.source === params.source && e.sourceHandle === "else"
+          );
+          if (ifExisting && elseExisting) {
+            alert("Both 'if' and 'else' branches are already connected");
+            return null;
+          }
+          sourceHandle = ifExisting ? "else" : "if";
+        }
+      }
+
+      const newEdge: ReactFlowEdge = {
+        id: `e${params.source}-${params.target}-${sourceHandle || "default"}`,
+        source: params.source!,
+        target: params.target!,
+        sourceHandle,
+        data: {
+          label: sourceHandle === "if" ? "if" : sourceHandle === "else" ? "else" : undefined,
+        },
+      };
+      setEdges((eds) => addEdge(newEdge, eds));
+      return newEdge;
+    },
+    [nodes, edges, setEdges]
+  );
+
+  // Updated handleNodeAction to use "if"/"else", add restrictions for programmatic adds, select new node after add, deselect on delete
+  const handleNodeAction = useCallback(
+    (
+      sourceId: string,
+      type: AutomationStep["type"] | "conditional" | "update" | "delete",
+      updates?: Partial<Node["data"]>
+    ) => {
+      if (type === "delete") {
+        if (sourceId === "1") return;
+        setNodes((nds) => {
+          return nds.filter((node) => node.id !== sourceId);
+        });
+        setEdges((eds) =>
+          eds.filter(
+            (edge) => edge.source !== sourceId && edge.target !== sourceId
+          )
+        );
+        setSelectedNodeId(null); // Deselect on delete
+        return;
+      }
+
+      if (type === "update" && updates) {
+        setNodes((nds) =>
+          nds.map((node) =>
+            node.id === sourceId
+              ? {
+                  ...node,
+                  data: {
+                    ...node.data,
+                    ...updates,
+                    onAddNode: handleNodeAction,
+                  },
+                }
+              : node
+          )
+        );
+        return;
+      }
+
+      // For adding new nodes, compute newId first
+      const newId = Date.now().toString();
+
+      // Add new node
+      setNodes((currentNodes) => {
+        const sourceNode = currentNodes.find((n) => n.id === sourceId);
+        console.log("currentNodes", currentNodes);
+        const newNode: ReactFlowNode = {
+          id: newId,
+          type: type === "conditional" ? "conditional" : "automationStep",
+          data:
+            type === "conditional"
+              ? {
+                  conditionType: "elementExists",
+                  selector: "",
+                  onAddNode: handleNodeAction,
+                }
+              : {
+                  step: {
+                    id: newId,
+                    type: type as AutomationStep["type"],
+                    description: `${
+                      stepTypes.find((s) => s.value === type)?.label || "Step"
+                    } step`,
+                    selector: type === "navigate" ? "" : "body",
+                    value: type === "navigate" ? "https://" : "",
+                  },
+                  onAddNode: handleNodeAction,
+                },
+          position: {
+            x: sourceNode ? sourceNode.position.x : 250,
+            y: sourceNode
+              ? sourceNode.position.y + 300
+              : currentNodes.length * 150 + 50,
+          },
+        };
+
+        return [...currentNodes, newNode];
+      });
+
+      // Add edge with restrictions
+      if (type === "conditional") {
+        // When adding conditional node, connect with default (from source perspective)
+        setEdges((eds) => [
+          ...eds,
+          { id: `e${sourceId}-${newId}`, source: sourceId, target: newId },
+        ]);
+      } else {
+        setNodes((currentNodes) => {
+          const sourceNode = currentNodes.find((n) => n.id === sourceId);
+          console.log("sourceNode", sourceNode);
+
+          if (sourceNode?.type === "conditional") {
+            setEdges((currentEdges) => {
+              const outgoingEdges = currentEdges.filter(
+                (e) => e.source === sourceId
+              );
+
+              if (outgoingEdges.length >= 2) {
+                alert(
+                  "Cannot add more than two outgoing edges from a conditional node"
+                );
+                return currentEdges; // Return unchanged
+              }
+
+              const handle = outgoingEdges.length === 0 ? "if" : "else";
+              return [
+                ...currentEdges,
+                {
+                  id: `e${sourceId}-${newId}-${handle}`,
+                  source: sourceId,
+                  target: newId,
+                  sourceHandle: handle,
+                  data: { label: handle }, // Add label for edge
+                },
+              ];
+            });
+          } else {
+            // Non-conditional: check restriction before adding
+            setEdges((currentEdges) => {
+              const outgoingCount = currentEdges.filter(
+                (e) => e.source === sourceId && !e.sourceHandle
+              ).length;
+              if (outgoingCount >= 1) {
+                alert(
+                  "Cannot add more than one outgoing edge from a non-conditional node"
+                );
+                return currentEdges;
+              }
+              return [
+                ...currentEdges,
+                { id: `e${sourceId}-${newId}`, source: sourceId, target: newId },
+              ];
+            });
+          }
+
+          return currentNodes; // Return unchanged since we're just reading
+        });
+      }
+
+      // Select the newly added node
+      setSelectedNodeId(newId);
+    },
+    [setNodes, setEdges, setSelectedNodeId]
+  );
+
+  // Handle selection change
+  const handleSelectionChange = useCallback(
+    ({ nodes: selectedNodes }: OnSelectionChangeParams) => {
+      setSelectedNodeId(selectedNodes[0]?.id || null);
+    },
+    []
+  );
 
   useEffect(() => {
     if (automation) {
@@ -435,7 +683,7 @@ export function AutomationBuilder({
       };
       setNodes(() => [defaultNode]);
     }
-  }, [automation, setNodes]);
+  }, [automation, handleNodeAction]);
 
   useEffect(() => {
     const handleBrowserClosed = () => {
@@ -447,145 +695,6 @@ export function AutomationBuilder({
       (window as any).electronAPI.onBrowserClosed(handleBrowserClosed);
     }
   }, []);
-
-  const onConnect = useCallback(
-    (params: Connection) => {
-      const newEdge: Edge = {
-        id: `e${params.source}-${params.target}-${params.sourceHandle || "default"}`,
-        source: params.source!,
-        target: params.target!,
-        sourceHandle: params.sourceHandle as "then" | "else" | undefined,
-      };
-      setEdges((eds) => addEdge(newEdge, eds));
-    },
-    [setEdges]
-  );
-
-  const handleNodeAction = useCallback(
-    (
-      sourceId: string,
-      type: AutomationStep["type"] | "conditional" | "update" | "delete",
-      updates?: Partial<Node["data"]>
-    ) => {
-      if (type === "delete") {
-        if (sourceId === "1") return;
-        setNodes((nds) => {
-          return nds.filter((node) => node.id !== sourceId);
-        });
-        setEdges((eds) =>
-          eds.filter(
-            (edge) => edge.source !== sourceId && edge.target !== sourceId
-          )
-        );
-        return;
-      }
-
-      if (type === "update" && updates) {
-        setNodes((nds) =>
-          nds.map((node) =>
-            node.id === sourceId
-              ? {
-                  ...node,
-                  data: {
-                    ...node.data,
-                    ...updates,
-                    onAddNode: handleNodeAction,
-                  },
-                }
-              : node
-          )
-        );
-        return;
-      }
-
-      // For adding new nodes, use functional update to access current nodes
-      setNodes((currentNodes) => {
-        const sourceNode = currentNodes.find((n) => n.id === sourceId);
-        console.log("currentNodes", currentNodes);
-        const newId = Date.now().toString();
-        const newNode: ReactFlowNode = {
-          id: newId,
-          type: type === "conditional" ? "conditional" : "automationStep",
-          data:
-            type === "conditional"
-              ? {
-                  conditionType: "elementExists",
-                  selector: "",
-                  onAddNode: handleNodeAction,
-                }
-              : {
-                  step: {
-                    id: newId,
-                    type: type as AutomationStep["type"],
-                    description: `${
-                      stepTypes.find((s) => s.value === type)?.label || "Step"
-                    } step`,
-                    selector: type === "navigate" ? "" : "body",
-                    value: type === "navigate" ? "https://" : "",
-                  },
-                  onAddNode: handleNodeAction,
-                },
-          position: {
-            x: sourceNode ? sourceNode.position.x : 250,
-            y: sourceNode
-              ? sourceNode.position.y + 300
-              : currentNodes.length * 150 + 50,
-          },
-        };
-
-        return [...currentNodes, newNode];
-      });
-
-      // Add edges
-      const newId = Date.now().toString();
-      if (type === "conditional") {
-        setEdges((eds) => [
-          ...eds,
-          { id: `e${sourceId}-${newId}`, source: sourceId, target: newId },
-        ]);
-      } else {
-        // Access current nodes inside setNodes, then use that info in setEdges
-        setNodes((currentNodes) => {
-          const sourceNode = currentNodes.find((n) => n.id === sourceId);
-          console.log("sourceNode", sourceNode);
-
-          if (sourceNode.type === "conditional") {
-            setEdges((currentEdges) => {
-              const outgoingEdges = currentEdges.filter(
-                (e) => e.source === sourceId
-              );
-
-              if (outgoingEdges.length >= 2) {
-                alert(
-                  "Cannot add more than two outgoing edges from a conditional node"
-                );
-                return currentEdges; // Return unchanged
-              }
-
-              const handle = outgoingEdges.length === 0 ? "then" : "else";
-              return [
-                ...currentEdges,
-                {
-                  id: `e${sourceId}-${newId}-${handle}`,
-                  source: sourceId,
-                  target: newId,
-                  sourceHandle: handle,
-                },
-              ];
-            });
-          } else {
-            setEdges((eds) => [
-              ...eds,
-              { id: `e${sourceId}-${newId}`, source: sourceId, target: newId },
-            ]);
-          }
-
-          return currentNodes; // Return unchanged since we're just reading
-        });
-      }
-    },
-    [nodes, edges, setNodes, setEdges] // Include dependencies
-  );
 
   const handleSave = () => {
     const automationData: Automation = {
@@ -601,6 +710,7 @@ export function AutomationBuilder({
           conditionType: data.conditionType,
           selector: data.selector,
           expectedValue: data.expectedValue,
+          condition: data.condition,
         },
         position,
       })) as Node[],
@@ -695,7 +805,7 @@ export function AutomationBuilder({
           node.type === "conditional" &&
           result.conditionResult !== undefined
         ) {
-          const branch = result.conditionResult ? "then" : "else";
+          const branch = result.conditionResult ? "if" : "else";
           console.log("Taking branch:", branch);
           console.log("Node ID:", nodeId);
           console.log("Edges:", edges);
@@ -734,6 +844,9 @@ export function AutomationBuilder({
     setIsAutomationRunning(false);
     setCurrentNodeId(null);
   };
+
+  // Get selected node for panels
+  const selectedNode = nodes.find((n) => n.id === selectedNodeId) || null;
 
   return (
     <div className="h-screen flex flex-col">
@@ -896,19 +1009,35 @@ export function AutomationBuilder({
           </div>
         </div>
       </header>
-      <div className="flex-1">
+      {/* Added relative positioning for absolute panels within canvas */}
+      <div className="flex-1 relative">
         <ReactFlow
           nodes={nodes}
           edges={edges}
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
+          onSelectionChange={handleSelectionChange} // For tracking selection
           nodeTypes={nodeTypes}
         >
           <Background />
           <Controls />
           <MiniMap />
         </ReactFlow>
+        {/* Node addition popup on left */}
+        {selectedNodeId && (
+          <div className="absolute left-4 top-1/2 -translate-y-1/2 z-50">
+            <AddStepPopup
+              onAdd={(stepType) => handleNodeAction(selectedNodeId, stepType)}
+            />
+          </div>
+        )}
+        {/* Node details panel on top-right */}
+        {selectedNodeId && selectedNode && (
+          <div className="absolute top-4 right-4 z-50 w-80">
+            <NodeDetails node={selectedNode} onUpdate={handleNodeAction} />
+          </div>
+        )}
       </div>
     </div>
   );
