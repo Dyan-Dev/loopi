@@ -12,6 +12,7 @@ import ReactFlow, {
   Handle,
   Position,
   OnSelectionChangeParams,
+  NodeProps,
 } from "reactflow";
 import "reactflow/dist/style.css";
 import { Button } from "./ui/button";
@@ -56,9 +57,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "./ui/dialog";
-import { set } from "react-hook-form/dist";
 
-// Define types to bridge reactflow and custom Node/Edge
 type NodeData = Node["data"] & {
   onAddNode: (
     sourceId: string,
@@ -66,9 +65,9 @@ type NodeData = Node["data"] & {
     updates?: Partial<Node["data"]>
   ) => void;
 };
-type ReactFlowNode = FlowNode<NodeData, Node["type"]>;
-type ReactFlowEdge = FlowEdge;
-
+type ReactFlowNode = FlowNode<NodeData>;
+type EdgeData = { label?: string };
+type ReactFlowEdge = FlowEdge<EdgeData>;
 const stepTypes = [
   {
     value: "navigate",
@@ -349,16 +348,20 @@ const AddStepPopup = ({
 
 // Simplified AutomationNode to be small and circular, with selection highlighting
 // Removed in-node inputs, add menu, and delete button (moved to details panel)
-const AutomationNode = (props: ReactFlowNode) => {
-  const { id, data, selected = false } = props;
+const AutomationNode = ({
+  id,
+  data,
+  selected = false,
+}: NodeProps<NodeData>) => {
   const isConditional = !data.step;
 
   return (
     <div className="relative">
-      {id !== "1" && <Handle type="target" position={Position.Top} style={{ top: -4 }} />}
+      {id !== "1" && (
+        <Handle type="target" position={Position.Top} style={{ top: -4 }} />
+      )}
       <div
-        className={`w-16 h-16 rounded-full flex items-center justify-center border-2 shadow-sm text-xs font-medium capitalize text-center cursor-pointer
-          ${selected ? "border-blue-500 bg-blue-50" : "border-gray-200 bg-white"}`}
+        className={`w-16 h-16 rounded-full flex items-center justify-center border-2 shadow-sm text-xs font-medium capitalize text-center cursor-pointer ${selected ? "border-blue-500 bg-blue-50" : "border-gray-200 bg-white"}`}
       >
         {data.step ? data.step.type : "Conditional"}
       </div>
@@ -410,7 +413,7 @@ export function AutomationBuilder({
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [nodes, setNodes, onNodesChange] = useNodesState<NodeData>([]);
-  const [edges, setEdges, onEdgesChange] = useEdgesState<ReactFlowEdge[]>([]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState<EdgeData>([]);
   // State for tracking selected node
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [schedule, setSchedule] = useState({
@@ -431,7 +434,10 @@ export function AutomationBuilder({
       const sourceNode = nodes.find((n) => n.id === params.source);
       if (!sourceNode) return null;
 
-      let sourceHandle: "if" | "else" | undefined = params.sourceHandle as "if" | "else" | undefined;
+      let sourceHandle: "if" | "else" | undefined = params.sourceHandle as
+        | "if"
+        | "else"
+        | undefined;
 
       if (sourceNode.type !== "conditional") {
         // Non-conditional: only one outgoing edge
@@ -439,7 +445,9 @@ export function AutomationBuilder({
           (e) => e.source === params.source && !e.sourceHandle
         ).length;
         if (outgoing >= 1) {
-          alert("Cannot add more than one outgoing edge to a non-conditional node");
+          alert(
+            "Cannot add more than one outgoing edge to a non-conditional node"
+          );
           return null;
         }
         sourceHandle = undefined;
@@ -477,14 +485,14 @@ export function AutomationBuilder({
         }
       }
 
-      const newEdge: ReactFlowEdge = {
+      const newEdge = {
         id: `e${params.source}-${params.target}-${sourceHandle || "default"}`,
         source: params.source!,
         target: params.target!,
         sourceHandle,
-        data: {
-          label: sourceHandle === "if" ? "if" : sourceHandle === "else" ? "else" : undefined,
-        },
+        ...(sourceHandle && {
+          data: { label: sourceHandle === "if" ? "if" : "else" },
+        }),
       };
       setEdges((eds) => addEdge(newEdge, eds));
       return newEdge;
@@ -574,10 +582,12 @@ export function AutomationBuilder({
       // Add edge with restrictions
       if (type === "conditional") {
         // When adding conditional node, connect with default (from source perspective)
-        setEdges((eds) => [
-          ...eds,
-          { id: `e${sourceId}-${newId}`, source: sourceId, target: newId },
-        ]);
+        setEdges((eds) =>
+          addEdge(
+            { id: `e${sourceId}-${newId}`, source: sourceId, target: newId },
+            eds
+          )
+        );
       } else {
         setNodes((currentNodes) => {
           const sourceNode = currentNodes.find((n) => n.id === sourceId);
@@ -597,8 +607,7 @@ export function AutomationBuilder({
               }
 
               const handle = outgoingEdges.length === 0 ? "if" : "else";
-              return [
-                ...currentEdges,
+              return addEdge(
                 {
                   id: `e${sourceId}-${newId}-${handle}`,
                   source: sourceId,
@@ -606,7 +615,8 @@ export function AutomationBuilder({
                   sourceHandle: handle,
                   data: { label: handle }, // Add label for edge
                 },
-              ];
+                currentEdges
+              );
             });
           } else {
             // Non-conditional: check restriction before adding
@@ -620,10 +630,14 @@ export function AutomationBuilder({
                 );
                 return currentEdges;
               }
-              return [
-                ...currentEdges,
-                { id: `e${sourceId}-${newId}`, source: sourceId, target: newId },
-              ];
+              return addEdge(
+                {
+                  id: `e${sourceId}-${newId}`,
+                  source: sourceId,
+                  target: newId,
+                },
+                currentEdges
+              );
             });
           }
 
@@ -653,9 +667,16 @@ export function AutomationBuilder({
         automation.nodes.map((node) => ({
           ...node,
           data: { ...node.data, onAddNode: handleNodeAction },
-        })) as ReactFlowNode[]
+        }))
       );
-      setEdges(automation.edges as ReactFlowEdge[]);
+      setEdges(
+        automation.edges.map(
+          (e): ReactFlowEdge => ({
+            ...e,
+            data: undefined,
+          })
+        )
+      );
       if (automation.schedule.type !== "manual") {
         setSchedule({
           type: automation.schedule.type,
@@ -681,7 +702,7 @@ export function AutomationBuilder({
         },
         position: { x: 250, y: 50 },
       };
-      setNodes(() => [defaultNode]);
+      setNodes([defaultNode]);
     }
   }, [automation, handleNodeAction]);
 
@@ -714,7 +735,12 @@ export function AutomationBuilder({
         },
         position,
       })) as Node[],
-      edges: edges as Edge[],
+      edges: edges.map(({ id, source, target, sourceHandle }) => ({
+        id,
+        source,
+        target,
+        sourceHandle,
+      })) as Edge[],
       steps: nodes
         .map((node) => node.data.step)
         .filter((step) => step !== undefined) as AutomationStep[],
