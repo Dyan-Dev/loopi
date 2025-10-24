@@ -747,9 +747,18 @@ export function AutomationBuilder({
         )}
         {/* Node details panel on top-right */}
         {selectedNodeId && selectedNode && (
-          <div className="absolute top-4 right-4 z-50 w-80">
-            <NodeDetails node={selectedNode} onUpdate={handleNodeAction} />
-          </div>
+            <div className="absolute top-4 right-4 z-50 w-80">
+            <NodeDetails 
+              node={selectedNode} 
+              onUpdate={handleNodeAction} 
+              setBrowserOpen={setIsBrowserOpen} 
+              recentUrl={nodes
+              .filter(n => n.data.step?.type === 'navigate')
+              .map(n => n.data.step?.value)
+              .filter(Boolean)
+              .pop() || 'https://'} 
+            />
+            </div>
         )}
       </div>
     </div>

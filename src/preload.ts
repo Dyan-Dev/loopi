@@ -11,4 +11,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
     ipcRenderer.invoke("browser:runConditional", condition),
   onBrowserClosed: (callback: () => void) =>
     ipcRenderer.on("browser:closed", callback),
+  pickSelector: (url: string) => ipcRenderer.invoke('pick-selector', url),
+  sendSelector: (selector: any) => ipcRenderer.send('selector-picked', selector),
+  cancelSelector: () => ipcRenderer.send('selector-cancel'),
 });

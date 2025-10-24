@@ -10,11 +10,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
-import { Trash2 } from "lucide-react";
+import { Trash2, Target } from "lucide-react"; // Added Target icon for the pick button
 
 export default function NodeDetails({
   node,
   onUpdate,
+  setBrowserOpen,
+  recentUrl,
 }: {
   node: ReactFlowNode;
   onUpdate: (
@@ -22,8 +24,32 @@ export default function NodeDetails({
     type: "update" | "delete",
     updates?: Partial<Node["data"]>
   ) => void;
+  setBrowserOpen: (isOpen: boolean) => void;
+  recentUrl: string;
 }) {
   const { data, id } = node;
+
+  // Helper function to handle picking a selector
+  const handlePickSelector = async (setter: (selector: string) => void) => {
+    if (!(window as any).electronAPI?.pickSelector) {
+      alert("Electron API not available. Ensure the browser is set up.");
+      return;
+    }
+    try {
+      const selector = await (window as any).electronAPI.pickSelector(recentUrl);
+      if (selector) {
+        setter(selector);
+      }
+      // Refocus main window (your React app)
+      (window as any).electronAPI.focusMainWindow?.(); // Add this IPC if needed
+    } catch (err: any) {
+      console.error("Selector pick failed:", err);
+      alert(
+        err.message ||
+          "Failed to pick selector. Ensure the browser is open and try again."
+      );
+    }
+  };
 
   return (
     <Card className="w-80 max-h-[80vh] overflow-y-auto">
@@ -81,16 +107,34 @@ export default function NodeDetails({
               data.step.type === "extractWithLogic") && (
               <div className="space-y-2">
                 <Label className="text-xs">CSS Selector</Label>
-                <Input
-                  value={data.step.selector || ""}
-                  placeholder="CSS Selector"
-                  onChange={(e) => {
-                    onUpdate(id, "update", {
-                      step: { ...data.step, selector: e.target.value },
-                    });
-                  }}
-                  className="text-xs"
-                />
+                <div className="flex gap-2">
+                  <Input
+                    value={data.step.selector || ""}
+                    placeholder="CSS Selector"
+                    onChange={(e) => {
+                      onUpdate(id, "update", {
+                        step: { ...data.step, selector: e.target.value },
+                      });
+                    }}
+                    className="text-xs flex-1"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={async () => {
+                      setBrowserOpen(true);
+                      await handlePickSelector((selector) =>
+                        onUpdate(id, "update", {
+                          step: { ...data.step, selector },
+                        })
+                      );
+                    }}
+                    title="Pick element from browser"
+                  >
+                    <Target className="h-3 w-3" />
+                  </Button>
+                </div>
               </div>
             )}
             {data.step.type === "type" && (
@@ -164,16 +208,31 @@ export default function NodeDetails({
             </div>
             <div className="space-y-2">
               <Label className="text-xs">Selector</Label>
-              <Input
-                value={data.selector || ""}
-                onChange={(e) => {
-                  onUpdate(id, "update", {
-                    selector: e.target.value,
-                  });
-                }}
-                placeholder="CSS Selector"
-                className="text-xs"
-              />
+              <div className="flex gap-2">
+                <Input
+                  value={data.selector || ""}
+                  onChange={(e) => {
+                    onUpdate(id, "update", {
+                      selector: e.target.value,
+                    });
+                  }}
+                  placeholder="CSS Selector"
+                  className="text-xs flex-1"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() =>
+                    handlePickSelector((selector) =>
+                      onUpdate(id, "update", { selector })
+                    )
+                  }
+                  title="Pick element from browser"
+                >
+                  <Target className="h-3 w-3" />
+                </Button>
+              </div>
             </div>
             {data.conditionType === "valueMatches" && (
               <div className="space-y-4">
