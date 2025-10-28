@@ -326,6 +326,31 @@ ipcMain.handle("pick-selector", async (__event, url: string) => {
 
     const onPick = (_event: any, selector: string) => {
       cleanup();
+      // if the selector is selectOption element send index, value and selector
+      if (selector.includes("select")) {
+        const indexScript = `
+          (() => {
+            const select = document.querySelector("${selector}");
+            if (select) {
+              return {
+                optionIndex: select.selectedIndex,
+                optionValue: select.value,
+              };
+            }
+            return null;
+          })();
+        `;
+        browserWin?.webContents.executeJavaScript(indexScript).then((res) => {
+          if (res) {
+            resolve(
+              `${selector}||${res.optionIndex}||${res.optionValue}`
+            );
+          } else {
+            resolve(selector);
+          }
+        });
+        return;
+      }
       resolve(selector);
     };
 

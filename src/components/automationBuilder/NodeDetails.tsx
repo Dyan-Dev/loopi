@@ -36,9 +36,25 @@ export default function NodeDetails({
       return;
     }
     try {
-      const selector = await (window as any).electronAPI.pickSelector(recentUrl);
+      const selector = await (window as any).electronAPI.pickSelector(
+        recentUrl
+      );
       if (selector) {
-        setter(selector);
+        if(data.step.type === "selectOption") {
+          const sel = selector.toString().split("||");
+          setter(sel[0]);
+          onUpdate(id, "update", {
+            step: {
+              ...data.step,
+              selector: sel[0],
+              optionIndex: sel[1] ? parseInt(sel[1]) : undefined,
+              optionValue: sel[2] || "",
+            },
+          });
+          console.log("Option selector picked:", selector);
+        }else {
+          setter(selector);
+        }
       }
       // Refocus main window (your React app)
       (window as any).electronAPI.focusMainWindow?.(); // Add this IPC if needed
@@ -104,7 +120,8 @@ export default function NodeDetails({
             )}
             {(data.step.type === "click" ||
               data.step.type === "type" ||
-              data.step.type === "extractWithLogic") && (
+              data.step.type === "extractWithLogic" ||
+              data.step.type === "selectOption") && (
               <div className="space-y-2">
                 <Label className="text-xs">CSS Selector</Label>
                 <div className="flex gap-2">
@@ -151,6 +168,40 @@ export default function NodeDetails({
                   className="text-xs"
                 />
               </div>
+            )}
+            {data.step.type === "selectOption" && (
+              <>
+                <div className="space-y-2">
+                  <Label className="text-xs">Option Value</Label>
+                  <Input
+                    value={data.step.optionValue || ""}
+                    placeholder="Option value to select"
+                    onChange={(e) => {
+                      onUpdate(id, "update", {
+                        step: { ...data.step, optionValue: e.target.value },
+                      });
+                    }}
+                    className="text-xs"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs">Option Index</Label>
+                  <Input
+                    type="number"
+                    value={data.step.optionIndex || ""}
+                    placeholder="Option index to select"
+                    onChange={(e) => {
+                      onUpdate(id, "update", {
+                        step: {
+                          ...data.step,
+                          optionIndex: Number(e.target.value),
+                        },
+                      });
+                    }}
+                    className="text-xs"
+                  />
+                </div>
+              </>
             )}
             {data.step.type === "wait" && (
               <div className="space-y-2">

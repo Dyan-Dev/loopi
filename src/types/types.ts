@@ -141,6 +141,7 @@ export const stepTypes = [
     description: "Click an element",
   },
   { value: "type", label: "Type", icon: Type, description: "Enter text" },
+  { value: "selectOption", label: "Select Option", icon: Type, description: "Select an option from a dropdown" },
   {
     value: "wait",
     label: "Wait",
