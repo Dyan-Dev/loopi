@@ -26,13 +26,13 @@ cd automa
 Install dependencies:
 
 ```bash
-npm install
+pnpm install
 ```
 
 Start the development server:
 
 ```bash
-npm run start
+pnpm start
 ```
 
 # Package the project
@@ -40,5 +40,12 @@ npm run start
 Package the project as an Electron app:
 
 ```bash
-npm run make
+pnpm run make
 ```
+
+# Contributing
+
+Before committing any changes, please format your code to keep the project consistent:
+
+```bash
+pnpm format

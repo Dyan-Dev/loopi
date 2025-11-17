@@ -9,7 +9,8 @@
     "make": "electron-forge make",
     "publish": "electron-forge publish",
     "lint": "eslint --ext .ts,.tsx .",
-    "react-dev": "npx webpack serve --config webpack.dev.config.ts"
+    "react-dev": "npx webpack serve --config webpack.dev.config.ts",
+    "format": "exec biome check --write"
   },
   "keywords": [],
   "license": "MIT",
