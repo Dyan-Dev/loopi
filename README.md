@@ -50,22 +50,19 @@ pnpm format
 If you're using VS Code, you can enable automatic formatting and linting via Biome.
 
 #### 1. Install the Extension
-Install the official **Biome VS Code extension** from the Visual Studio Marketplace:  
-[here](https://marketplace.visualstudio.com/items?itemName=biomejs.biome)
+Install the official **Biome VS Code extension** from the Visual Studio Marketplace: [here](https://marketplace.visualstudio.com/items?itemName=biomejs.biome)
 
 #### 2. Set Biome as the Default Formatter
 To make Biome your default formatter:
 
 1. Open any [supported file](https://biomejs.dev/internals/language-support) (e.g., `.ts`, `.tsx`, `.js`)
-2. Open the Command Palette:  
-   *View → Command Palette* or `Ctrl/⌘ + Shift + P`
+2. Open the Command Palette: *View → Command Palette* or `Ctrl/⌘ + Shift + P`
 3. Select *Format Document With…*
 4. Select *Configure Default Formatter*
 5. Choose *Biome*
 
 #### 3. Learn More
-For advanced configuration and options, see the Biome reference documentation:  
-[reference docs](https://biomejs.dev/reference/vscode)
+For advanced configuration and options, see the Biome [reference documentation](https://biomejs.dev/reference/vscode).
 
 ## Package the Project
 
