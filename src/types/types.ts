@@ -1,5 +1,5 @@
-import { Edge as FlowEdge, Node as FlowNode } from "reactflow";
-import { Globe, Mouse, Type, Clock, Camera } from "lucide-react";
+import { Camera, Clock, Globe, Mouse, Type } from "lucide-react";
+import type { Edge as FlowEdge, Node as FlowNode } from "reactflow";
 
 export interface Automation {
   id: string;
@@ -68,7 +68,26 @@ export interface AutomationStep {
   optionIndex?: number;
   // For fileUpload
   filePath?: string;
-  onAddNode?: (id: string, type: "delete" | "conditional" | "navigate" | "click" | "type" | "wait" | "screenshot" | "extract" | "extractWithLogic" | "repeat" | "apiCall" | "scroll" | "selectOption" | "fileUpload" | "hover" | "update") => void;
+  onAddNode?: (
+    id: string,
+    type:
+      | "delete"
+      | "conditional"
+      | "navigate"
+      | "click"
+      | "type"
+      | "wait"
+      | "screenshot"
+      | "extract"
+      | "extractWithLogic"
+      | "repeat"
+      | "apiCall"
+      | "scroll"
+      | "selectOption"
+      | "fileUpload"
+      | "hover"
+      | "update"
+  ) => void;
 }
 
 export interface Node {

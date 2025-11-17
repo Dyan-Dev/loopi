@@ -1,7 +1,7 @@
-import path from "path";
-import webpack from "webpack";
 import HtmlWebpackPlugin from "html-webpack-plugin";
+import path from "path";
 import type { Configuration as WebpackConfiguration } from "webpack";
+import webpack from "webpack";
 import type { Configuration as WebpackDevServerConfiguration } from "webpack-dev-server";
 
 interface Configuration extends WebpackConfiguration {

@@ -1,27 +1,17 @@
-import { ReactFlowNode, Node } from "../../types/types";
+import { Trash2 } from "lucide-react";
+import type { Node, ReactFlowNode } from "../../types/types";
+import { Button } from "../ui/button";
 import { Card, CardContent, CardHeader } from "../ui/card";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
-import { Button } from "../ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../ui/select";
-import { Trash2 } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 
 export default function NodeDetails({
   node,
   onUpdate,
 }: {
   node: ReactFlowNode;
-  onUpdate: (
-    sourceId: string,
-    type: "update" | "delete",
-    updates?: Partial<Node["data"]>
-  ) => void;
+  onUpdate: (sourceId: string, type: "update" | "delete", updates?: Partial<Node["data"]>) => void;
 }) {
   const { data, id } = node;
 

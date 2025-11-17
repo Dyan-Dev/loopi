@@ -1,5 +1,6 @@
-import { app, BrowserWindow, ipcMain } from "electron";
 import axios from "axios";
+import { app, BrowserWindow, ipcMain } from "electron";
+
 // Fix for Linux sandbox issues - must be before any app initialization
 if (process.platform === "linux") {
   app.commandLine.appendSwitch("--no-sandbox");
@@ -100,14 +101,15 @@ ipcMain.handle("browser:runStep", async (_event, step) => {
     case "wait":
       await new Promise((res) => setTimeout(res, parseInt(step.value) * 1000));
       break;
-    case "screenshot":
+    case "screenshot": {
       const img = await wc.capturePage();
       return img.toPNG().toString("base64");
+    }
     case "extract":
       return await wc.executeJavaScript(`
         document.querySelector("${step.selector}")?.innerText || "";
       `);
-    case "extractWithLogic":
+    case "extractWithLogic": {
       const extractedValue = await wc.executeJavaScript(`
         document.querySelector("${step.selector}")?.innerText || "";
       `);
@@ -117,14 +119,13 @@ ipcMain.handle("browser:runStep", async (_event, step) => {
       } else if (step.condition === "contains") {
         conditionMet = extractedValue.includes(step.expectedValue);
       } else if (step.condition === "greaterThan") {
-        conditionMet =
-          parseFloat(extractedValue) > parseFloat(step.expectedValue);
+        conditionMet = parseFloat(extractedValue) > parseFloat(step.expectedValue);
       } else if (step.condition === "lessThan") {
-        conditionMet =
-          parseFloat(extractedValue) < parseFloat(step.expectedValue);
+        conditionMet = parseFloat(extractedValue) < parseFloat(step.expectedValue);
       }
       return { value: extractedValue, conditionMet };
-    case "repeat":
+    }
+    case "repeat": {
       const elements = await wc.executeJavaScript(`
         Array.from(document.querySelectorAll("${step.selector}")).slice(0, ${step.repeatCount || Infinity});
       `);
@@ -136,6 +137,7 @@ ipcMain.handle("browser:runStep", async (_event, step) => {
         }
       }
       return results;
+    }
     case "apiCall":
       try {
         const response = await axios({

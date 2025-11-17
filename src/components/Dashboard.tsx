@@ -1,25 +1,30 @@
-import { useState } from 'react';
-import { Button } from './ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
-import { Badge } from './ui/badge';
-import { Separator } from './ui/separator';
-import { Alert, AlertDescription } from './ui/alert';
-import { 
-  Play, 
-  Pause, 
-  Square, 
-  Plus, 
-  Shield, 
-  Clock, 
-  CheckCircle, 
-  XCircle, 
-  Edit, 
-  MoreVertical,
+import {
   Calendar,
-  Timer
-} from 'lucide-react';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu';
-import type { Automation } from '../types/types';
+  CheckCircle,
+  Clock,
+  Edit,
+  MoreVertical,
+  Pause,
+  Play,
+  Plus,
+  Shield,
+  Square,
+  Timer,
+  XCircle,
+} from "lucide-react";
+import { useState } from "react";
+import type { Automation } from "../types/types";
+import { Alert, AlertDescription } from "./ui/alert";
+import { Badge } from "./ui/badge";
+import { Button } from "./ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "./ui/dropdown-menu";
+import { Separator } from "./ui/separator";
 
 interface DashboardProps {
   automations: Automation[];
@@ -29,59 +34,64 @@ interface DashboardProps {
   onUpdateAutomations: (automations: Automation[]) => void;
 }
 
-export function Dashboard({ 
-  automations, 
-  onCreateAutomation, 
-  onEditAutomation, 
+export function Dashboard({
+  automations,
+  onCreateAutomation,
+  onEditAutomation,
   onManageCredentials,
-  onUpdateAutomations 
+  onUpdateAutomations,
 }: DashboardProps) {
   const [executingAutomations, setExecutingAutomations] = useState<Set<string>>(new Set());
 
   const handleStartAutomation = async (id: string) => {
-    setExecutingAutomations(prev => new Set(prev).add(id));
-    
+    setExecutingAutomations((prev) => new Set(prev).add(id));
+
     // Update automation status
-    onUpdateAutomations(automations.map(automation => 
-      automation.id === id 
-        ? { ...automation, status: 'running' as const }
-        : automation
-    ));
+    onUpdateAutomations(
+      automations.map((automation) =>
+        automation.id === id ? { ...automation, status: "running" as const } : automation
+      )
+    );
 
     // Mock execution - in real app this would trigger backend execution
-    setTimeout(() => {
-      const success = Math.random() > 0.3; // 70% success rate for demo
-      
-      onUpdateAutomations(automations.map(automation => 
-        automation.id === id 
-          ? { 
-              ...automation, 
-              status: 'idle' as const,
-              lastRun: {
-                timestamp: new Date(),
-                success,
-                duration: Math.floor(Math.random() * 20000) + 5000
-              }
-            }
-          : automation
-      ));
-      
-      setExecutingAutomations(prev => {
-        const next = new Set(prev);
-        next.delete(id);
-        return next;
-      });
-    }, 3000 + Math.random() * 5000);
+    setTimeout(
+      () => {
+        const success = Math.random() > 0.3; // 70% success rate for demo
+
+        onUpdateAutomations(
+          automations.map((automation) =>
+            automation.id === id
+              ? {
+                  ...automation,
+                  status: "idle" as const,
+                  lastRun: {
+                    timestamp: new Date(),
+                    success,
+                    duration: Math.floor(Math.random() * 20000) + 5000,
+                  },
+                }
+              : automation
+          )
+        );
+
+        setExecutingAutomations((prev) => {
+          const next = new Set(prev);
+          next.delete(id);
+          return next;
+        });
+      },
+      3000 + Math.random() * 5000
+    );
   };
 
   const handleStopAutomation = (id: string) => {
-    onUpdateAutomations(automations.map(automation => 
-      automation.id === id 
-        ? { ...automation, status: 'idle' as const }
-        : automation
-    ));
-    
-    setExecutingAutomations(prev => {
+    onUpdateAutomations(
+      automations.map((automation) =>
+        automation.id === id ? { ...automation, status: "idle" as const } : automation
+      )
+    );
+
+    setExecutingAutomations((prev) => {
       const next = new Set(prev);
       next.delete(id);
       return next;
@@ -89,60 +99,68 @@ export function Dashboard({
   };
 
   const handlePauseAutomation = (id: string) => {
-    onUpdateAutomations(automations.map(automation => 
-      automation.id === id 
-        ? { ...automation, status: 'paused' as const }
-        : automation
-    ));
+    onUpdateAutomations(
+      automations.map((automation) =>
+        automation.id === id ? { ...automation, status: "paused" as const } : automation
+      )
+    );
   };
 
   const handleResumeAutomation = (id: string) => {
-    onUpdateAutomations(automations.map(automation => 
-      automation.id === id 
-        ? { ...automation, status: 'running' as const }
-        : automation
-    ));
+    onUpdateAutomations(
+      automations.map((automation) =>
+        automation.id === id ? { ...automation, status: "running" as const } : automation
+      )
+    );
   };
 
-  const formatSchedule = (schedule: Automation['schedule']) => {
-    if (schedule.type === 'manual') return 'Manual execution only';
-    if (schedule.type === 'fixed') return `Fixed time: ${schedule.value}`;
-    if (schedule.type === 'interval') {
+  const formatSchedule = (schedule: Automation["schedule"]) => {
+    if (schedule.type === "manual") return "Manual execution only";
+    if (schedule.type === "fixed") return `Fixed time: ${schedule.value}`;
+    if (schedule.type === "interval") {
       return `Every ${schedule.interval} ${schedule.unit}`;
     }
-    return 'Not scheduled';
+    return "Not scheduled";
   };
 
-  const formatLastRun = (lastRun?: Automation['lastRun']) => {
-    if (!lastRun) return 'Never run';
-    
+  const formatLastRun = (lastRun?: Automation["lastRun"]) => {
+    if (!lastRun) return "Never run";
+
     const timeAgo = new Date().getTime() - lastRun.timestamp.getTime();
     const minutes = Math.floor(timeAgo / (1000 * 60));
     const hours = Math.floor(minutes / 60);
     const days = Math.floor(hours / 24);
-    
-    let timeStr = '';
+
+    let timeStr = "";
     if (days > 0) timeStr = `${days}d ago`;
     else if (hours > 0) timeStr = `${hours}h ago`;
     else timeStr = `${minutes}m ago`;
-    
+
     return `${timeStr} (${lastRun.duration ? Math.round(lastRun.duration / 1000) : 0}s)`;
   };
 
-  const getStatusBadge = (status: Automation['status']) => {
+  const getStatusBadge = (status: Automation["status"]) => {
     switch (status) {
-      case 'running':
-        return <Badge variant="default" className="bg-green-100 text-green-800 border-green-300">Running</Badge>;
-      case 'paused':
-        return <Badge variant="outline" className="border-yellow-300 text-yellow-700">Paused</Badge>;
+      case "running":
+        return (
+          <Badge variant="default" className="bg-green-100 text-green-800 border-green-300">
+            Running
+          </Badge>
+        );
+      case "paused":
+        return (
+          <Badge variant="outline" className="border-yellow-300 text-yellow-700">
+            Paused
+          </Badge>
+        );
       default:
         return <Badge variant="secondary">Idle</Badge>;
     }
   };
 
-  const runningCount = automations.filter(a => a.status === 'running').length;
+  const runningCount = automations.filter((a) => a.status === "running").length;
   const totalAutomations = automations.length;
-  const successfulRuns = automations.filter(a => a.lastRun?.success).length;
+  const successfulRuns = automations.filter((a) => a.lastRun?.success).length;
 
   return (
     <div className="p-6 space-y-6">
@@ -162,9 +180,7 @@ export function Dashboard({
             <CardTitle className="text-sm">Currently Running</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-semibold text-green-600">
-              {runningCount}
-            </div>
+            <div className="text-2xl font-semibold text-green-600">{runningCount}</div>
           </CardContent>
         </Card>
 
@@ -194,9 +210,7 @@ export function Dashboard({
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold">Your Automations</h2>
-          <p className="text-sm text-muted-foreground">
-            {totalAutomations} total
-          </p>
+          <p className="text-sm text-muted-foreground">{totalAutomations} total</p>
         </div>
 
         {automations.length === 0 ? (
@@ -227,14 +241,10 @@ export function Dashboard({
                   <div className="flex items-start justify-between">
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
-                        <CardTitle className="text-base">
-                          {automation.name}
-                        </CardTitle>
+                        <CardTitle className="text-base">{automation.name}</CardTitle>
                         {getStatusBadge(automation.status)}
                       </div>
-                      <CardDescription>
-                        {automation.description}
-                      </CardDescription>
+                      <CardDescription>{automation.description}</CardDescription>
                     </div>
 
                     <DropdownMenu>
@@ -244,9 +254,7 @@ export function Dashboard({
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem
-                          onClick={() => onEditAutomation(automation)}
-                        >
+                        <DropdownMenuItem onClick={() => onEditAutomation(automation)}>
                           <Edit className="h-4 w-4 mr-2" />
                           Edit
                         </DropdownMenuItem>
@@ -265,9 +273,7 @@ export function Dashboard({
                         disabled={executingAutomations.has(automation.id)}
                       >
                         <Play className="h-4 w-4 mr-1" />
-                        {executingAutomations.has(automation.id)
-                          ? "Starting..."
-                          : "Start"}
+                        {executingAutomations.has(automation.id) ? "Starting..." : "Start"}
                       </Button>
                     )}
 
@@ -294,10 +300,7 @@ export function Dashboard({
 
                     {automation.status === "paused" && (
                       <>
-                        <Button
-                          onClick={() => handleResumeAutomation(automation.id)}
-                          size="sm"
-                        >
+                        <Button onClick={() => handleResumeAutomation(automation.id)} size="sm">
                           <Play className="h-4 w-4 mr-1" />
                           Resume
                         </Button>
@@ -357,8 +360,8 @@ export function Dashboard({
                     <Alert>
                       <Play className="h-4 w-4" />
                       <AlertDescription>
-                        This automation is currently running. You can pause or
-                        stop it using the controls above.
+                        This automation is currently running. You can pause or stop it using the
+                        controls above.
                       </AlertDescription>
                     </Alert>
                   )}

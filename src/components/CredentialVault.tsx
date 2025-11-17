@@ -1,25 +1,33 @@
-import { useState } from 'react';
-import { Button } from './ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
-import { Badge } from './ui/badge';
-import { Input } from './ui/input';
-import { Label } from './ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
-import { Alert, AlertDescription } from './ui/alert';
-import { 
-  Plus, 
-  Shield, 
-  Key, 
-  Edit, 
-  Trash2, 
-  Eye, 
-  EyeOff, 
+import {
+  AlertTriangle,
   ArrowLeft,
+  Edit,
+  Eye,
+  EyeOff,
+  Key,
   Lock,
-  AlertTriangle
-} from 'lucide-react';
-import type { Credential } from '../types/types';
+  Plus,
+  Shield,
+  Trash2,
+} from "lucide-react";
+import { useState } from "react";
+import type { Credential } from "../types/types";
+import { Alert, AlertDescription } from "./ui/alert";
+import { Badge } from "./ui/badge";
+import { Button } from "./ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "./ui/dialog";
+import { Input } from "./ui/input";
+import { Label } from "./ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 
 interface CredentialVaultProps {
   credentials: Credential[];
@@ -27,30 +35,34 @@ interface CredentialVaultProps {
   onBack: () => void;
 }
 
-export function CredentialVault({ credentials, onUpdateCredentials, onBack }: CredentialVaultProps) {
+export function CredentialVault({
+  credentials,
+  onUpdateCredentials,
+  onBack,
+}: CredentialVaultProps) {
   const [isCreating, setIsCreating] = useState(false);
   const [editingCredential, setEditingCredential] = useState<Credential | null>(null);
   const [showValues, setShowValues] = useState<Record<string, boolean>>({});
   const [newCredential, setNewCredential] = useState({
-    name: '',
-    type: 'username_password' as Credential['type'],
-    values: {} as Record<string, string>
+    name: "",
+    type: "username_password" as Credential["type"],
+    values: {} as Record<string, string>,
   });
 
   const credentialTypes = [
-    { value: 'username_password', label: 'Username/Password', fields: ['username', 'password'] },
-    { value: 'api_key', label: 'API Key', fields: ['apiKey'] },
-    { value: 'oauth_token', label: 'OAuth Token', fields: ['accessToken', 'refreshToken'] },
-    { value: 'custom', label: 'Custom', fields: ['value'] }
+    { value: "username_password", label: "Username/Password", fields: ["username", "password"] },
+    { value: "api_key", label: "API Key", fields: ["apiKey"] },
+    { value: "oauth_token", label: "OAuth Token", fields: ["accessToken", "refreshToken"] },
+    { value: "custom", label: "Custom", fields: ["value"] },
   ] as const;
 
-  const getTypeInfo = (type: Credential['type']) => {
-    return credentialTypes.find(t => t.value === type) || credentialTypes[0];
+  const getTypeInfo = (type: Credential["type"]) => {
+    return credentialTypes.find((t) => t.value === type) || credentialTypes[0];
   };
 
   const handleCreateCredential = () => {
     if (!newCredential.name.trim()) return;
-    
+
     const credential: Credential = {
       id: Date.now().toString(),
       name: newCredential.name,
@@ -59,44 +71,48 @@ export function CredentialVault({ credentials, onUpdateCredentials, onBack }: Cr
       // In real app, these would be encrypted before storage
       encryptedValues: Object.fromEntries(
         Object.entries(newCredential.values).map(([key, value]) => [
-          key, 
-          '•'.repeat(Math.min(value.length, 16)) // Mock encryption display
+          key,
+          "•".repeat(Math.min(value.length, 16)), // Mock encryption display
         ])
-      )
+      ),
     };
 
     onUpdateCredentials([...credentials, credential]);
-    setNewCredential({ name: '', type: 'username_password', values: {} });
+    setNewCredential({ name: "", type: "username_password", values: {} });
     setIsCreating(false);
   };
 
   const handleDeleteCredential = (id: string) => {
-    onUpdateCredentials(credentials.filter(c => c.id !== id));
+    onUpdateCredentials(credentials.filter((c) => c.id !== id));
   };
 
   const toggleShowValue = (credentialId: string, field: string) => {
     const key = `${credentialId}-${field}`;
-    setShowValues(prev => ({ ...prev, [key]: !prev[key] }));
+    setShowValues((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
   const formatLastUpdated = (date: Date) => {
     const now = new Date();
     const diffTime = now.getTime() - date.getTime();
     const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-    
-    if (diffDays === 0) return 'Today';
-    if (diffDays === 1) return 'Yesterday';
+
+    if (diffDays === 0) return "Today";
+    if (diffDays === 1) return "Yesterday";
     if (diffDays < 7) return `${diffDays} days ago`;
     if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
     return `${Math.floor(diffDays / 30)} months ago`;
   };
 
-  const getTypeIcon = (type: Credential['type']) => {
+  const getTypeIcon = (type: Credential["type"]) => {
     switch (type) {
-      case 'username_password': return <Key className="h-4 w-4" />;
-      case 'api_key': return <Shield className="h-4 w-4" />;
-      case 'oauth_token': return <Lock className="h-4 w-4" />;
-      default: return <Key className="h-4 w-4" />;
+      case "username_password":
+        return <Key className="h-4 w-4" />;
+      case "api_key":
+        return <Shield className="h-4 w-4" />;
+      case "oauth_token":
+        return <Lock className="h-4 w-4" />;
+      default:
+        return <Key className="h-4 w-4" />;
     }
   };
 
@@ -114,7 +130,7 @@ export function CredentialVault({ credentials, onUpdateCredentials, onBack }: Cr
             <p className="text-muted-foreground">Securely manage your automation credentials</p>
           </div>
         </div>
-        
+
         <Dialog open={isCreating} onOpenChange={setIsCreating}>
           <DialogTrigger asChild>
             <Button>
@@ -129,7 +145,7 @@ export function CredentialVault({ credentials, onUpdateCredentials, onBack }: Cr
                 Store encrypted credentials for use in your automations
               </DialogDescription>
             </DialogHeader>
-            
+
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="cred-name">Name</Label>
@@ -137,19 +153,19 @@ export function CredentialVault({ credentials, onUpdateCredentials, onBack }: Cr
                   id="cred-name"
                   placeholder="e.g., Gmail Login, Twitter API"
                   value={newCredential.name}
-                  onChange={(e) => setNewCredential(prev => ({ ...prev, name: e.target.value }))}
+                  onChange={(e) => setNewCredential((prev) => ({ ...prev, name: e.target.value }))}
                 />
               </div>
-              
+
               <div className="space-y-2">
                 <Label>Type</Label>
-                <Select 
-                  value={newCredential.type} 
+                <Select
+                  value={newCredential.type}
                   onValueChange={(value) => {
-                    setNewCredential(prev => ({ 
-                      ...prev, 
-                      type: value as Credential['type'],
-                      values: {} // Reset values when type changes
+                    setNewCredential((prev) => ({
+                      ...prev,
+                      type: value as Credential["type"],
+                      values: {}, // Reset values when type changes
                     }));
                   }}
                 >
@@ -157,7 +173,7 @@ export function CredentialVault({ credentials, onUpdateCredentials, onBack }: Cr
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {credentialTypes.map(type => (
+                    {credentialTypes.map((type) => (
                       <SelectItem key={type.value} value={type.value}>
                         {type.label}
                       </SelectItem>
@@ -165,26 +181,32 @@ export function CredentialVault({ credentials, onUpdateCredentials, onBack }: Cr
                   </SelectContent>
                 </Select>
               </div>
-              
-              {getTypeInfo(newCredential.type).fields.map(field => (
+
+              {getTypeInfo(newCredential.type).fields.map((field) => (
                 <div key={field} className="space-y-2">
                   <Label htmlFor={`cred-${field}`}>
                     {field.charAt(0).toUpperCase() + field.slice(1)}
                   </Label>
                   <Input
                     id={`cred-${field}`}
-                    type={field.includes('password') || field.includes('token') || field.includes('key') ? 'password' : 'text'}
+                    type={
+                      field.includes("password") || field.includes("token") || field.includes("key")
+                        ? "password"
+                        : "text"
+                    }
                     placeholder={`Enter ${field}`}
-                    value={newCredential.values[field] || ''}
-                    onChange={(e) => setNewCredential(prev => ({
-                      ...prev,
-                      values: { ...prev.values, [field]: e.target.value }
-                    }))}
+                    value={newCredential.values[field] || ""}
+                    onChange={(e) =>
+                      setNewCredential((prev) => ({
+                        ...prev,
+                        values: { ...prev.values, [field]: e.target.value },
+                      }))
+                    }
                   />
                 </div>
               ))}
             </div>
-            
+
             <DialogFooter>
               <Button variant="outline" onClick={() => setIsCreating(false)}>
                 Cancel
@@ -201,7 +223,8 @@ export function CredentialVault({ credentials, onUpdateCredentials, onBack }: Cr
       <Alert>
         <AlertTriangle className="h-4 w-4" />
         <AlertDescription>
-          All credentials are encrypted and stored securely. They are only decrypted during automation execution and never exposed in logs.
+          All credentials are encrypted and stored securely. They are only decrypted during
+          automation execution and never exposed in logs.
         </AlertDescription>
       </Alert>
 
@@ -215,36 +238,36 @@ export function CredentialVault({ credentials, onUpdateCredentials, onBack }: Cr
             <div className="text-2xl font-semibold">{credentials.length}</div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm">Username/Password</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-semibold">
-              {credentials.filter(c => c.type === 'username_password').length}
+              {credentials.filter((c) => c.type === "username_password").length}
             </div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm">API Keys</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-semibold">
-              {credentials.filter(c => c.type === 'api_key').length}
+              {credentials.filter((c) => c.type === "api_key").length}
             </div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm">OAuth Tokens</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-semibold">
-              {credentials.filter(c => c.type === 'oauth_token').length}
+              {credentials.filter((c) => c.type === "oauth_token").length}
             </div>
           </CardContent>
         </Card>
@@ -253,7 +276,7 @@ export function CredentialVault({ credentials, onUpdateCredentials, onBack }: Cr
       {/* Credentials List */}
       <div className="space-y-4">
         <h2 className="text-lg font-semibold">Stored Credentials</h2>
-        
+
         {credentials.length === 0 ? (
           <Card>
             <CardContent className="py-12 text-center">
@@ -263,7 +286,9 @@ export function CredentialVault({ credentials, onUpdateCredentials, onBack }: Cr
                 </div>
                 <div>
                   <h3 className="font-medium">No credentials stored</h3>
-                  <p className="text-sm text-muted-foreground">Add your first credential to get started</p>
+                  <p className="text-sm text-muted-foreground">
+                    Add your first credential to get started
+                  </p>
                 </div>
                 <Button onClick={() => setIsCreating(true)}>
                   <Plus className="h-4 w-4 mr-2" />
@@ -282,21 +307,19 @@ export function CredentialVault({ credentials, onUpdateCredentials, onBack }: Cr
                       <div className="flex items-center gap-2">
                         {getTypeIcon(credential.type)}
                         <CardTitle className="text-base">{credential.name}</CardTitle>
-                        <Badge variant="outline">
-                          {getTypeInfo(credential.type).label}
-                        </Badge>
+                        <Badge variant="outline">{getTypeInfo(credential.type).label}</Badge>
                       </div>
                       <CardDescription>
                         Last updated {formatLastUpdated(credential.lastUpdated)}
                       </CardDescription>
                     </div>
-                    
+
                     <div className="flex gap-2">
                       <Button variant="ghost" size="sm">
                         <Edit className="h-4 w-4" />
                       </Button>
-                      <Button 
-                        variant="ghost" 
+                      <Button
+                        variant="ghost"
                         size="sm"
                         onClick={() => handleDeleteCredential(credential.id)}
                       >
@@ -305,13 +328,13 @@ export function CredentialVault({ credentials, onUpdateCredentials, onBack }: Cr
                     </div>
                   </div>
                 </CardHeader>
-                
+
                 <CardContent>
                   <div className="space-y-3">
                     {Object.entries(credential.encryptedValues).map(([field, value]) => {
                       const showKey = `${credential.id}-${field}`;
                       const isVisible = showValues[showKey];
-                      
+
                       return (
                         <div key={field} className="flex items-center justify-between">
                           <div className="space-y-1">
@@ -319,7 +342,7 @@ export function CredentialVault({ credentials, onUpdateCredentials, onBack }: Cr
                               {field.charAt(0).toUpperCase() + field.slice(1)}
                             </Label>
                             <div className="font-mono text-sm">
-                              {isVisible ? 'decrypted-value-here' : value}
+                              {isVisible ? "decrypted-value-here" : value}
                             </div>
                           </div>
                           <Button
@@ -327,7 +350,11 @@ export function CredentialVault({ credentials, onUpdateCredentials, onBack }: Cr
                             size="sm"
                             onClick={() => toggleShowValue(credential.id, field)}
                           >
-                            {isVisible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                            {isVisible ? (
+                              <EyeOff className="h-4 w-4" />
+                            ) : (
+                              <Eye className="h-4 w-4" />
+                            )}
                           </Button>
                         </div>
                       );

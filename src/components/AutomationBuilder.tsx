@@ -1,59 +1,38 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import ReactFlow, {
   addEdge,
   Background,
+  type Connection,
   Controls,
   MiniMap,
-  Connection,
-  useNodesState,
+  type OnSelectionChangeParams,
   useEdgesState,
-  OnSelectionChangeParams,
+  useNodesState,
 } from "reactflow";
 import "reactflow/dist/style.css";
-import { Button } from "./ui/button";
-import { Input } from "./ui/input";
-import { Label } from "./ui/label";
-import { Textarea } from "./ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "./ui/select";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "./ui/dialog";
-import {
-  ArrowLeft,
-  Save,
-  Play,
-  Globe,
-  Pause,
-  Square,
-  Settings,
-} from "lucide-react";
+import { ArrowLeft, Globe, Pause, Play, Save, Settings, Square } from "lucide-react";
 import type {
   Automation,
   AutomationStep,
   Credential,
-  Node,
   Edge,
-  NodeData,
   EdgeData,
-  ReactFlowNode,
+  Node,
+  NodeData,
   ReactFlowEdge,
+  ReactFlowNode,
 } from "../types/types";
 import { stepTypes } from "../types/types";
-
-// Automation Builder component and related sub-components
-import NodeDetails from "./automationBuilder/NodeDetails";
 import AddStepPopup from "./automationBuilder/AddStepPopup";
 import AutomationNode from "./automationBuilder/AutomationNode";
+// Automation Builder component and related sub-components
+import NodeDetails from "./automationBuilder/NodeDetails";
+import { Button } from "./ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
+import { Input } from "./ui/input";
+import { Label } from "./ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
+import { Textarea } from "./ui/textarea";
 
 const nodeTypes = {
   automationStep: AutomationNode,
@@ -88,7 +67,7 @@ export function AutomationBuilder({
   const [isBrowserOpen, setIsBrowserOpen] = useState(false);
   const [isAutomationRunning, setIsAutomationRunning] = useState(false);
   const [currentNodeId, setCurrentNodeId] = useState<string | null>(null);
-  const stopGraphExecutionRef  = useRef(false);
+  const stopGraphExecutionRef = useRef(false);
 
   // Enhanced onConnect with connection restrictions and labels for "if"/"else"
   const onConnect = useCallback(
@@ -105,22 +84,16 @@ export function AutomationBuilder({
 
       if (sourceNode.type !== "conditional") {
         // Non-conditional: only one outgoing edge
-        const outgoing = edges.filter(
-          (e) => e.source === params.source && !e.sourceHandle
-        ).length;
+        const outgoing = edges.filter((e) => e.source === params.source && !e.sourceHandle).length;
         if (outgoing >= 1) {
-          alert(
-            "Cannot add more than one outgoing edge to a non-conditional node"
-          );
+          alert("Cannot add more than one outgoing edge to a non-conditional node");
           return null;
         }
         sourceHandle = undefined;
       } else {
         // Conditional: up to two specific branches
         if (sourceHandle === "if") {
-          const existing = edges.find(
-            (e) => e.source === params.source && e.sourceHandle === "if"
-          );
+          const existing = edges.find((e) => e.source === params.source && e.sourceHandle === "if");
           if (existing) {
             alert("The 'if' branch is already connected");
             return null;
@@ -177,9 +150,7 @@ export function AutomationBuilder({
           return nds.filter((node) => node.id !== sourceId);
         });
         setEdges((eds) =>
-          eds.filter(
-            (edge) => edge.source !== sourceId && edge.target !== sourceId
-          )
+          eds.filter((edge) => edge.source !== sourceId && edge.target !== sourceId)
         );
         setSelectedNodeId(null); // Deselect on delete
         return;
@@ -225,9 +196,7 @@ export function AutomationBuilder({
                   step: {
                     id: newId,
                     type: type as AutomationStep["type"],
-                    description: `${
-                      stepTypes.find((s) => s.value === type)?.label || "Step"
-                    } step`,
+                    description: `${stepTypes.find((s) => s.value === type)?.label || "Step"} step`,
                     selector: type === "navigate" ? "" : "body",
                     value: type === "navigate" ? "https://" : "",
                   },
@@ -236,9 +205,7 @@ export function AutomationBuilder({
                 },
           position: {
             x: sourceNode ? sourceNode.position.x : 250,
-            y: sourceNode
-              ? sourceNode.position.y + 100
-              : currentNodes.length * 150 + 50,
+            y: sourceNode ? sourceNode.position.y + 100 : currentNodes.length * 150 + 50,
           },
         };
 
@@ -249,10 +216,7 @@ export function AutomationBuilder({
       if (type === "conditional") {
         // When adding conditional node, connect with default (from source perspective)
         setEdges((eds) =>
-          addEdge(
-            { id: `e${sourceId}-${newId}`, source: sourceId, target: newId },
-            eds
-          )
+          addEdge({ id: `e${sourceId}-${newId}`, source: sourceId, target: newId }, eds)
         );
       } else {
         setNodes((currentNodes) => {
@@ -261,14 +225,10 @@ export function AutomationBuilder({
 
           if (sourceNode?.type === "conditional") {
             setEdges((currentEdges) => {
-              const outgoingEdges = currentEdges.filter(
-                (e) => e.source === sourceId
-              );
+              const outgoingEdges = currentEdges.filter((e) => e.source === sourceId);
 
               if (outgoingEdges.length >= 2) {
-                alert(
-                  "Cannot add more than two outgoing edges from a conditional node"
-                );
+                alert("Cannot add more than two outgoing edges from a conditional node");
                 return currentEdges; // Return unchanged
               }
 
@@ -291,9 +251,7 @@ export function AutomationBuilder({
                 (e) => e.source === sourceId && !e.sourceHandle
               ).length;
               if (outgoingCount >= 1) {
-                alert(
-                  "Cannot add more than one outgoing edge from a non-conditional node"
-                );
+                alert("Cannot add more than one outgoing edge from a non-conditional node");
                 return currentEdges;
               }
               return addEdge(
@@ -318,12 +276,9 @@ export function AutomationBuilder({
   );
 
   // Handle selection change
-  const handleSelectionChange = useCallback(
-    ({ nodes: selectedNodes }: OnSelectionChangeParams) => {
-      setSelectedNodeId(selectedNodes[0]?.id || null);
-    },
-    []
-  );
+  const handleSelectionChange = useCallback(({ nodes: selectedNodes }: OnSelectionChangeParams) => {
+    setSelectedNodeId(selectedNodes[0]?.id || null);
+  }, []);
 
   useEffect(() => {
     if (automation) {
@@ -457,9 +412,7 @@ export function AutomationBuilder({
   const executeNode = async (node: ReactFlowNode) => {
     setCurrentNodeId(node.id);
     setNodes((nds) =>
-      nds.map((n) =>
-        n.id === node.id ? { ...n, data: { ...n.data, nodeRunning: true } } : n
-      )
+      nds.map((n) => (n.id === node.id ? { ...n, data: { ...n.data, nodeRunning: true } } : n))
     );
     await new Promise((resolve) => setTimeout(resolve, 500));
     if (node.type === "automationStep" && node.data.step) {
@@ -495,27 +448,18 @@ export function AutomationBuilder({
         if (stopGraphExecutionRef.current) return;
         visited.add(nodeId);
 
-        const node = nodes.find((n) => n.id === nodeId) as
-          | ReactFlowNode
-          | undefined;
+        const node = nodes.find((n) => n.id === nodeId) as ReactFlowNode | undefined;
         if (!node) return;
 
         const result = await executeNode(node);
         setNodes((nds) =>
-          nds.map((n) =>
-            n.id === node.id
-              ? { ...n, data: { ...n.data, nodeRunning: false } }
-              : n
-          )
+          nds.map((n) => (n.id === node.id ? { ...n, data: { ...n.data, nodeRunning: false } } : n))
         );
         let nextNodes: string[] = [];
 
         console.log("Execution result:", result);
 
-        if (
-          node.type === "conditional" &&
-          result.conditionResult !== undefined
-        ) {
+        if (node.type === "conditional" && result.conditionResult !== undefined) {
           const branch = result.conditionResult ? "if" : "else";
           console.log("Taking branch:", branch);
           console.log("Node ID:", nodeId);
@@ -525,9 +469,7 @@ export function AutomationBuilder({
             .map((e) => e.target);
           console.log("Next nodes:", nextNodes);
         } else {
-          nextNodes = edges
-            .filter((e) => e.source === nodeId)
-            .map((e) => e.target);
+          nextNodes = edges.filter((e) => e.source === nodeId).map((e) => e.target);
           console.log("else Next nodes:", nextNodes);
         }
 
@@ -625,9 +567,7 @@ export function AutomationBuilder({
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="manual">Manual only</SelectItem>
-                        <SelectItem value="interval">
-                          Repeat interval
-                        </SelectItem>
+                        <SelectItem value="interval">Repeat interval</SelectItem>
                         <SelectItem value="fixed">Fixed time</SelectItem>
                       </SelectContent>
                     </Select>
@@ -693,11 +633,7 @@ export function AutomationBuilder({
                   Close Browser
                 </Button>
                 {!isAutomationRunning ? (
-                  <Button
-                    variant="default"
-                    onClick={runAutomation}
-                    disabled={nodes.length === 0}
-                  >
+                  <Button variant="default" onClick={runAutomation} disabled={nodes.length === 0}>
                     <Play className="h-4 w-4 mr-2" />
                     Run Automation
                   </Button>
@@ -740,9 +676,7 @@ export function AutomationBuilder({
         {/* Node addition popup on left */}
         {selectedNodeId && (
           <div className="absolute left-4 top-1/2 -translate-y-1/2 z-50">
-            <AddStepPopup
-              onAdd={(stepType) => handleNodeAction(selectedNodeId, stepType)}
-            />
+            <AddStepPopup onAdd={(stepType) => handleNodeAction(selectedNodeId, stepType)} />
           </div>
         )}
         {/* Node details panel on top-right */}

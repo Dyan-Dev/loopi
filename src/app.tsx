@@ -1,11 +1,11 @@
-import * as ReactDOM from 'react-dom/client';
+import { Bot, Grid, Shield } from "lucide-react";
 import { useState } from "react";
-import { Dashboard } from "./components/Dashboard";
-import { CredentialVault } from "./components/CredentialVault";
+import * as ReactDOM from "react-dom/client";
 import { AutomationBuilder } from "./components/AutomationBuilder";
+import { CredentialVault } from "./components/CredentialVault";
+import { Dashboard } from "./components/Dashboard";
 import { Tabs, TabsList, TabsTrigger } from "./components/ui/tabs";
-import { Bot, Shield, Grid } from "lucide-react";
-import { Automation, Credential } from "./types/types";
+import type { Automation, Credential } from "./types/types";
 import "./index.css";
 
 // Mock data
@@ -42,7 +42,7 @@ const mockAutomations: Automation[] = [
     ],
     linkedCredentials: ["gmail-creds"],
     nodes: [],
-    edges: []
+    edges: [],
   },
   {
     id: "2",
@@ -69,7 +69,7 @@ const mockAutomations: Automation[] = [
     ],
     linkedCredentials: ["twitter-creds"],
     nodes: [],
-    edges: []
+    edges: [],
   },
 ];
 
@@ -97,13 +97,12 @@ const mockCredentials: Credential[] = [
 ];
 
 export default function App() {
-  const [currentView, setCurrentView] = useState<
-    "dashboard" | "credentials" | "builder"
-  >("builder");
+  const [currentView, setCurrentView] = useState<"dashboard" | "credentials" | "builder">(
+    "builder"
+  );
   const [automations, setAutomations] = useState<Automation[]>(mockAutomations);
   const [credentials, setCredentials] = useState<Credential[]>(mockCredentials);
-  const [selectedAutomation, setSelectedAutomation] =
-    useState<Automation | null>(null);
+  const [selectedAutomation, setSelectedAutomation] = useState<Automation | null>(null);
 
   const handleCreateAutomation = () => {
     setSelectedAutomation(null);
@@ -117,14 +116,9 @@ export default function App() {
 
   const handleSaveAutomation = (automation: Automation) => {
     if (selectedAutomation) {
-      setAutomations((prev) =>
-        prev.map((a) => (a.id === automation.id ? automation : a))
-      );
+      setAutomations((prev) => prev.map((a) => (a.id === automation.id ? automation : a)));
     } else {
-      setAutomations((prev) => [
-        ...prev,
-        { ...automation, id: Date.now().toString() },
-      ]);
+      setAutomations((prev) => [...prev, { ...automation, id: Date.now().toString() }]);
     }
     setCurrentView("dashboard");
   };
@@ -140,10 +134,7 @@ export default function App() {
           </div>
 
           <div className="flex items-center space-x-4">
-            <Tabs
-              value={currentView}
-              onValueChange={(value) => setCurrentView(value as any)}
-            >
+            <Tabs value={currentView} onValueChange={(value) => setCurrentView(value as any)}>
               <TabsList>
                 <TabsTrigger value="dashboard">
                   <Grid className="h-4 w-4 mr-1" />
@@ -198,7 +189,7 @@ export default function App() {
 
 function render() {
   const root = ReactDOM.createRoot(document.getElementById("app"));
-  root.render(<App/>);
+  root.render(<App />);
 }
 
 render();

@@ -7,8 +7,6 @@ contextBridge.exposeInMainWorld("electronAPI", {
   closeBrowser: () => ipcRenderer.invoke("browser:close"),
   navigate: (url: string) => ipcRenderer.invoke("browser:navigate", url),
   runStep: (step: any) => ipcRenderer.invoke("browser:runStep", step),
-  runConditional: (condition: any) =>
-    ipcRenderer.invoke("browser:runConditional", condition),
-  onBrowserClosed: (callback: () => void) =>
-    ipcRenderer.on("browser:closed", callback),
+  runConditional: (condition: any) => ipcRenderer.invoke("browser:runConditional", condition),
+  onBrowserClosed: (callback: () => void) => ipcRenderer.on("browser:closed", callback),
 });
