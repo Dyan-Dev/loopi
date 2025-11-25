@@ -180,6 +180,50 @@ export function AutomationBuilder({
 
   const selectedNode = nodes.find((n) => n.id === selectedNodeId) || null;
 
+  // Get current automation for export
+  const currentAutomationForExport: Automation | undefined = name.trim() ? {
+    id: automation?.id || Date.now().toString(),
+    name,
+    description,
+    status: "idle",
+    nodes: nodes.map(({ id, type, data, position }) => ({
+      id,
+      type,
+      data: {
+        step: data.step,
+        conditionType: data.conditionType,
+        selector: data.selector,
+        expectedValue: data.expectedValue,
+        condition: data.condition,
+      },
+      position,
+    })) as Node[],
+    edges: edges.map(({ id, source, target, sourceHandle }) => ({
+      id,
+      source,
+      target,
+      sourceHandle,
+    })) as Edge[],
+    steps: nodes
+      .map((node) => node.data.step)
+      .filter((step) => step !== undefined) as AutomationStep[],
+    schedule:
+      schedule.type === "manual"
+        ? { type: "manual" }
+        : schedule.type === "fixed"
+          ? { type: "fixed", value: schedule.value }
+          : {
+              type: "interval",
+              interval: schedule.interval,
+              unit: schedule.unit,
+            },
+    linkedCredentials: nodes
+      .filter((node) => node.data.step?.credentialId)
+      .map((node) => node.data.step!.credentialId!)
+      .filter((id, index, arr) => arr.indexOf(id) === index),
+    lastRun: automation?.lastRun,
+  } : undefined;
+
   return (
     <div className="h-screen flex flex-col">
       <BuilderHeader
@@ -199,6 +243,7 @@ export function AutomationBuilder({
         handleSave={handleSave}
         onCancel={onCancel}
         nodesLength={nodes.length}
+        currentAutomation={currentAutomationForExport}
       />
 
       <BuilderCanvas

@@ -23,6 +23,9 @@ import {
   MoreVertical,
   Calendar,
   Timer,
+  Download,
+  Upload,
+  FileDown,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -31,6 +34,7 @@ import {
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
 import type { Automation } from "../types/types";
+import { exportAutomation, exportAllAutomations, importAutomation, importAllAutomations } from "../utils/automationIO";
 
 interface DashboardProps {
   automations: Automation[];
@@ -50,6 +54,34 @@ export function Dashboard({
   const [executingAutomations, setExecutingAutomations] = useState<Set<string>>(
     new Set()
   );
+
+  const handleImportAutomation = async () => {
+    try {
+      const automation = await importAutomation();
+      onUpdateAutomations([...automations, automation]);
+    } catch (error) {
+      console.error("Failed to import automation:", error);
+      alert("Failed to import automation. Please check the file format.");
+    }
+  };
+
+  const handleImportAll = async () => {
+    try {
+      const importedAutomations = await importAllAutomations();
+      onUpdateAutomations([...automations, ...importedAutomations]);
+    } catch (error) {
+      console.error("Failed to import automations:", error);
+      alert("Failed to import automations. Please check the file format.");
+    }
+  };
+
+  const handleExportAll = () => {
+    if (automations.length === 0) {
+      alert("No automations to export");
+      return;
+    }
+    exportAllAutomations(automations);
+  };
 
   const handleStartAutomation = async (id: string) => {
     setExecutingAutomations((prev) => new Set(prev).add(id));
@@ -224,6 +256,18 @@ export function Dashboard({
           <Plus className="h-5 w-5 mr-2" />
           Add Automation
         </Button>
+        <Button onClick={handleImportAutomation} variant="outline" size="lg">
+          <Upload className="h-5 w-5 mr-2" />
+          Import
+        </Button>
+        <Button onClick={handleImportAll} variant="outline" size="lg">
+          <Upload className="h-5 w-5 mr-2" />
+          Import All
+        </Button>
+        <Button onClick={handleExportAll} variant="outline" size="lg" disabled={automations.length === 0}>
+          <FileDown className="h-5 w-5 mr-2" />
+          Export All
+        </Button>
         <Button onClick={onManageCredentials} variant="outline" size="lg">
           <Shield className="h-5 w-5 mr-2" />
           Manage Credentials
@@ -252,10 +296,6 @@ export function Dashboard({
                     Get started by creating your first automation
                   </p>
                 </div>
-                <Button onClick={onCreateAutomation}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Create First Automation
-                </Button>
               </div>
             </CardContent>
           </Card>
@@ -289,6 +329,12 @@ export function Dashboard({
                         >
                           <Edit className="h-4 w-4 mr-2" />
                           Edit
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => exportAutomation(automation)}
+                        >
+                          <Download className="h-4 w-4 mr-2" />
+                          Export
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>

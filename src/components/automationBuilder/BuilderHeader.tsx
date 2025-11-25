@@ -17,7 +17,9 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "../ui/dialog";
-import { ArrowLeft, Save, Play, Globe, Pause, Square, Settings } from "lucide-react";
+import { ArrowLeft, Save, Play, Globe, Pause, Square, Settings, Download } from "lucide-react";
+import { exportAutomation } from "../../utils/automationIO";
+import type { Automation } from "../../types/types";
 
 interface BuilderHeaderProps {
   name: string;
@@ -36,6 +38,7 @@ interface BuilderHeaderProps {
   handleSave: () => void;
   onCancel: () => void;
   nodesLength: number;
+  currentAutomation?: Automation;
 }
 
 export const BuilderHeader: React.FC<BuilderHeaderProps> = ({
@@ -55,7 +58,13 @@ export const BuilderHeader: React.FC<BuilderHeaderProps> = ({
   handleSave,
   onCancel,
   nodesLength,
+  currentAutomation,
 }) => {
+  const handleExport = () => {
+    if (currentAutomation) {
+      exportAutomation(currentAutomation);
+    }
+  };
   return (
     <header className="border-b border-border bg-card px-6 py-4">
       <div className="flex items-center justify-between">
@@ -153,6 +162,12 @@ export const BuilderHeader: React.FC<BuilderHeaderProps> = ({
                 </>
               )}
             </>
+          )}
+          {currentAutomation && (
+            <Button variant="outline" onClick={handleExport}>
+              <Download className="h-4 w-4 mr-2" />
+              Export
+            </Button>
           )}
           <Button onClick={handleSave} disabled={!name.trim()}>
             <Save className="h-4 w-4 mr-2" />

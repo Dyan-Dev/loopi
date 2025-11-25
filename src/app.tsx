@@ -8,71 +8,7 @@ import { Bot, Shield, Grid } from "lucide-react";
 import { Automation, Credential } from "./types/types";
 import "./index.css";
 
-// Mock data
-const mockAutomations: Automation[] = [
-  {
-    id: "1",
-    name: "Gmail Email Check",
-    description: "Check for new emails and extract subject lines",
-    status: "idle",
-    schedule: {
-      type: "interval",
-      interval: 30,
-      unit: "minutes",
-    },
-    lastRun: {
-      timestamp: new Date(Date.now() - 1000 * 60 * 15), // 15 minutes ago
-      success: true,
-      duration: 12000,
-    },
-    steps: [
-      {
-        id: "1",
-        type: "navigate",
-        value: "https://gmail.com",
-        description: "Navigate to Gmail",
-      },
-      {
-        id: "2",
-        type: "click",
-        selector: "#signin",
-        credentialId: "gmail-creds",
-        description: "Click sign in and use Gmail credentials",
-      },
-    ],
-    linkedCredentials: ["gmail-creds"],
-    nodes: [],
-    edges: [],
-  },
-  {
-    id: "2",
-    name: "Social Media Monitoring",
-    description: "Monitor social media mentions and save screenshots",
-    status: "running",
-    schedule: {
-      type: "interval",
-      interval: 2,
-      unit: "hours",
-    },
-    lastRun: {
-      timestamp: new Date(Date.now() - 1000 * 60 * 45), // 45 minutes ago
-      success: false,
-      duration: 8000,
-    },
-    steps: [
-      {
-        id: "1",
-        type: "navigate",
-        value: "https://twitter.com",
-        description: "Navigate to Twitter",
-      },
-    ],
-    linkedCredentials: ["twitter-creds"],
-    nodes: [],
-    edges: [],
-  },
-];
-
+// Mock credentials (keeping these as they're separate from automations)
 const mockCredentials: Credential[] = [
   {
     id: "gmail-creds",
@@ -99,8 +35,8 @@ const mockCredentials: Credential[] = [
 export default function App() {
   const [currentView, setCurrentView] = useState<
     "dashboard" | "credentials" | "builder"
-  >("builder");
-  const [automations, setAutomations] = useState<Automation[]>(mockAutomations);
+  >("dashboard");
+  const [automations, setAutomations] = useState<Automation[]>([]);
   const [credentials, setCredentials] = useState<Credential[]>(mockCredentials);
   const [selectedAutomation, setSelectedAutomation] =
     useState<Automation | null>(null);
@@ -117,15 +53,15 @@ export default function App() {
 
   const handleSaveAutomation = (automation: Automation) => {
     if (selectedAutomation) {
+      // Update existing automation
       setAutomations((prev) =>
         prev.map((a) => (a.id === automation.id ? automation : a))
       );
     } else {
-      setAutomations((prev) => [
-        ...prev,
-        { ...automation, id: Date.now().toString() },
-      ]);
+      // Add new automation
+      setAutomations((prev) => [...prev, automation]);
     }
+    setSelectedAutomation(null);
     setCurrentView("dashboard");
   };
 
