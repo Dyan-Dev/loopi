@@ -57,6 +57,8 @@ export function AutomationBuilder({
   const [edges, setEdges, onEdgesChange] = useEdgesState<EdgeData>([]);
   // State for tracking selected node
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+  // State for tracking selected edges for deletion
+  const [selectedEdgeIds, setSelectedEdgeIds] = useState<string[]>([]);
   const [schedule, setSchedule] = useState({
     type: "manual" as "interval" | "fixed" | "manual",
     interval: 30,
@@ -82,13 +84,33 @@ export function AutomationBuilder({
     stopAutomation,
   } = useExecution({ nodes, edges, setNodes });
 
-  // Handle selection change
+  // Handle selection change (nodes & edges)
   const handleSelectionChange = useCallback(
-    ({ nodes: selectedNodes }: OnSelectionChangeParams) => {
+    ({ nodes: selectedNodes, edges: selectedEdges }: OnSelectionChangeParams) => {
       setSelectedNodeId(selectedNodes[0]?.id || null);
+      setSelectedEdgeIds(selectedEdges.map((e) => e.id));
     },
     []
   );
+
+  // Delete selected edges utility
+  const handleDeleteSelectedEdges = useCallback(() => {
+    if (selectedEdgeIds.length === 0) return;
+    setEdges((eds) => eds.filter((e) => !selectedEdgeIds.includes(e.id)));
+    setSelectedEdgeIds([]);
+  }, [selectedEdgeIds, setEdges]);
+
+  // Keyboard shortcut: Delete/Backspace removes selected edges
+  useEffect(() => {
+    const keyHandler = (e: KeyboardEvent) => {
+      if ((e.key === 'Delete' || e.key === 'Backspace') && selectedEdgeIds.length > 0) {
+        e.preventDefault();
+        handleDeleteSelectedEdges();
+      }
+    };
+    window.addEventListener('keydown', keyHandler);
+    return () => window.removeEventListener('keydown', keyHandler);
+  }, [selectedEdgeIds, handleDeleteSelectedEdges]);
 
   useEffect(() => {
     if (automation) {
@@ -246,6 +268,8 @@ export function AutomationBuilder({
         selectedNodeId={selectedNodeId}
         selectedNode={selectedNode}
         handleNodeAction={handleNodeAction}
+        selectedEdgeIds={selectedEdgeIds}
+        onDeleteSelectedEdges={handleDeleteSelectedEdges}
         setBrowserOpen={(arg?: boolean | string) => {
           if (typeof arg === "string") {
             openBrowser(arg);
