@@ -19,6 +19,20 @@ interface UseNodeActionsArgs {
   setSelectedNodeId: (id: string | null) => void;
 }
 
+/**
+ * useNodeActions - Manages node and edge operations in the automation builder
+ * 
+ * Provides:
+ * - Node creation with type-specific initial values
+ * - Node updates and deletion
+ * - Edge creation with validation (conditional branching constraints)
+ * - Automatic edge routing based on node type
+ * 
+ * Constraints enforced:
+ * - Regular nodes: max 1 outgoing edge
+ * - Conditional nodes: max 2 outgoing edges ("if" and "else" branches)
+ * - Root node (id="1") cannot be deleted
+ */
 export default function useNodeActions({
   nodes,
   edges,

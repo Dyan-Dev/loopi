@@ -1,11 +1,25 @@
 import type { Node as FlowNode, Edge as FlowEdge } from "reactflow";
 import type { AutomationStep } from "./steps";
 
+/**
+ * ReactFlow Graph Types
+ * 
+ * Defines the node and edge structure for the automation workflow graph.
+ * Nodes can represent either automation steps or conditional logic.
+ */
+
+/** Condition types for branching logic */
 export type ConditionType = "elementExists" | "valueMatches" | "loopUntilFalse";
 
 export interface NodePosition { x: number; y: number }
 
-export interface NodeDataBase {
+/**
+ * NodeDataBase - Core data structure for graph nodes
+ * 
+ * A node can be either:
+ * - An automation step (step is defined)
+ * - A conditional node (conditionType, selector, expectedValue are defined)
+ */export interface NodeDataBase {
   // When this node represents a step
   step?: AutomationStep;
   // When this node represents a conditional

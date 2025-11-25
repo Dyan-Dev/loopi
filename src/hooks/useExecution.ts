@@ -7,6 +7,19 @@ interface UseExecutionArgs {
   setNodes: (updater: any) => void;
 }
 
+/**
+ * useExecution - Manages browser automation execution state and graph traversal
+ * 
+ * Handles:
+ * - Browser window lifecycle (open/close)
+ * - Automation execution state (running/paused/stopped)
+ * - Graph-based flow execution with conditional branching
+ * - Node-by-node step execution with visual feedback
+ * 
+ * @param nodes - ReactFlow nodes representing automation steps
+ * @param edges - ReactFlow edges defining execution order
+ * @param setNodes - Function to update node state (for visual feedback)
+ */
 export default function useExecution({ nodes, edges, setNodes }: UseExecutionArgs) {
   const [isBrowserOpen, setIsBrowserOpen] = useState(false);
   const [isAutomationRunning, setIsAutomationRunning] = useState(false);

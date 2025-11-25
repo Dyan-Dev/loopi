@@ -8,7 +8,10 @@ import { Bot, Shield, Grid } from "lucide-react";
 import { Automation, Credential } from "./types";
 import "./index.css";
 
-// Mock credentials (keeping these as they're separate from automations)
+/**
+ * Mock credentials for demonstration
+ * In production, these would be stored securely and encrypted
+ */
 const mockCredentials: Credential[] = [
   {
     id: "gmail-creds",
@@ -32,6 +35,15 @@ const mockCredentials: Credential[] = [
   },
 ];
 
+/**
+ * App - Root application component
+ * 
+ * Manages:
+ * - View routing (Dashboard, Builder, Credentials)
+ * - Global automation state
+ * - Credential management
+ * - Create/Edit/Save automation workflows
+ */
 export default function App() {
   const [currentView, setCurrentView] = useState<
     "dashboard" | "credentials" | "builder"

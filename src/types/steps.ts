@@ -1,13 +1,31 @@
 import { Globe, Mouse, Type as TypeIcon, Clock, Camera } from "lucide-react";
 
-// Base for all steps
+/**
+ * Automation Step Type System
+ * 
+ * This module defines a discriminated union for all automation step types.
+ * Each step has a unique 'type' field that TypeScript uses for type narrowing.
+ * 
+ * Usage:
+ *   switch (step.type) {
+ *     case "navigate":
+ *       // TypeScript knows step.value exists here
+ *       await loadURL(step.value);
+ *       break;
+ *     case "click":
+ *       // TypeScript knows step.selector exists here
+ *       await clickElement(step.selector);
+ *       break;
+ *   }
+ */
+
+/** Base properties shared by all automation steps */
 export interface StepBase {
   id: string;
   description: string;
 }
 
-// Individual step variants
-export interface StepNavigate extends StepBase {
+/** Navigate to a URL */export interface StepNavigate extends StepBase {
   type: "navigate";
   value: string; // URL
 }

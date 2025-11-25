@@ -1,9 +1,20 @@
 import type { AutomationStep } from "./steps";
 import type { Node, Edge } from "./flow";
 
+/**
+ * Automation Domain Types
+ * 
+ * Core business logic types for automation workflows, scheduling, and execution.
+ */
+
 export type AutomationStatus = "idle" | "running" | "paused";
 
-export type Schedule =
+/**
+ * Schedule - Discriminated union for automation scheduling
+ * - manual: User-triggered execution only
+ * - interval: Repeat every N minutes/hours/days
+ * - fixed: Run at specific time each day
+ */export type Schedule =
   | { type: "manual" }
   | { type: "fixed"; value: string }
   | { type: "interval"; interval: number; unit: "minutes" | "hours" | "days" };

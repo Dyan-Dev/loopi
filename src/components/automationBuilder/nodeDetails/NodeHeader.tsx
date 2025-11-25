@@ -1,6 +1,10 @@
 import { Button } from "../../ui/button";
 import { Trash2 } from "lucide-react";
 
+/**
+ * NodeHeader - Header component for node detail panel
+ * Displays node type and delete button (except for root node)
+ */
 export default function NodeHeader({
   title,
   id,

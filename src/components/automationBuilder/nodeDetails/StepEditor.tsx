@@ -10,6 +10,12 @@ import {
   ScreenshotStep,
 } from "./stepTypes";
 
+/**
+ * StepEditor - Dynamic editor for automation step configuration
+ * 
+ * Routes to appropriate step-specific editor based on step type.
+ * Each step type has its own component with custom fields and validation.
+ */
 export default function StepEditor({
   node,
   onUpdate,

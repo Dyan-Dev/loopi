@@ -4,6 +4,14 @@ import { Label } from "../../ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../ui/select";
 import { SelectorButton } from "./customComponents";
 
+/**
+ * ConditionEditor - Configuration UI for conditional nodes
+ * 
+ * Supports three condition types:
+ * - elementExists: Check if element is present in DOM
+ * - valueMatches: Compare element text content against expected value
+ * - loopUntilFalse: Dynamic iteration with ${index} template variable
+ */
 export default function ConditionEditor({
   node,
   onUpdate,

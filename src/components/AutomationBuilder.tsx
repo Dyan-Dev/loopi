@@ -35,6 +35,16 @@ interface AutomationBuilderProps {
   onCancel: () => void;
 }
 
+/**
+ * AutomationBuilder - Main visual editor for creating and managing browser automations
+ * 
+ * Features:
+ * - Drag-and-drop node graph editor using ReactFlow
+ * - Real-time automation testing in browser window
+ * - Step configuration and conditional branching
+ * - Import/export automation workflows
+ * - Schedule configuration (manual, interval, fixed time)
+ */
 export function AutomationBuilder({
   automation,
   credentials,
@@ -145,8 +155,12 @@ export function AutomationBuilder({
     }
   }, [automation, handleNodeAction]);
 
-  const handleSave = () => {
-    const automationData: Automation = {
+  /**
+   * Serializes current builder state into Automation object
+   * Handles schedule type discrimination and credential extraction
+   */
+  const serializeAutomation = useCallback((): Automation => {
+    return {
       id: automation?.id || Date.now().toString(),
       name,
       description,
@@ -187,53 +201,17 @@ export function AutomationBuilder({
         .filter((id, index, arr) => arr.indexOf(id) === index),
       lastRun: automation?.lastRun,
     };
-    onSave(automationData);
+  }, [automation, name, description, nodes, edges, schedule]);
+
+  const handleSave = () => {
+    onSave(serializeAutomation());
   };
 
   const selectedNode = nodes.find((n) => n.id === selectedNodeId) || null;
 
-  // Get current automation for export
-  const currentAutomationForExport: Automation | undefined = name.trim() ? {
-    id: automation?.id || Date.now().toString(),
-    name,
-    description,
-    status: "idle",
-    nodes: nodes.map(({ id, type, data, position }) => ({
-      id,
-      type,
-      data: {
-        step: data.step,
-        conditionType: data.conditionType,
-        selector: data.selector,
-        expectedValue: data.expectedValue,
-      },
-      position,
-    })) as Node[],
-    edges: edges.map(({ id, source, target, sourceHandle }) => ({
-      id,
-      source,
-      target,
-      sourceHandle,
-    })) as Edge[],
-    steps: nodes
-      .map((node) => node.data.step)
-      .filter((step) => step !== undefined) as AutomationStep[],
-    schedule:
-      schedule.type === "manual"
-        ? { type: "manual" }
-        : schedule.type === "fixed"
-          ? { type: "fixed", value: schedule.value }
-          : {
-              type: "interval",
-              interval: schedule.interval,
-              unit: schedule.unit,
-            },
-    linkedCredentials: nodes
-      .filter((node) => node.data.step?.type === "type" && !!(node.data.step as any).credentialId)
-      .map((node) => (node.data.step as any).credentialId as string)
-      .filter((id, index, arr) => arr.indexOf(id) === index),
-    lastRun: automation?.lastRun,
-  } : undefined;
+  const currentAutomationForExport: Automation | undefined = name.trim() 
+    ? serializeAutomation() 
+    : undefined;
 
   return (
     <div className="h-screen flex flex-col">

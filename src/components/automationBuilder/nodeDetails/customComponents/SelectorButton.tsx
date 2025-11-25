@@ -1,6 +1,12 @@
 import { Button } from "../../../ui/button";
 import { Target } from "lucide-react";
 
+/**
+ * SelectorButton - Trigger button for interactive element selector
+ * 
+ * Initiates the browser-based element picker when clicked.
+ * Used in step configuration forms that require CSS selectors.
+ */
 export default function SelectorButton({
   onPick,
   title = "Pick element from browser",

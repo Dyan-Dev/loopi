@@ -18,6 +18,15 @@ interface BuilderCanvasProps {
   setBrowserOpen: (arg?: boolean | string) => void;
 }
 
+/**
+ * BuilderCanvas - Main ReactFlow canvas for visual automation editing
+ * 
+ * Renders:
+ * - Interactive node graph with drag-and-drop
+ * - Background grid and minimap for navigation
+ * - AddStepPopup for adding new nodes
+ * - NodeDetails panel for editing selected node
+ */
 export const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
   nodes,
   edges,

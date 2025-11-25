@@ -1,5 +1,18 @@
-// See the Electron documentation for details on how to use preload scripts:
-// https://www.electronjs.org/docs/latest/tutorial/process-model#preload-scripts
+/**
+ * Preload Script - Secure IPC Bridge
+ * 
+ * Exposes a limited, sandboxed API to the renderer process via contextBridge.
+ * This provides secure communication between renderer and main process while
+ * maintaining contextIsolation for security.
+ * 
+ * API Surface:
+ * - Browser lifecycle: openBrowser, closeBrowser, navigate
+ * - Automation execution: runStep, runConditional
+ * - Element picking: pickSelector, sendSelector, cancelSelector
+ * - Event listening: onBrowserClosed
+ * 
+ * See: https://www.electronjs.org/docs/latest/tutorial/process-model#preload-scripts
+ */
 import { contextBridge, ipcRenderer } from "electron";
 
 contextBridge.exposeInMainWorld("electronAPI", {

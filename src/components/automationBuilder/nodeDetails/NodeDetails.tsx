@@ -4,6 +4,14 @@ import NodeHeader from "./NodeHeader";
 import StepEditor from "./StepEditor";
 import ConditionEditor from "./ConditionEditor";
 
+/**
+ * NodeDetails - Displays and manages properties for automation steps and conditional nodes
+ * 
+ * Provides a detail panel for editing node properties, including:
+ * - Step configuration (URL, selectors, values, etc.)
+ * - Conditional logic settings
+ * - Interactive selector picking via Electron IPC
+ */
 export default function NodeDetails({
   node,
   onUpdate,
@@ -21,33 +29,38 @@ export default function NodeDetails({
 }) {
   const { data, id } = node;
 
-  // Helper function to handle picking a selector
+  /**
+   * Initiates interactive element selector picking in the browser window
+   * Special handling for select elements to capture option data
+   */
   const handlePickSelector = async (setter: (selector: string) => void) => {
     if (!(window as any).electronAPI?.pickSelector) {
       alert("Electron API not available. Ensure the browser is set up.");
       return;
     }
+    
     try {
-      // Ensure recentUrl is a valid string
-      const urlToOpen = typeof recentUrl === 'string' && recentUrl ? recentUrl : "https://";
+      const urlToOpen = recentUrl || "https://";
       const selector = await (window as any).electronAPI.pickSelector(urlToOpen);
+      
       if (selector) {
+        // Parse select element data: "selector||optionIndex||optionValue"
         if (data.step?.type === "selectOption") {
-          const sel = selector.toString().split("||");
-          setter(sel[0]);
+          const [selectorStr, optionIndex, optionValue] = selector.toString().split("||");
+          setter(selectorStr);
           onUpdate(id, "update", {
             step: {
               ...data.step,
-              selector: sel[0],
-              optionIndex: sel[1] ? parseInt(sel[1]) : undefined,
-              optionValue: sel[2] || "",
+              selector: selectorStr,
+              optionIndex: optionIndex ? parseInt(optionIndex) : undefined,
+              optionValue: optionValue || "",
             },
           });
-          console.log("Option selector picked:", selector);
         } else {
           setter(selector);
         }
       }
+      
       (window as any).electronAPI.focusMainWindow?.();
     } catch (err: any) {
       console.error("Selector pick failed:", err);

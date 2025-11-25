@@ -41,6 +41,16 @@ interface BuilderHeaderProps {
   currentAutomation?: Automation;
 }
 
+/**
+ * BuilderHeader - Top toolbar for automation builder
+ * 
+ * Provides:
+ * - Navigation (back to dashboard)
+ * - Automation metadata (name, description, schedule)
+ * - Browser controls (open/close)
+ * - Execution controls (run/pause/stop)
+ * - Save and export functionality
+ */
 export const BuilderHeader: React.FC<BuilderHeaderProps> = ({
   name,
   setName,
