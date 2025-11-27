@@ -262,6 +262,12 @@ case "custom": {
 4. Push to branch (`git push origin feature/amazing-feature`)
 5. Open Pull Request
 
+## Contributing & Community
+
+- See `CONTRIBUTING.md` for contribution guidelines, coding style and PR workflow.
+- Please follow the `CODE_OF_CONDUCT.md` to help keep this community welcoming.
+- Security issues should be reported privately as described in `SECURITY.md`.
+
 ## 📄 License
 
 This project is licensed under the MIT License.
