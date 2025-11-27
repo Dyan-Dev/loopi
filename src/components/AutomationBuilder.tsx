@@ -159,10 +159,20 @@ export function AutomationBuilder({
         id,
         type,
         data: {
+          // step nodes keep their step object
           step: data.step,
+          // conditional node fields
           conditionType: data.conditionType,
           selector: data.selector,
           expectedValue: data.expectedValue,
+          // comparison operator (equals/contains/greaterThan/lessThan)
+          condition: data.condition,
+          // post-processing transform options
+          transformType: data.transformType,
+          transformPattern: data.transformPattern,
+          transformReplace: data.transformReplace,
+          transformChars: data.transformChars,
+          parseAsNumber: data.parseAsNumber,
         },
         position,
       })) as Node[],

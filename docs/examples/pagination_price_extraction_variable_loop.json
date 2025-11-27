@@ -1,5 +1,5 @@
 {
-  "id": "1764247549405",
+  "id": "1764249460025",
   "name": "Pagination Price Extraction with Variable Loop",
   "description": "Pagination Price Extraction with Variable Loop Example",
   "nodes": [
@@ -70,7 +70,10 @@
       "data": {
         "conditionType": "valueMatches",
         "selector": "html > body > div:nth-of-type(4) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div > div:nth-of-type(4) > div > div > div > div:nth-of-type(5) > div > div > table > tbody > tr:nth-of-type({{indexVal}}) > td:nth-of-type(3)",
-        "expectedValue": "10"
+        "expectedValue": "10",
+        "condition": "greaterThan",
+        "transformType": "stripCurrency",
+        "parseAsNumber": true
       },
       "position": {
         "x": 288,
