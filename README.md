@@ -21,7 +21,7 @@ A powerful Electron-based desktop application for creating, managing, and execut
 - **Tailwind CSS** + **shadcn/ui** - Modern, accessible UI components
 - **Electron Forge** - Build and packaging toolchain
 
-## 🏗️ Project Structure
+## 🏗 Project Structure
 
 ```
 src/
@@ -61,7 +61,7 @@ src/
 └── renderer.ts               # Renderer process entry
 ```
 
-## 🛠️ Architecture
+## 🛠 Architecture
 
 ### Main Process (`src/main/`)
 
@@ -169,20 +169,20 @@ Automation flows are executed as directed graphs:
 ```bash
 git clone https://github.com/Dyan-Dev/automa.git
 cd automa
-npm install
+pnpm install
 ```
 
 ### Development
 
 ```bash
-npm start              # Start Electron app with hot reload
+pnpm start              # Start Electron app with hot reload
 ```
 
 ### Building
 
 ```bash
-npm run make           # Package for current platform
-npm run publish        # Build and publish (requires config)
+pnpm run make           # Package for current platform
+pnpm run publish        # Build and publish (requires config)
 
 ## Examples
 
@@ -252,7 +252,7 @@ case "custom": {
 - **Context Isolation**: Renderer process cannot directly access Node.js/Electron APIs
 - **Preload Script**: Only exposes whitelisted IPC channels via `contextBridge`
 - **No Direct Node Access**: Renderer uses async IPC for all privileged operations
-- **Credential Encryption**: Credentials stored with placeholder encryption (⚠️ implement real crypto for production)
+- **Credential Encryption**: Credentials stored with placeholder encryption (! implement real crypto for production)
 
 ## 🤝 Contributing
 
@@ -261,6 +261,35 @@ case "custom": {
 3. Commit changes (`git commit -m 'Add amazing feature'`)
 4. Push to branch (`git push origin feature/amazing-feature`)
 5. Open Pull Request
+
+### Editor & Formatting Setup
+
+This project uses **Biome** for formatting and linting.
+
+Before committing changes, please ensure your code is formatted:
+
+```bash
+pnpm format
+```
+
+#### VS Code (Biome)
+
+If you're using VS Code, you can enable automatic formatting and linting via Biome.
+
+##### 1. Install the Extension
+Install the official **Biome VS Code extension** from the Visual Studio Marketplace: [here](https://marketplace.visualstudio.com/items?itemName=biomejs.biome)
+
+##### 2. Set Biome as the Default Formatter
+To make Biome your default formatter:
+
+1. Open any [supported file](https://biomejs.dev/internals/language-support) (e.g., `.ts`, `.tsx`, `.js`)
+2. Open the Command Palette: *View → Command Palette* or `Ctrl/⌘ + Shift + P`
+3. Select *Format Document With…*
+4. Select *Configure Default Formatter*
+5. Choose *Biome*
+
+##### 3. Learn More
+For advanced configuration and options, see the Biome [reference documentation](https://biomejs.dev/reference/vscode).
 
 ## Contributing & Community
 
