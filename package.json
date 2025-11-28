@@ -13,7 +13,7 @@
     "make:windows": "electron-forge make --platform=win32",
     "make:mac": "electron-forge make --platform=darwin",
     "docker-build": "docker build -t automa-builder .",
-    "lint": "eslint --ext .ts,.tsx .",
+    "format": "pnpm exec biome check --write",
     "react-dev": "npx webpack serve --config webpack.dev.config.ts"
   },
   "keywords": [],
