@@ -274,6 +274,24 @@
         "x": 417.02602234693256,
         "y": 935.8157690009488
       }
+    },
+    {
+      "id": "1764303416336",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "1764303416336",
+          "type": "scroll",
+          "description": "Scroll step",
+          "scrollType": "toElement",
+          "selector": "html > body > div:nth-of-type(4) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div > div:nth-of-type(4) > div > div > div > div:nth-of-type(4) > div > div > p",
+          "scrollAmount": 500
+        }
+      },
+      "position": {
+        "x": 575.7377019601511,
+        "y": 359.3416616872236
+      }
     }
   ],
   "edges": [
@@ -337,11 +355,6 @@
       "target": "1764245092610"
     },
     {
-      "id": "e1764245092610-1764244585233-default",
-      "source": "1764245092610",
-      "target": "1764244585233"
-    },
-    {
       "id": "e1764245017245-1764245205490-if",
       "source": "1764245017245",
       "target": "1764245205490",
@@ -376,6 +389,16 @@
     {
       "id": "e1764245460534-1764244585233-default",
       "source": "1764245460534",
+      "target": "1764244585233"
+    },
+    {
+      "id": "e1764245092610-1764303416336",
+      "source": "1764245092610",
+      "target": "1764303416336"
+    },
+    {
+      "id": "e1764303416336-1764244585233-default",
+      "source": "1764303416336",
       "target": "1764244585233"
     }
   ],
@@ -471,6 +494,14 @@
       "variableName": "indexVal",
       "operation": "set",
       "value": "1"
+    },
+    {
+      "id": "1764303416336",
+      "type": "scroll",
+      "description": "Scroll step",
+      "scrollType": "toElement",
+      "selector": "html > body > div:nth-of-type(4) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div > div:nth-of-type(4) > div > div > div > div:nth-of-type(4) > div > div > p",
+      "scrollAmount": 500
     }
   ]
 }

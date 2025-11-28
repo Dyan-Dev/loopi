@@ -6,6 +6,7 @@ import {
   TypeStep,
   SelectOptionStep,
   ExtractWithLogicStep,
+  ScrollStep,
   WaitStep,
   ScreenshotStep,
 } from "./stepTypes";
@@ -46,6 +47,8 @@ export default function StepEditor({
         return <WaitStep step={step} id={id} onUpdate={onUpdate} />;
       case "screenshot":
         return <ScreenshotStep step={step} id={id} onUpdate={onUpdate} />;
+      case "scroll":
+        return <ScrollStep step={step} id={id} onUpdate={onUpdate} onPickWithSetter={onPickWithSetter} />;
       case "modifyVariable":
         return <ModifyVariableStep step={step} id={id} onUpdate={onUpdate} />;
       case "setVariable":

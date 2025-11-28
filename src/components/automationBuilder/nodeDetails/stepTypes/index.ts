@@ -7,5 +7,6 @@ import { WaitStep } from "./WaitStep";
 import { ScreenshotStep } from "./ScreenshotStep";
 import { ModifyVariableStep } from "./ModifyVariableStep";
 import { SetVariableStep } from "./SetVariableStep";
+import { ScrollStep } from "./ScrollStep";
 
-export { NavigateStep, ClickStep, TypeStep, SelectOptionStep, ExtractWithLogicStep, WaitStep, ScreenshotStep, ModifyVariableStep, SetVariableStep };
+export { NavigateStep, ClickStep, TypeStep, SelectOptionStep, ExtractWithLogicStep, WaitStep, ScreenshotStep, ScrollStep, ModifyVariableStep, SetVariableStep };

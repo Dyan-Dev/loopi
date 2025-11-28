@@ -131,6 +131,7 @@ export const stepTypes = [
   { value: "selectOption", label: "Select Option", icon: TypeIcon, description: "Select an option from a dropdown" },
   { value: "wait", label: "Wait", icon: Clock, description: "Wait for a duration" },
   { value: "screenshot", label: "Screenshot", icon: Camera, description: "Take a screenshot" },
+  { value: "scroll", label: "Scroll", icon: Mouse, description: "Scroll the page or to an element" },
   { value: "setVariable", label: "Set Variable", icon: TypeIcon, description: "Define or update a variable" },
   { value: "modifyVariable", label: "Modify Variable", icon: TypeIcon, description: "Increment / decrement / edit a variable" },
 ] as const;
