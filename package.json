@@ -2,6 +2,7 @@
   "name": "automa",
   "version": "1.0.0",
   "description": "A visual automation builder that lets you create, schedule, and run automations with secure credential management",
+  "author": "Dyan-Dev",
   "main": ".webpack/main",
   "scripts": {
     "start": "electron-forge start -- --no-sandbox",
