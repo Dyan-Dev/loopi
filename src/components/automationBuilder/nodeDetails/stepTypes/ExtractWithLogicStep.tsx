@@ -4,6 +4,8 @@ import { SelectorButton } from "../customComponents";
 import { StepProps } from "./types";
 
 export function ExtractWithLogicStep({ step, id, onUpdate, onPickWithSetter }: StepProps) {
+  if (step.type !== "extractWithLogic") return null;
+
   return (
     <div className="space-y-2">
       <Label className="text-xs">CSS Selector</Label>

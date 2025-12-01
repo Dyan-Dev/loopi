@@ -3,6 +3,8 @@ import { Label } from "../../../ui/label";
 import { StepProps } from "./types";
 
 export function ModifyVariableStep({ step, id, onUpdate }: StepProps) {
+  if (step.type !== "modifyVariable") return null;
+
   return (
     <div className="space-y-3">
       <div className="space-y-2">

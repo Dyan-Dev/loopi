@@ -4,6 +4,8 @@ import { SelectorButton } from "../customComponents";
 import { StepProps } from "./types";
 
 export function ClickStep({ step, id, onUpdate, onPickWithSetter }: StepProps) {
+  if (step.type !== "click") return null;
+
   return (
     <div className="space-y-2">
       <Label className="text-xs">CSS Selector</Label>

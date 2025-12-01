@@ -3,6 +3,8 @@ import { Label } from "../../../ui/label";
 import { StepProps } from "./types";
 
 export function NavigateStep({ step, id, onUpdate }: StepProps) {
+  if (step.type !== "navigate") return null;
+
   return (
     <div className="space-y-2">
       <Label className="text-xs">URL</Label>

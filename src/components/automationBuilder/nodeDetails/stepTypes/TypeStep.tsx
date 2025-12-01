@@ -4,6 +4,8 @@ import { SelectorButton } from "../customComponents";
 import { StepProps } from "./types";
 
 export function TypeStep({ step, id, onUpdate, onPickWithSetter }: StepProps) {
+  if (step.type !== "type") return null;
+
   return (
     <>
       <div className="space-y-2">

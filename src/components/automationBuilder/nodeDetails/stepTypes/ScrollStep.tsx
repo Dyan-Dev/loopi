@@ -4,6 +4,8 @@ import { SelectorButton } from "../customComponents";
 import { StepProps } from "./types";
 
 export function ScrollStep({ step, id, onUpdate, onPickWithSetter }: StepProps) {
+  if (step.type !== "scroll") return null;
+
   const setType = (t: "toElement" | "byAmount") =>
     onUpdate(id, "update", { step: { ...step, scrollType: t } });
 

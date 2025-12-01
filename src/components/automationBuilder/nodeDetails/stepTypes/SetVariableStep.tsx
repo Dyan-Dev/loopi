@@ -3,6 +3,8 @@ import { Label } from "../../../ui/label";
 import { StepProps } from "./types";
 
 export function SetVariableStep({ step, id, onUpdate }: StepProps) {
+  if (step.type !== "setVariable") return null;
+
   return (
     <div className="space-y-3">
       <div className="space-y-2">
