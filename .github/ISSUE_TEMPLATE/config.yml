@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: GitHub Discussions
+    url: https://github.com/Dyan-Dev/automa/discussions
+    about: Ask questions and discuss ideas with the community
+  - name: Discord Community
+    url: https://discord.gg/B8SwwcGh
+    about: Join our Discord server for real-time chat
