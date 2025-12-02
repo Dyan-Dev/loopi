@@ -1,0 +1,74 @@
+# GitHub Labels Configuration
+# These labels will be used by the issue generator
+
+# Priority
+- name: "priority: high"
+  color: "d73a4a"
+  description: "High priority issue"
+
+- name: "priority: medium"
+  color: "fbca04"
+  description: "Medium priority issue"
+
+- name: "priority: low"
+  color: "0e8a16"
+  description: "Low priority issue"
+
+# Type
+- name: "bug"
+  color: "d73a4a"
+  description: "Something isn't working"
+
+- name: "enhancement"
+  color: "a2eeef"
+  description: "New feature or request"
+
+- name: "documentation"
+  color: "0075ca"
+  description: "Improvements or additions to documentation"
+
+# Category
+- name: "good first issue"
+  color: "7057ff"
+  description: "Good for newcomers"
+
+- name: "help wanted"
+  color: "008672"
+  description: "Extra attention is needed"
+
+- name: "performance"
+  color: "f9d0c4"
+  description: "Performance improvement"
+
+- name: "ui/ux"
+  color: "e99695"
+  description: "User interface or experience"
+
+- name: "security"
+  color: "b60205"
+  description: "Security related"
+
+- name: "testing"
+  color: "c2e0c6"
+  description: "Testing related"
+
+- name: "i18n"
+  color: "bfd4f2"
+  description: "Internationalization"
+
+- name: "accessibility"
+  color: "d4c5f9"
+  description: "Accessibility improvements"
+
+# Status
+- name: "wontfix"
+  color: "ffffff"
+  description: "This will not be worked on"
+
+- name: "duplicate"
+  color: "cfd3d7"
+  description: "This issue or pull request already exists"
+
+- name: "invalid"
+  color: "e4e669"
+  description: "This doesn't seem right"
