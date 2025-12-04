@@ -1,6 +1,6 @@
 # Contributor Covenant Code of Conduct
 
-Automa is dedicated to providing a welcoming and harassment-free experience for everyone.
+Loopi is dedicated to providing a welcoming and harassment-free experience for everyone.
 
 Be respectful, considerate, and professional. Harassment and abusive behavior are not tolerated.
 

@@ -1,0 +1,181 @@
+{
+  "id": "1764839184527",
+  "name": "Multi-Page Scraper",
+  "description": "Navigate through pages, extract data, and increment page counter",
+  "nodes": [
+    {
+      "id": "1",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "1",
+          "type": "setVariable",
+          "description": "Initialize page counter",
+          "variableName": "currentPage",
+          "value": "1"
+        }
+      },
+      "position": {
+        "x": 400,
+        "y": 50
+      }
+    },
+    {
+      "id": "2",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "2",
+          "type": "navigate",
+          "description": "Go to Hacker News page",
+          "value": "https://news.ycombinator.com/news?p={{currentPage}}"
+        }
+      },
+      "position": {
+        "x": 324,
+        "y": 146
+      }
+    },
+    {
+      "id": "3",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "3",
+          "type": "wait",
+          "description": "Wait for page load",
+          "value": "2"
+        }
+      },
+      "position": {
+        "x": 456,
+        "y": 253
+      }
+    },
+    {
+      "id": "4",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "4",
+          "type": "extract",
+          "description": "Get first story title",
+          "selector": ".titleline > a",
+          "storeKey": "storyTitle"
+        }
+      },
+      "position": {
+        "x": 491,
+        "y": 357
+      }
+    },
+    {
+      "id": "5",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "5",
+          "type": "screenshot",
+          "description": "Capture page",
+          "savePath": "page_{{currentPage}}.png"
+        }
+      },
+      "position": {
+        "x": 493,
+        "y": 456
+      }
+    },
+    {
+      "id": "6",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "6",
+          "type": "modifyVariable",
+          "description": "Next page",
+          "variableName": "currentPage",
+          "operation": "increment",
+          "value": "1"
+        }
+      },
+      "position": {
+        "x": 400,
+        "y": 550
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1-2",
+      "source": "1",
+      "target": "2"
+    },
+    {
+      "id": "e2-3",
+      "source": "2",
+      "target": "3"
+    },
+    {
+      "id": "e3-4",
+      "source": "3",
+      "target": "4"
+    },
+    {
+      "id": "e4-5",
+      "source": "4",
+      "target": "5"
+    },
+    {
+      "id": "e5-6",
+      "source": "5",
+      "target": "6"
+    },
+    {
+      "id": "e6-2-default",
+      "source": "6",
+      "target": "2"
+    }
+  ],
+  "steps": [
+    {
+      "id": "1",
+      "type": "setVariable",
+      "description": "Initialize page counter",
+      "variableName": "currentPage",
+      "value": "1"
+    },
+    {
+      "id": "2",
+      "type": "navigate",
+      "description": "Go to Hacker News page",
+      "value": "https://news.ycombinator.com/news?p={{currentPage}}"
+    },
+    {
+      "id": "3",
+      "type": "wait",
+      "description": "Wait for page load",
+      "value": "2"
+    },
+    {
+      "id": "4",
+      "type": "extract",
+      "description": "Get first story title",
+      "selector": ".titleline > a",
+      "storeKey": "storyTitle"
+    },
+    {
+      "id": "5",
+      "type": "screenshot",
+      "description": "Capture page",
+      "savePath": "page_{{currentPage}}.png"
+    },
+    {
+      "id": "6",
+      "type": "modifyVariable",
+      "description": "Next page",
+      "variableName": "currentPage",
+      "operation": "increment",
+      "value": "1"
+    }
+  ]
+}

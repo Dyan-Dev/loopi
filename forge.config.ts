@@ -17,7 +17,7 @@ const config: ForgeConfig = {
     // Windows
     new MakerSquirrel(
       {
-        name: "automa",
+        name: "loopi",
       },
       ["win32"]
     ),
@@ -30,7 +30,7 @@ const config: ForgeConfig = {
       {
         options: {
           icon: "assets/logo.png",
-          maintainer: "automa",
+          maintainer: "loopi",
         },
       },
       ["linux"]

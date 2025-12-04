@@ -1,4 +1,4 @@
-# Automa - Visual Browser Automation Platform
+# Loopi - Visual Browser Automation Platform
 
 A powerful Electron-based desktop application for creating, managing, and executing browser automation workflows with a visual node-based editor.
 
@@ -171,8 +171,8 @@ Automation flows are executed as directed graphs:
 ### Installation
 
 ```bash
-git clone https://github.com/Dyan-Dev/automa.git
-cd automa
+git clone https://github.com/Dyan-Dev/loopi.git
+cd loopi
 pnpm install
 ```
 
@@ -327,7 +327,7 @@ For advanced configuration and options, see the Biome [reference documentation](
 
 For support, bug reports, or questions:
 - **Email**: support@dyan.live
-- **Issues**: [GitHub Issues](https://github.com/Dyan-Dev/automa/issues)
+- **Issues**: [GitHub Issues](https://github.com/Dyan-Dev/loopi/issues)
 
 ## 📄 License
 

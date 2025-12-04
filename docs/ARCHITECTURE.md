@@ -2,7 +2,7 @@
 
 ## Overview
 
-Automa is built on Electron's multi-process architecture with a clear separation between main process (Node.js) and renderer process (React/browser). This document explains the design decisions and data flow patterns.
+Loopi is built on Electron's multi-process architecture with a clear separation between main process (Node.js) and renderer process (React/browser). This document explains the design decisions and data flow patterns.
 
 ## Process Architecture
 

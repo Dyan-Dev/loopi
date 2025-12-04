@@ -1,4 +1,4 @@
-# Contributing to Automa
+# Contributing to Loopi
 
 Thanks for your interest in contributing! This project welcomes contributions from everyone — issues, pull requests, documentation improvements, tests, and examples are all appreciated.
 
@@ -32,7 +32,7 @@ Community
 - Be respectful and patient — maintainers are volunteers
 - Expect constructive feedback and iterate on your PR
 
-Thank you for contributing — your work makes Automa better for everyone!
+Thank you for contributing — your work makes Loopi better for everyone!
 
 ## Getting Help
 

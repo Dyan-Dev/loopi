@@ -33,7 +33,19 @@ registerIPCHandlers(windowManager, executor, picker);
  * Application ready - create main window
  */
 app.on("ready", () => {
-  windowManager.createMainWindow();
+  const mainWindow = windowManager.createMainWindow();
+
+  // Close browser window when main window is closed
+  mainWindow.on("close", () => {
+    windowManager.closeBrowserWindow();
+  });
+});
+
+/**
+ * Clean up before quitting to prevent "Object has been destroyed" errors
+ */
+app.on("before-quit", () => {
+  windowManager.cleanup();
 });
 
 /**

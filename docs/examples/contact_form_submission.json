@@ -1,0 +1,228 @@
+{
+  "id": "1733270300000",
+  "name": "Contact Form Submission",
+  "description": "Fill and submit a contact form with name, email, and message",
+  "nodes": [
+    {
+      "id": "1",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "1",
+          "type": "navigate",
+          "description": "Go to contact page",
+          "value": "https://www.selenium.dev/selenium/web/web-form.html"
+        }
+      },
+      "position": {
+        "x": 400,
+        "y": 50
+      }
+    },
+    {
+      "id": "2",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "2",
+          "type": "wait",
+          "description": "Wait for page load",
+          "value": "1"
+        }
+      },
+      "position": {
+        "x": 400,
+        "y": 150
+      }
+    },
+    {
+      "id": "3",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "3",
+          "type": "type",
+          "description": "Enter text in input",
+          "selector": "#my-text-id",
+          "value": "John Doe"
+        }
+      },
+      "position": {
+        "x": 400,
+        "y": 250
+      }
+    },
+    {
+      "id": "4",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "4",
+          "type": "type",
+          "description": "Enter password",
+          "selector": "input[name='my-password']",
+          "value": "SecurePassword123"
+        }
+      },
+      "position": {
+        "x": 400,
+        "y": 350
+      }
+    },
+    {
+      "id": "5",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "5",
+          "type": "type",
+          "description": "Enter message in textarea",
+          "selector": "textarea[name='my-textarea']",
+          "value": "Hello, this is a test message from Loopi!"
+        }
+      },
+      "position": {
+        "x": 400,
+        "y": 450
+      }
+    },
+    {
+      "id": "6",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "6",
+          "type": "click",
+          "description": "Submit form",
+          "selector": "button[type='submit']"
+        }
+      },
+      "position": {
+        "x": 400,
+        "y": 550
+      }
+    },
+    {
+      "id": "7",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "7",
+          "type": "wait",
+          "description": "Wait for confirmation",
+          "value": "2"
+        }
+      },
+      "position": {
+        "x": 400,
+        "y": 650
+      }
+    },
+    {
+      "id": "8",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "8",
+          "type": "screenshot",
+          "description": "Capture confirmation",
+          "savePath": "form_submitted.png"
+        }
+      },
+      "position": {
+        "x": 400,
+        "y": 750
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1-2",
+      "source": "1",
+      "target": "2"
+    },
+    {
+      "id": "e2-3",
+      "source": "2",
+      "target": "3"
+    },
+    {
+      "id": "e3-4",
+      "source": "3",
+      "target": "4"
+    },
+    {
+      "id": "e4-5",
+      "source": "4",
+      "target": "5"
+    },
+    {
+      "id": "e5-6",
+      "source": "5",
+      "target": "6"
+    },
+    {
+      "id": "e6-7",
+      "source": "6",
+      "target": "7"
+    },
+    {
+      "id": "e7-8",
+      "source": "7",
+      "target": "8"
+    }
+  ],
+  "steps": [
+    {
+      "id": "1",
+      "type": "navigate",
+      "description": "Go to contact page",
+      "value": "https://www.selenium.dev/selenium/web/web-form.html"
+    },
+    {
+      "id": "2",
+      "type": "wait",
+      "description": "Wait for page load",
+      "value": "1"
+    },
+    {
+      "id": "3",
+      "type": "type",
+      "description": "Enter text in input",
+      "selector": "#my-text-id",
+      "value": "John Doe"
+    },
+    {
+      "id": "4",
+      "type": "type",
+      "description": "Enter password",
+      "selector": "input[name='my-password']",
+      "value": "SecurePassword123"
+    },
+    {
+      "id": "5",
+      "type": "type",
+      "description": "Enter message in textarea",
+      "selector": "textarea[name='my-textarea']",
+      "value": "Hello, this is a test message from Loopi!"
+    },
+    {
+      "id": "6",
+      "type": "click",
+      "description": "Submit form",
+      "selector": "button[type='submit']"
+    },
+    {
+      "id": "7",
+      "type": "wait",
+      "description": "Wait for confirmation",
+      "value": "2"
+    },
+    {
+      "id": "8",
+      "type": "screenshot",
+      "description": "Capture confirmation",
+      "savePath": "form_submitted.png"
+    }
+  ]
+}

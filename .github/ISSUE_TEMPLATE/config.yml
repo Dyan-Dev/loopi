@@ -1,14 +1,14 @@
 blank_issues_enabled: false
 contact_links:
   - name: GitHub Discussions
-    url: https://github.com/Dyan-Dev/automa/discussions
+    url: https://github.com/Dyan-Dev/loopi/discussions
     about: Ask questions and discuss ideas with the community
   - name: Discord Community
     url: https://discord.gg/B8SwwcGh
     about: Join our Discord server for real-time chat
   - name: Report a Bug
-    url: https://github.com/Dyan-Dev/automa/issues/new?assignees=&labels=bug&template=bug_report.md
+    url: https://github.com/Dyan-Dev/loopi/issues/new?assignees=&labels=bug&template=bug_report.md
     about: Report a bug or issue with the project
   - name: Feature Request
-    url: https://github.com/Dyan-Dev/automa/issues/new?assignees=&labels=feature&template=feature_request.md
+    url: https://github.com/Dyan-Dev/loopi/issues/new?assignees=&labels=feature&template=feature_request.md
     about: Suggest a new feature or improvement  

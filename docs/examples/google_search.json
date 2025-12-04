@@ -1,0 +1,143 @@
+{
+  "id": "1764824758798",
+  "name": "Google Search",
+  "description": "Search Google for 'loopi browser automation' and take screenshot",
+  "nodes": [
+    {
+      "id": "1",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "1",
+          "type": "navigate",
+          "description": "Go to Google",
+          "value": "https://www.google.com/"
+        }
+      },
+      "position": {
+        "x": 400,
+        "y": 48
+      }
+    },
+    {
+      "id": "2",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "2",
+          "type": "type",
+          "description": "Enter search query",
+          "selector": "html > body > div:nth-of-type(2) > div:nth-of-type(4) > form > div > div > div > div > div:nth-of-type(2) > textarea",
+          "value": "automa browser automation"
+        }
+      },
+      "position": {
+        "x": 400,
+        "y": 150
+      }
+    },
+    {
+      "id": "3",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "3",
+          "type": "click",
+          "description": "Click search button",
+          "selector": "html > body > div:nth-of-type(2) > div:nth-of-type(4) > form > div > div > div:nth-of-type(2) > div:nth-of-type(4) > div:nth-of-type(2) > div > div > ul > li > div > div:nth-of-type(2) > div > div > span"
+        }
+      },
+      "position": {
+        "x": 400,
+        "y": 250
+      }
+    },
+    {
+      "id": "4",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "4",
+          "type": "wait",
+          "description": "Wait for results",
+          "value": "2"
+        }
+      },
+      "position": {
+        "x": 400,
+        "y": 349
+      }
+    },
+    {
+      "id": "5",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "5",
+          "type": "screenshot",
+          "description": "Capture results",
+          "savePath": "google_results.png"
+        }
+      },
+      "position": {
+        "x": 400,
+        "y": 450
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1-2",
+      "source": "1",
+      "target": "2"
+    },
+    {
+      "id": "e2-3",
+      "source": "2",
+      "target": "3"
+    },
+    {
+      "id": "e3-4",
+      "source": "3",
+      "target": "4"
+    },
+    {
+      "id": "e4-5",
+      "source": "4",
+      "target": "5"
+    }
+  ],
+  "steps": [
+    {
+      "id": "1",
+      "type": "navigate",
+      "description": "Go to Google",
+      "value": "https://www.google.com/"
+    },
+    {
+      "id": "2",
+      "type": "type",
+      "description": "Enter search query",
+      "selector": "html > body > div:nth-of-type(2) > div:nth-of-type(4) > form > div > div > div > div > div:nth-of-type(2) > textarea",
+      "value": "automa browser automation"
+    },
+    {
+      "id": "3",
+      "type": "click",
+      "description": "Click search button",
+      "selector": "html > body > div:nth-of-type(2) > div:nth-of-type(4) > form > div > div > div:nth-of-type(2) > div:nth-of-type(4) > div:nth-of-type(2) > div > div > ul > li > div > div:nth-of-type(2) > div > div > span"
+    },
+    {
+      "id": "4",
+      "type": "wait",
+      "description": "Wait for results",
+      "value": "2"
+    },
+    {
+      "id": "5",
+      "type": "screenshot",
+      "description": "Capture results",
+      "savePath": "google_results.png"
+    }
+  ]
+}

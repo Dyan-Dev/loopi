@@ -1,5 +1,5 @@
 {
-  "name": "automa",
+  "name": "loopi",
   "version": "1.0.0",
   "description": "A visual automation builder that lets you create, schedule, and run automations with secure credential management",
   "author": "Dyan-Dev",
@@ -13,7 +13,7 @@
     "make:linux": "electron-forge make --platform=linux",
     "make:windows": "electron-forge make --platform=win32",
     "make:mac": "electron-forge make --platform=darwin",
-    "docker-build": "docker build -t automa-builder .",
+    "docker-build": "docker build -t loopi-builder .",
     "format": "pnpm exec biome check --write",
     "react-dev": "npx webpack serve --config webpack.dev.config.ts"
   },
@@ -21,10 +21,10 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Dyan-Dev/automa.git"
+    "url": "https://github.com/Dyan-Dev/loopi.git"
   },
   "bugs": {
-    "url": "https://github.com/Dyan-Dev/automa/issues",
+    "url": "https://github.com/Dyan-Dev/loopi/issues",
     "email": "support@dyan.live"
   },
   "devDependencies": {

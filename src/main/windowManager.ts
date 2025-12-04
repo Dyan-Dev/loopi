@@ -76,9 +76,28 @@ export class WindowManager {
    * Closes the browser automation window
    */
   closeBrowserWindow(): void {
-    if (this.browserWindow) {
+    if (this.browserWindow && !this.browserWindow.isDestroyed()) {
       this.browserWindow.close();
       this.browserWindow = null;
+    }
+  }
+
+  /**
+   * Cleanup all windows when app is closing
+   * Prevents "Object has been destroyed" errors
+   */
+  cleanup(): void {
+    // Close browser window first
+    if (this.browserWindow && !this.browserWindow.isDestroyed()) {
+      this.browserWindow.removeAllListeners();
+      this.browserWindow.close();
+      this.browserWindow = null;
+    }
+
+    // Clean up main window reference
+    if (this.mainWindow && !this.mainWindow.isDestroyed()) {
+      this.mainWindow.removeAllListeners();
+      this.mainWindow = null;
     }
   }
 
