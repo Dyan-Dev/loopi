@@ -166,6 +166,19 @@ Automation flows are executed as directed graphs:
 4. Recurse until no more nodes
 5. Mark nodes as "running" for visual feedback
 
+## 📖 Documentation
+
+**Full documentation is available at: [https://loopi.dyan.live/](https://loopi.dyan.live/)**
+
+The documentation site includes:
+- **[Getting Started](https://loopi.dyan.live/docs/getting-started)** - Installation and first steps
+- **[User Guide](https://loopi.dyan.live/docs/usage)** - Detailed feature documentation
+- **[Architecture](https://loopi.dyan.live/docs/developer-guide)** - System design and internals
+- **[Examples & Tutorials](https://loopi.dyan.live/docs/examples)** - Real-world automation examples
+- **[API Reference](https://loopi.dyan.live/docs/api-reference)** - Detailed API documentation
+- **[FAQ](https://loopi.dyan.live/docs/faq)** - Frequently asked questions
+- **[Contributing Guide](https://github.com/Dyan-Dev/loopi/blob/main/CONTRIBUTING.md)** - How to contribute
+
 ## 🚦 Getting Started
 
 ### Installation
@@ -326,8 +339,11 @@ For advanced configuration and options, see the Biome [reference documentation](
 ## 📧 Support
 
 For support, bug reports, or questions:
+- **Documentation**: [https://loopi.dyan.live/docs](https://loopi.dyan.live/docs)
+- **FAQ**: [https://loopi.dyan.live/docs/faq](https://loopi.dyan.live/docs/faq)
 - **Email**: support@dyan.live
-- **Issues**: [GitHub Issues](https://github.com/Dyan-Dev/loopi/issues)
+- **GitHub Issues**: [Report bugs or request features](https://github.com/Dyan-Dev/loopi/issues)
+- **GitHub Discussions**: [Community discussions](https://github.com/Dyan-Dev/loopi/discussions)
 
 ## 📄 License
 

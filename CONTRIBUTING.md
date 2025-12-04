@@ -37,9 +37,10 @@ Thank you for contributing — your work makes Loopi better for everyone!
 ## Getting Help
 
 If you need help or have questions about contributing:
+- **Documentation**: [https://loopi.dyan.live/docs](https://loopi.dyan.live/docs)
 - **Email**: support@dyan.live
-- **GitHub Discussions**: Start a discussion in the repository
-- **Issues**: Search existing issues or create a new one
+- **GitHub Discussions**: [Start a discussion in the repository](https://github.com/Dyan-Dev/loopi/discussions)
+- **Issues**: [Search existing issues or create a new one](https://github.com/Dyan-Dev/loopi/issues)
 
 ## Developer Notes
 
