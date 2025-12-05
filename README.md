@@ -2,6 +2,18 @@
 
 A powerful Electron-based desktop application for creating, managing, and executing browser automation workflows with a visual node-based editor.
 
+## 🎬 Demo Video
+
+### Quick Start Demo (2 min)
+[![Loopi Demo](https://img.youtube.com/vi/QLP-VOGVHBc/maxresdefault.jpg)](https://youtu.be/QLP-VOGVHBc?si=FczG6_QU04WFDJCP)
+
+Watch how to:
+- Build your first automation
+- Navigate to a website
+- Extract data with variables
+- Compare values using conditions
+- Run the automation in a real browser window
+
 ## 🚀 Features
 
 - **Visual Workflow Editor**: Drag-and-drop node graph using ReactFlow
