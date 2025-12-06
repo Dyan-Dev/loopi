@@ -8,8 +8,8 @@ import { AutomationStep } from "../types/steps";
  */
 export class AutomationExecutor {
   /** Unified variable storage - automatically typed by input
-    * Variables are automatically typed based on input:
-    * "42" → number, "true" → boolean, objects/arrays stay as-is, else string
+   * Variables are automatically typed based on input:
+   * "42" → number, "true" → boolean, objects/arrays stay as-is, else string
    */
   private variables: Record<string, unknown> = {};
 
@@ -131,7 +131,7 @@ export class AutomationExecutor {
   private substituteVariables(input?: string): string {
     if (!input) return "";
     // Match {{varName}}, {{varName.property}}, {{array[0]}}, etc.
-    return input.replace(/\{\{\s*([a-zA-Z0-9_\[\].]+)\s*\}\}/g, (_, path) => {
+    return input.replace(/\{\{\s*([a-zA-Z0-9_[\].]+)\s*\}\}/g, (_, path) => {
       const value = this.getVariableValue(path);
       if (value === null || value === undefined) return "";
       if (typeof value === "object") return JSON.stringify(value);

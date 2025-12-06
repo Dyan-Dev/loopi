@@ -123,7 +123,7 @@ export type AutomationStep =
   | StepHover
   | StepSetVariable
   | StepModifyVariable;
-  
+
 // UI meta for step type picker
 export const stepTypes = [
   { value: "navigate", label: "Navigate", icon: Globe, description: "Go to a URL" },

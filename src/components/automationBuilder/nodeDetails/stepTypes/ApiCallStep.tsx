@@ -1,14 +1,8 @@
 import { Trash2 } from "lucide-react";
+import { Button } from "../../../ui/button";
 import { Input } from "../../../ui/input";
 import { Label } from "../../../ui/label";
-import { Button } from "../../../ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../../../ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../../ui/select";
 import { Textarea } from "../../../ui/textarea";
 import { StepProps } from "./types";
 
@@ -41,9 +35,12 @@ export function ApiCallStep({ step, id, onUpdate }: StepProps) {
       {/* Method Selection */}
       <div className="space-y-2">
         <Label className="text-xs">HTTP Method</Label>
-        <Select value={step.method || "GET"} onValueChange={(value) => 
-          onUpdate(id, "update", { step: { ...step, method: value as "GET" | "POST" } })
-        }>
+        <Select
+          value={step.method || "GET"}
+          onValueChange={(value) =>
+            onUpdate(id, "update", { step: { ...step, method: value as "GET" | "POST" } })
+          }
+        >
           <SelectTrigger className="text-xs">
             <SelectValue />
           </SelectTrigger>
@@ -63,7 +60,9 @@ export function ApiCallStep({ step, id, onUpdate }: StepProps) {
           onChange={(e) => onUpdate(id, "update", { step: { ...step, url: e.target.value } })}
           className="text-xs"
         />
-        <p className="text-xs text-gray-500">Supports variable syntax like: url/endpoint?id={"{"}productId{"}"}</p>
+        <p className="text-xs text-gray-500">
+          Supports variable syntax like: url/endpoint?id={"{"}productId{"}"}
+        </p>
       </div>
 
       {/* Body (for POST) */}
@@ -76,7 +75,9 @@ export function ApiCallStep({ step, id, onUpdate }: StepProps) {
             onChange={(e) => onUpdate(id, "update", { step: { ...step, body: e.target.value } })}
             className="text-xs min-h-24 font-mono"
           />
-          <p className="text-xs text-gray-500">JSON or plain text. Supports variable syntax like: {"{"}varName{"}"}</p>
+          <p className="text-xs text-gray-500">
+            JSON or plain text. Supports variable syntax like: {"{"}varName{"}"}
+          </p>
         </div>
       )}
 
@@ -84,12 +85,7 @@ export function ApiCallStep({ step, id, onUpdate }: StepProps) {
       <div className="space-y-2">
         <div className="flex items-center justify-between">
           <Label className="text-xs">Headers</Label>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={handleAddHeader}
-            className="text-xs h-6"
-          >
+          <Button size="sm" variant="outline" onClick={handleAddHeader} className="text-xs h-6">
             + Add Header
           </Button>
         </div>
@@ -119,7 +115,9 @@ export function ApiCallStep({ step, id, onUpdate }: StepProps) {
             </div>
           ))}
         </div>
-        <p className="text-xs text-gray-500">Optional. Header values support variable syntax like: Bearer {"{"}token{"}"}</p>
+        <p className="text-xs text-gray-500">
+          Optional. Header values support variable syntax like: Bearer {"{"}token{"}"}
+        </p>
       </div>
 
       {/* Store Response */}
