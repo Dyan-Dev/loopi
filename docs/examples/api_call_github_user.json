@@ -1,0 +1,120 @@
+{
+  "id": "1765021658735",
+  "name": "GitHub User Info Fetcher",
+  "description": "Fetch GitHub user info via API, navigate to profile, and take screenshot",
+  "nodes": [
+    {
+      "id": "1",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "1",
+          "type": "setVariable",
+          "description": "Set GitHub username",
+          "variableName": "username",
+          "value": "torvalds"
+        }
+      },
+      "position": {
+        "x": 400,
+        "y": 50
+      }
+    },
+    {
+      "id": "2",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "2",
+          "type": "apiCall",
+          "description": "Fetch GitHub user data from API",
+          "method": "GET",
+          "url": "https://api.github.com/users/{{username}}",
+          "storeKey": "userInfo"
+        }
+      },
+      "position": {
+        "x": 400,
+        "y": 150
+      }
+    },
+    {
+      "id": "3",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "3",
+          "type": "navigate",
+          "description": "Navigate to user profile",
+          "value": "https://github.com/{{userInfo.login}}"
+        }
+      },
+      "position": {
+        "x": 400,
+        "y": 250
+      }
+    },
+    {
+      "id": "4",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "4",
+          "type": "screenshot",
+          "description": "Take screenshot of profile",
+          "savePath": "github_profile_{{username}}.png"
+        }
+      },
+      "position": {
+        "x": 400,
+        "y": 350
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1-2",
+      "source": "1",
+      "target": "2"
+    },
+    {
+      "id": "e2-3",
+      "source": "2",
+      "target": "3"
+    },
+    {
+      "id": "e3-4",
+      "source": "3",
+      "target": "4"
+    }
+  ],
+  "steps": [
+    {
+      "id": "1",
+      "type": "setVariable",
+      "description": "Set GitHub username",
+      "variableName": "username",
+      "value": "torvalds"
+    },
+    {
+      "id": "2",
+      "type": "apiCall",
+      "description": "Fetch GitHub user data from API",
+      "method": "GET",
+      "url": "https://api.github.com/users/{{username}}",
+      "storeKey": "userInfo"
+    },
+    {
+      "id": "3",
+      "type": "navigate",
+      "description": "Navigate to user profile",
+      "value": "https://github.com/{{userInfo.login}}"
+    },
+    {
+      "id": "4",
+      "type": "screenshot",
+      "description": "Take screenshot of profile",
+      "savePath": "github_profile_{{username}}.png"
+    }
+  ]
+}

@@ -1,4 +1,4 @@
-import { Camera, Clock, Globe, Mouse, Type as TypeIcon } from "lucide-react";
+import { Camera, Clock, Globe, Mouse, Type as TypeIcon, Zap } from "lucide-react";
 
 /**
  * Automation Step Type System
@@ -123,6 +123,7 @@ export type AutomationStep =
   | StepHover
   | StepSetVariable
   | StepModifyVariable;
+  
 // UI meta for step type picker
 export const stepTypes = [
   { value: "navigate", label: "Navigate", icon: Globe, description: "Go to a URL" },
@@ -147,6 +148,12 @@ export const stepTypes = [
     label: "Scroll",
     icon: Mouse,
     description: "Scroll the page or to an element",
+  },
+  {
+    value: "apiCall",
+    label: "API Call",
+    icon: Zap,
+    description: "Make HTTP request (GET/POST)",
   },
   {
     value: "setVariable",

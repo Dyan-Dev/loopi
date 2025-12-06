@@ -5,10 +5,10 @@ export interface Automation {
   id: string;
   name: string;
   description: string;
-  nodes: Node[]; // from flow.ts, re-exported via index barrel
-  edges: Edge[]; // ditto
-  variables?: Record<string, string>;
-  steps: AutomationStep[]; // optional: some UIs may use this list view
+  nodes: Node[];
+  edges: Edge[];
+  variables?: Record<string, unknown>;
+  steps: AutomationStep[];
 }
 
 export interface ExecutionLogEntry {

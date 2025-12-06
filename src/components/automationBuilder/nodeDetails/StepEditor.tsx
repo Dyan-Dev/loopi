@@ -8,6 +8,7 @@ import type { ReactFlowNode } from "../../../types";
 import { Input } from "../../ui/input";
 import { Label } from "../../ui/label";
 import {
+  ApiCallStep,
   ClickStep,
   ExtractStep,
   ExtractWithLogicStep,
@@ -84,6 +85,8 @@ export default function StepEditor({
         return (
           <ScrollStep step={step} id={id} onUpdate={onUpdate} onPickWithSetter={onPickWithSetter} />
         );
+      case "apiCall":
+        return <ApiCallStep step={step} id={id} onUpdate={onUpdate} />;
       case "modifyVariable":
         return <ModifyVariableStep step={step} id={id} onUpdate={onUpdate} />;
       case "setVariable":

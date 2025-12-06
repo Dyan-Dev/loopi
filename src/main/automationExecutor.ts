@@ -7,30 +7,135 @@ import { AutomationStep } from "../types/steps";
  * Handles execution of automation steps in the browser window
  */
 export class AutomationExecutor {
-  private variables: Record<string, string> = {};
+  /** Unified variable storage - automatically typed by input
+    * Variables are automatically typed based on input:
+    * "42" → number, "true" → boolean, objects/arrays stay as-is, else string
+   */
+  private variables: Record<string, unknown> = {};
 
   /**
-   * Initialize executor variable context with user-defined automation variables
+   * Initialize executor variable context
    */
-  initVariables(vars?: Record<string, string>) {
+  initVariables(vars?: Record<string, unknown>) {
     this.variables = { ...(vars || {}) };
   }
 
   /**
    * Expose a shallow copy of current variables (for logging / IPC)
    */
-  getVariables(): Record<string, string> {
+  getVariables(): Record<string, unknown> {
     return { ...this.variables };
   }
 
   /**
-   * Replace {{varName}} tokens in a string with current variable values.
-   * Unknown variables resolve to an empty string.
+   * Get a variable value, supporting dot notation and array indexing
+   * e.g., "userinfo.name" → nested property
+   * e.g., "users[0]" → first array element
+   * e.g., "users[0].name" → property of array element
+   */
+  private getVariableValue(path: string): unknown {
+    // Parse path into tokens: handles both . and [index] syntax
+    const tokens: (string | number)[] = [];
+    let current = "";
+    let i = 0;
+
+    while (i < path.length) {
+      const char = path[i];
+
+      if (char === ".") {
+        if (current) tokens.push(current);
+        current = "";
+        i++;
+      } else if (char === "[") {
+        // Handle array index [0], [1], etc.
+        if (current) tokens.push(current);
+        current = "";
+        i++;
+        let indexStr = "";
+        while (i < path.length && path[i] !== "]") {
+          indexStr += path[i];
+          i++;
+        }
+        if (path[i] === "]") i++; // Skip closing ]
+        const index = parseInt(indexStr, 10);
+        if (!isNaN(index)) tokens.push(index);
+      } else {
+        current += char;
+        i++;
+      }
+    }
+
+    if (current) tokens.push(current);
+
+    // Navigate through tokens
+    if (tokens.length === 0) return "";
+
+    let value: unknown = this.variables[String(tokens[0])];
+
+    for (let i = 1; i < tokens.length; i++) {
+      if (value === null || value === undefined) return "";
+
+      const token = tokens[i];
+
+      if (typeof token === "number") {
+        // Array indexing
+        if (Array.isArray(value)) {
+          value = value[token];
+        } else {
+          return "";
+        }
+      } else {
+        // Property access
+        if (typeof value === "object") {
+          value = (value as Record<string, unknown>)[token];
+        } else {
+          return "";
+        }
+      }
+    }
+
+    return value;
+  }
+
+  /**
+   * Auto-detect and convert variable value to appropriate type
+   */
+  private parseValue(input: string): unknown {
+    // Try JSON parse first (objects, arrays, null)
+    try {
+      const parsed = JSON.parse(input);
+      return parsed;
+    } catch {
+      // Not JSON, try other types
+    }
+
+    // Boolean conversion
+    if (input === "true") return true;
+    if (input === "false") return false;
+
+    // Number conversion
+    if (!isNaN(Number(input)) && input !== "") {
+      return Number(input);
+    }
+
+    // Default to string
+    return input;
+  }
+
+  /**
+   * Replace {{varName}} and {{varName.property}} tokens in a string with current variable values.
+   * Supports dot notation for nested property access and array indexing.
+   * Variables are automatically typed based on their value.
+   * Examples: {{var}}, {{var.prop}}, {{array[0]}}, {{array[0].name}}
    */
   private substituteVariables(input?: string): string {
     if (!input) return "";
-    return input.replace(/\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g, (_, name) => {
-      return this.variables[name] ?? "";
+    // Match {{varName}}, {{varName.property}}, {{array[0]}}, etc.
+    return input.replace(/\{\{\s*([a-zA-Z0-9_\[\].]+)\s*\}\}/g, (_, path) => {
+      const value = this.getVariableValue(path);
+      if (value === null || value === undefined) return "";
+      if (typeof value === "object") return JSON.stringify(value);
+      return String(value);
     });
   }
 
@@ -148,12 +253,7 @@ export class AutomationExecutor {
           const response = await axios({ method, url, data, headers });
           const dataOut = response.data;
           if (step.storeKey) {
-            try {
-              this.variables[step.storeKey] =
-                typeof dataOut === "string" ? dataOut : JSON.stringify(dataOut);
-            } catch (_e) {
-              this.variables[step.storeKey] = String(dataOut);
-            }
+            this.variables[step.storeKey] = dataOut;
           }
           return dataOut;
         } catch (error) {
@@ -227,8 +327,9 @@ export class AutomationExecutor {
       case "setVariable": {
         const varName = step.variableName;
         const rawValue = this.substituteVariables(step.value);
-        this.variables[varName] = rawValue;
-        return rawValue;
+        const value = this.parseValue(rawValue);
+        this.variables[varName] = value;
+        return value;
       }
 
       case "modifyVariable": {
@@ -236,23 +337,25 @@ export class AutomationExecutor {
         const raw = this.substituteVariables(step.value);
         const op = step.operation;
         const current = this.variables[name];
+
         if (op === "set") {
-          this.variables[name] = raw;
-          return raw;
+          const value = this.parseValue(raw);
+          this.variables[name] = value;
+          return value;
         } else if (op === "increment") {
-          const num = parseFloat(current || "0");
+          const num = typeof current === "number" ? current : parseFloat(String(current) || "0");
           const by = parseFloat(raw || "1");
           const res = num + by;
-          this.variables[name] = String(res);
+          this.variables[name] = res;
           return res;
         } else if (op === "decrement") {
-          const num = parseFloat(current || "0");
+          const num = typeof current === "number" ? current : parseFloat(String(current) || "0");
           const by = parseFloat(raw || "1");
           const res = num - by;
-          this.variables[name] = String(res);
+          this.variables[name] = res;
           return res;
         } else if (op === "append") {
-          const res = (current || "") + raw;
+          const res = String(current || "") + raw;
           this.variables[name] = res;
           return res;
         }
