@@ -13,7 +13,7 @@ import ReactFlow, {
 import type { AutomationStep, NodeData, ReactFlowEdge, ReactFlowNode } from "../../types";
 import "reactflow/dist/style.css";
 import AddStepPopup from "./AddStepPopup";
-import { NodeDetails } from "./nodeDetails";
+import NodeDetails from "./NodeDetails";
 
 interface BuilderCanvasProps {
   nodes: ReactFlowNode[];
