@@ -1,7 +1,7 @@
 import { app } from "electron";
 import fs from "fs";
 import path from "path";
-import type { Automation, StoredAutomation } from "../types";
+import type { StoredAutomation } from "../types";
 
 export const defaultStorageFolder = path.join(app.getPath("userData"), ".trees");
 

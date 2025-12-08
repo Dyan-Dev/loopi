@@ -1,6 +1,5 @@
-import { StoredAutomation } from "../main/treeStore";
+import { Automation, StoredAutomation } from "./automation";
 import { AutomationStep } from "./steps";
-import { Automation } from "./automation";
 
 export interface ElectronAPI {
   openBrowser: (url: string) => Promise<void>;
