@@ -41,38 +41,6 @@ jobs:
             out/**
             dist/**
 
-  build-macos:
-    name: Build macOS packages
-    runs-on: macos-latest
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
-      - name: Enable Corepack and install pnpm
-        run: |
-          corepack enable
-          corepack prepare pnpm@latest --activate
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile --prefer-offline
-
-      - name: Build macOS packages
-        run: pnpm run make
-
-      - name: Upload macOS artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: dist-macos
-          path: |
-            out/**
-            dist/**
-
   build-linux:
     name: Build Linux packages
     runs-on: ubuntu-latest
@@ -108,7 +76,7 @@ jobs:
   create_release:
     name: Create GitHub Release with all artifacts
     runs-on: ubuntu-latest
-    needs: [build-windows, build-macos, build-linux]
+    needs: [build-windows, build-linux]
     
     steps:
       - name: Checkout
@@ -120,42 +88,51 @@ jobs:
           name: dist-windows
           path: artifacts/windows
 
-      - name: Download macOS artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: dist-macos
-          path: artifacts/macos
-
       - name: Download Linux artifacts
         uses: actions/download-artifact@v4
         with:
           name: dist-linux
           path: artifacts/linux
 
-      - name: List downloaded files
-        run: find artifacts -type f -name "*.exe" -o -name "*.msi" -o -name "*.zip" -o -name "*.dmg" -o -name "*.AppImage" -o -name "*.deb" -o -name "*.rpm" | sort
-
-      - name: Generate Release Notes
+      - name: List and calculate file sizes
         run: |
-          cat > release_notes.md << 'EOF'
+          echo "=== Windows Artifacts ===" 
+          find artifacts/windows -type f -name "*.exe" | sort
+          echo "=== Linux Artifacts ===" 
+          find artifacts/linux -type f -name "*.deb" | sort
+
+      - name: Generate Release Notes with Dynamic File Sizes
+        run: |
+          # Function to format file size
+          format_size() {
+            local size=$1
+            if (( size < 1024 )); then
+              echo "${size} B"
+            elif (( size < 1048576 )); then
+              echo "$(( size / 1024 )) KB"
+            else
+              echo "$(( size / 1048576 )) MB"
+            fi
+          }
+          
+          # Get Windows exe size
+          WIN_EXE=$(find artifacts/windows -type f -name "*.exe" -printf '%s' | head -1)
+          WIN_SIZE=$(format_size $WIN_EXE)
+          
+          # Get Linux deb size
+          LINUX_DEB=$(find artifacts/linux -type f -name "*.deb" -printf '%s' | head -1)
+          LINUX_SIZE=$(format_size $LINUX_DEB)
+          
+          cat > release_notes.md << EOF
           # Loopi ${{ github.ref_name }}
           
           Download the installer for your operating system below.
           
           ## 🪟 Windows (Windows 10 or later, 64-bit)
-          - **Installer (.exe)** - 85 MB - Recommended for most users
-          - **MSI Package** - 82 MB - For enterprise deployments
-          - **Portable (.zip)** - 120 MB - No installation required
+          - **Installer (.exe)** - ${WIN_SIZE} - Recommended for most users
           
-          ## 🍎 macOS (Big Sur or later)
-          - **Universal (.dmg)** - 95 MB - Works on all Macs (Intel & Apple Silicon)
-          - **Intel (.dmg)** - 88 MB - Intel Macs only
-          - **Apple Silicon (.dmg)** - 82 MB - M1/M2 Macs only
-          
-          ## 🐧 Linux (Ubuntu 20.04+, Fedora 35+, or equivalent)
-          - **AppImage** - 92 MB - Works on most Linux distributions
-          - **Debian (.deb)** - 85 MB - For Ubuntu, Debian, and derivatives
-          - **RPM (.rpm)** - 86 MB - For Fedora, RHEL, CentOS, and derivatives
+          ## 🐧 Linux (Ubuntu 20.04+, Debian 11+, or equivalent)
+          - **Debian Package (.deb)** - ${LINUX_SIZE} - For Ubuntu, Debian, and derivatives
           
           ## 📋 System Requirements
           
@@ -164,13 +141,8 @@ jobs:
           - 4 GB RAM minimum
           - 500 MB free disk space
           
-          ### macOS
-          - macOS 11 (Big Sur) or later
-          - 4 GB RAM minimum
-          - 500 MB free disk space
-          
           ### Linux
-          - Ubuntu 20.04+, Fedora 35+, or equivalent
+          - Ubuntu 20.04+, Debian 11+, or equivalent
           - 4 GB RAM minimum
           - 500 MB free disk space
           
@@ -182,9 +154,10 @@ jobs:
           
           ## 📖 Documentation
           
-          - [README](https://github.com/Dyan-Dev/loopi)
-          - [Getting Started Guide](https://github.com/Dyan-Dev/loopi/docs/getting-started.md)
-          - [Architecture](https://github.com/Dyan-Dev/loopi/docs/ARCHITECTURE.md)
+          - [README](https://github.com/Dyan-Dev/loopi/tree/feature/docs)
+          - [Getting Started Guide](https://github.com/Dyan-Dev/loopi/blob/feature/docs/GETTING_STARTED.md)
+          - [Variable System](https://github.com/Dyan-Dev/loopi/blob/feature/docs/VARIABLES.md)
+          - [Architecture](https://github.com/Dyan-Dev/loopi/blob/feature/docs/ARCHITECTURE.md)
           
           ## 🐛 Bug Reports
           
@@ -215,11 +188,6 @@ jobs:
           draft: false
           files: |
             artifacts/windows/out/**/*.exe
-            artifacts/windows/out/**/*.msi
-            artifacts/windows/out/**/*.zip
-            artifacts/macos/out/**/*.dmg
-            artifacts/linux/out/**/*.AppImage
             artifacts/linux/out/**/*.deb
-            artifacts/linux/out/**/*.rpm
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
