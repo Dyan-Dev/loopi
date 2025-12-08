@@ -23,9 +23,13 @@ The main process runs Node.js and manages the application lifecycle. It's organi
 - **Key Methods**:
   - `executeStep(browserWindow, step)`: Runs a single step
   - `evaluateConditional(browserWindow, config)`: Evaluates branching logic
-  - `injectIndexIntoSelector(selector, index)`: Template variable substitution
+  - `substituteVariables(input)`: Template variable substitution `{{varName}}`
+  - `getVariableValue(path)`: Parse and access `{{obj.prop[0].nested}}`
+  - `parseValue(input)`: Auto-detect type (number, boolean, object, array, string)
 - **State Management**:
-  - Maintains `loopIndices` map for tracking loop iteration state per conditional node
+  - Maintains `variables: Record<string, unknown>` for all automation variables
+  - Variables auto-type based on input: `"42"` → number, `"true"` → boolean, JSON → object
+  - Token-based parser handles dot notation and array indexing
   - Stores `currentNodeId` for coordinating selector injection
 
 #### SelectorPicker
@@ -166,7 +170,88 @@ ReactFlow re-renders updated node
 
 ## Type System Design
 
-### Discriminated Unions
+### Variables System
+
+Loopi uses an **auto-typed unified variable system** where all variables are stored as `unknown` type and auto-detect their type based on input.
+
+**Storage Structure** (in `AutomationExecutor`):
+```typescript
+variables: Record<string, unknown>
+```
+
+**Type Detection** (`parseValue()` method):
+- `"42"` or `"3.14"` → `number`
+- `"true"` or `"false"` → `boolean`
+- Valid JSON starting with `{` or `[` → `object` or `array`
+- Everything else → `string`
+
+**Example:**
+```typescript
+this.variables["count"] = this.parseValue("42");        // number: 42
+this.variables["user"] = this.parseValue('{"name":"John"}'); // object
+this.variables["name"] = this.parseValue("John");        // string: "John"
+```
+
+**Variable Access** (`getVariableValue()` method):
+
+Uses token-based parser to handle dot notation and array indexing:
+
+```typescript
+// Parses path into tokens: ["users", 0, "name"]
+// Then navigates: variables["users"] → [0] → .name
+path: "users[0].name"
+result: "John" (if users is array of objects)
+
+// Supported syntax:
+{{username}}                    // Simple: string value
+{{user.name}}                   // Nested: property access
+{{users[0]}}                    // Array: index access
+{{users[0].email}}              // Mixed: combined access
+{{matrix[0][1]}}                // Multi-dimensional arrays
+{{response.data.items[2].id}}   // Deep nesting
+```
+
+**Variable Substitution** (`substituteVariables()` method):
+
+Replaces `{{varName}}` tokens in strings with actual values:
+
+```typescript
+// Input: "https://example.com/user/{{userId}}"
+// Result: "https://example.com/user/123"
+
+// Input: "Hello {{user.name}}, your balance is {{account.balance}}"
+// Result: "Hello John, your balance is 1000"
+
+// Regex: /\{\{\s*([a-zA-Z0-9_\[\].]+)\s*\}\}/g
+```
+
+**Usage in Steps:**
+
+1. **API Call** - Stores raw response as object
+   ```typescript
+   this.variables[step.storeKey] = dataOut; // Already typed
+   ```
+
+2. **Set Variable** - Auto-types input
+   ```typescript
+   this.variables[name] = this.parseValue(rawValue); // Auto-detect
+   ```
+
+3. **Modify Variable** - Type-aware operations
+   ```typescript
+   if (typeof current === "number") {
+     this.variables[name] = current + increment;
+   }
+   ```
+
+4. **Navigate/Type/Extract** - Substitutes variables
+   ```typescript
+   const url = this.substituteVariables(step.value);
+   ```
+
+For detailed variable documentation, see [VARIABLES.md](./VARIABLES.md).
+
+### Discriminated Unions (Step Types)
 
 All step types are modeled as a discriminated union with `type` as the discriminant:
 
@@ -286,16 +371,16 @@ No global state library (Redux, Zustand) needed—props drilling is minimal due 
 
 ### Adding New Step Types
 
-1. Define type in `src/types/steps.ts`
-2. Add to `AutomationStep` union
-3. Add to `stepTypes` UI metadata array with icon and description
-4. Create editor component in `stepTypes/` (follow existing patterns like `ExtractStep.tsx`)
-5. Export from `stepTypes/index.ts`
-6. Add case to `StepEditor.tsx` switch statement
-7. Add execution case in `AutomationExecutor.executeStep()`
-8. Add initial value in `useNodeActions` switch
+For detailed step-by-step instructions, see [NEW_STEP_TEMPLATE.md](./NEW_STEP_TEMPLATE.md).
 
-**Example**: See the `Extract` step implementation for a complete reference of this pattern.
+Quick overview:
+1. Define type in `src/types/steps.ts`
+2. Create editor component in `src/components/.../stepTypes/`
+3. Add execution logic in `src/main/automationExecutor.ts`
+4. Add initial values in `src/hooks/useNodeActions.ts`
+5. Wire up in `StepEditor.tsx`
+6. Update `docs/STEPS_REFERENCE.md` with examples
+7. Create example in `docs/examples/`
 
 ### Custom Conditional Types
 

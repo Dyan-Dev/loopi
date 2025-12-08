@@ -137,59 +137,51 @@ contextBridge.exposeInMainWorld("electronAPI", {
 });
 ```
 
-## 🎯 Key Features Explained
+## 🎯 Key Features
 
 ### Interactive Element Picker
 
-1. User clicks "Pick Element" button in step configuration
-2. Renderer sends IPC request to main process
-3. Main process injects picker script into browser page
-4. User hovers (highlights) and clicks element
-5. Script generates unique CSS selector (e.g., `html > body > div:nth-of-type(3) > button:first-of-type`)
-6. Selector sent back to renderer via IPC
-7. Step configuration auto-populated
+Click-to-select CSS selectors from live pages - no manual typing needed.
 
-### Variable-driven loops and template substitution
+### Variable System
 
-The project now uses an explicit variable system instead of the legacy `loopUntilFalse` behavior.
+Auto-typed variables with dot notation and array indexing:
+- `{{username}}` - Simple variables
+- `{{user.name}}` - Nested properties
+- `{{users[0]}}` - Array indexing
+- `{{users[0].email}}` - Mixed access
 
-- Add a `Set Variable` or `Modify Variable` step to declare and change variables as your flow runs.
-- Use double-curly tokens `{{variableName}}` inside selectors, step inputs, and API payloads; those tokens are substituted at runtime by the executor.
+Types automatically detected: numbers, booleans, objects, and arrays.
 
-Example selector using a variable:
-
-```
-Selector: .product-list > div:nth-of-type({{index}})
-```
-
-Control how `{{index}}` changes by placing `Modify Variable` steps (increment/decrement/append/set) in your graph. This makes loop semantics explicit and easier to maintain.
-
-Conditional nodes also support post-processing of extracted text (strip currency symbols, remove non-numeric characters, regex replace, and parse-as-number) to make comparisons robust (for example, comparing `$29.99` numerically).
+**Learn more:** See [VARIABLES.md](./docs/VARIABLES.md)
 
 ### Graph Execution
 
-Automation flows are executed as directed graphs:
-
-1. Start at root node (id="1")
-2. Execute current node's step/condition
-3. Follow outgoing edges to next nodes:
-   - Regular nodes: 1 outgoing edge
-   - Conditional nodes: 2 edges ("if" or "else" branch)
-4. Recurse until no more nodes
-5. Mark nodes as "running" for visual feedback
+Automation flows execute as directed graphs starting from the root node, following edges through conditional branches until completion.
 
 ## 📖 Documentation
 
-**Full documentation is available at: [https://loopi.dyan.live/](https://loopi.dyan.live/)**
+Comprehensive documentation split into focused guides for different needs:
 
-The documentation site includes:
-- **[Getting Started](https://loopi.dyan.live/docs/getting-started)** - Installation and first steps
-- **[User Guide](https://loopi.dyan.live/docs/usage)** - Detailed feature documentation
-- **[Architecture](https://loopi.dyan.live/docs/developer-guide)** - System design and internals
-- **[Examples & Tutorials](https://loopi.dyan.live/docs/examples)** - Real-world automation examples
-- **[API Reference](https://loopi.dyan.live/docs/api-reference)** - Detailed API documentation
-- **[FAQ](https://loopi.dyan.live/docs/faq)** - Frequently asked questions
-- **[Contributing Guide](https://github.com/Dyan-Dev/loopi/blob/main/CONTRIBUTING.md)** - How to contribute
+### 📍 **Start Here**
+- **[Documentation Index](./docs/README.md)** - Overview of all docs
+- **[Documentation Map](./docs/DOCUMENTATION_MAP.md)** - Navigation guide, find what you need
+
+### For Users
+- **[GETTING_STARTED.md](./docs/GETTING_STARTED.md)** - Installation and your first automation
+- **[VARIABLES.md](./docs/VARIABLES.md)** - Variable system, types, and access patterns (dot notation, arrays, nesting)
+- **[STEPS_REFERENCE.md](./docs/STEPS_REFERENCE.md)** - Complete step type reference with JSON examples
+- **[examples/](./docs/examples/)** - Real-world automation examples
+
+### For Developers
+- **[ARCHITECTURE.md](./docs/ARCHITECTURE.md)** - System design, data flows, type system, security model
+- **[COMPONENT_GUIDE.md](./docs/COMPONENT_GUIDE.md)** - React components, hooks, and UI patterns
+- **[NEW_STEP_TEMPLATE.md](./docs/NEW_STEP_TEMPLATE.md)** - Complete checklist for adding new step types
+- **[DEVELOPMENT_WORKFLOWS.md](./docs/DEVELOPMENT_WORKFLOWS.md)** - Common dev tasks and troubleshooting
+- **[DOCUMENTATION_GUIDE.md](./docs/DOCUMENTATION_GUIDE.md)** - How to maintain and extend documentation
+
+### Project Info
+- **[Contributing](./CONTRIBUTING.md)** - Contribution guidelines and code style (Biome)
 
 ## 🚦 Getting Started
 
@@ -199,104 +191,34 @@ The documentation site includes:
 git clone https://github.com/Dyan-Dev/loopi.git
 cd loopi
 pnpm install
+pnpm start
 ```
 
-### Development
-
-```bash
-pnpm start              # Start Electron app with hot reload
-```
+For detailed setup instructions and your first automation, see [GETTING_STARTED.md](./docs/GETTING_STARTED.md).
 
 ### Building
 
 ```bash
 pnpm run make           # Package for current platform
-pnpm run publish        # Build and publish (requires config)
-
-## Examples
-
-Example automation JSON files are included under `docs/examples/` to help you test common scenarios quickly.
-
-- `docs/examples/pagination_price_extraction_variable_loop.json`: Extract each product price across page and compare against a threshold using variable-driven loop. If price > specified amount, tick checkbox.
-
-How to use an example:
-
-1. Open the Automation Builder and choose _Import_ (or place the JSON into the import dialog).
-2. Select one of the files under `docs/examples/` and import it into the editor.
-3. Inspect nodes to see `Set Variable` / `Modify Variable` usage and condition transforms (e.g. `stripCurrency`, `parseAsNumber`).
-4. Run the automation from the builder using the Run button. The executor will initialize variables and execute steps in the browser window.
-
-Tip: Use the `Condition` node's "Post-process Extracted Text" options for robust comparisons when dealing with currency or noisy text.
-
-## 🧰 Developer Notes
-
-- **Tailwind / PostCSS**: This project uses Tailwind CSS (v4) processed via PostCSS. The canonical PostCSS config is `postcss.config.cjs`; there is also an ESM re-export `postcss.config.js` to accommodate different toolchains. If you change Tailwind or PostCSS plugins, update both configs and ensure `tailwind.config.cjs` `content` globs include any new file locations so utilities are generated.
-
-- **Formatting & Linting (Biome)**: We use Biome for linting and formatting. Run `pnpm format` before committing to apply automatic fixes. The CI expects Biome checks to pass.
+pnpm run publish        # Build and publish
 ```
 
-## 📝 Adding a New Step Type
+## 📚 Examples
 
-1. **Define type in `src/types/steps.ts`**:
-```typescript
-export interface StepCustom extends StepBase {
-  type: "custom";
-  customField: string;
-}
+Example automation JSON files under `docs/examples/` demonstrate common patterns:
 
-export type AutomationStep = 
-  | StepNavigate
-  | StepClick
-  | ...
-  | StepCustom;  // Add to union
+- `contact_form_submission.json` - Form filling
+- `google_search.json` - Search and navigation
+- `ecommerce_price_monitor.json` - Multi-page scraping
+- `api_call_github_user.json` - API calls with object access
+- `api_call_newsletter_post.json` - POST requests
 
-// Add to UI metadata
-export const stepTypes = [
-  // ...
-  { value: "custom", label: "Custom", icon: Icon, description: "Custom step" },
-] as const;
-```
+**To use an example:**
+1. Open the builder and choose "Import"
+2. Select a JSON file from `docs/examples/`
+3. Inspect the automation to see patterns
+4. Run it with the Run button
 
-2. **Create editor in `src/components/automationBuilder/nodeDetails/stepTypes/`**:
-```typescript
-import { Input } from "../../../ui/input";
-import { Label } from "../../../ui/label";
-import { SelectorButton } from "../customComponents";
-import { StepProps } from "./types";
-
-export function CustomStep({ step, id, onUpdate, onPickWithSetter }: StepProps) {
-  if (step.type !== "custom") return null;
-
-  return (
-    <>
-      <div className="space-y-2">
-        <Label className="text-xs">Custom Field</Label>
-        <Input
-          value={step.customField || ""}
-          onChange={(e) => onUpdate(id, "update", { 
-            step: { ...step, customField: e.target.value } 
-          })}
-          className="text-xs"
-        />
-      </div>
-    </>
-  );
-}
-```
-
-3. **Export from `stepTypes/index.ts`** and add to `StepEditor.tsx` switch statement
-
-4. **Add execution logic in `src/main/automationExecutor.ts`**:
-```typescript
-case "custom": {
-  // Use the executor's substitution helper to resolve any `{{var}}` tokens
-  const value = this.substituteVariables(step.customField);
-  await wc.executeJavaScript(`console.log(${JSON.stringify(value)});`);
-  break;
-}
-```
-
-5. **Update `useNodeActions.ts`** to provide default initial values when creating new nodes.
 
 ## 🔒 Security Notes
 
