@@ -1,4 +1,4 @@
-import { StoredAutomation } from "../main/treeStore";
+import { StoredAutomation } from "../types";
 
 /**
  * Export automation to JSON file

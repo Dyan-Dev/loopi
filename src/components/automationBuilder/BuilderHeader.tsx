@@ -1,6 +1,6 @@
 import { ArrowLeft, Download, Globe, Pause, Play, Save, Settings, Square } from "lucide-react";
 import React from "react";
-import { StoredAutomation } from "../../main/treeStore";
+import { StoredAutomation } from "../../types";
 import { exportAutomation } from "../../utils/automationIO";
 import { Button } from "../ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../ui/dialog";
