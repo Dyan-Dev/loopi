@@ -28,7 +28,7 @@
           "type": "type",
           "description": "Enter search query",
           "selector": "html > body > div:nth-of-type(2) > div:nth-of-type(4) > form > div > div > div > div > div:nth-of-type(2) > textarea",
-          "value": "automa browser automation"
+          "value": "Loopi: Open-Source Visual Browser Automation"
         }
       },
       "position": {
