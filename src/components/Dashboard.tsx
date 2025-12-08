@@ -21,7 +21,10 @@ export function Dashboard({
   const handleImportAutomation = async () => {
     try {
       const automation = await importAutomation();
-      onUpdateAutomations([...automations, automation]);
+      const id = await window.electronAPI.tree.save(automation);
+      if (id) {
+        onUpdateAutomations([...automations, automation]);
+      }
     } catch (error) {
       console.error("Failed to import automation:", error);
       alert("Failed to import automation. Please check the file format.");

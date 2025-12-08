@@ -26,11 +26,18 @@ export default function App() {
       const savedAutomations = await window.electronAPI.tree.list();
       if (savedAutomations && savedAutomations.length > 0)
         savedAutomations.sort(
-          (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+          (a: StoredAutomation, b: StoredAutomation) =>
+            new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
         );
       setAutomations(savedAutomations);
     };
-    loadSavedTrees();
+
+    try {
+      loadSavedTrees();
+    } catch (err) {
+      console.error(err);
+      alert("Failed to load saved automations");
+    }
   }, []);
 
   const handleCreateAutomation = () => {
@@ -51,10 +58,15 @@ export default function App() {
       // Add new automation
       setAutomations((prev) => [...prev, automation]);
     }
-    const id = await window.electronAPI.tree.save(automation);
-    if (id) {
+    try {
+      const id = await window.electronAPI.tree.save(automation);
+      if (!id) throw new Error("Failed to retrieve saved file id");
+
       setSelectedAutomation(null);
       setCurrentView("dashboard");
+    } catch (err) {
+      console.error(err);
+      alert(`Failed to save: ${automation.name}`);
     }
   };
 
