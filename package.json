@@ -1,6 +1,6 @@
 {
   "name": "loopi",
-  "version": "1.2.2",
+  "version": "1.2.3",
   "description": "Loopi — Visual Browser Automation for humans and teams",
   "author": "Dyan-Dev",
   "main": ".webpack/main",

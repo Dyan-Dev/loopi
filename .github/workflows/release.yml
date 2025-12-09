@@ -103,25 +103,33 @@ jobs:
 
       - name: Generate Release Notes with Dynamic File Sizes
         run: |
-          # Function to format file size
+          # Function to format file size with decimals
           format_size() {
             local size=$1
             if (( size < 1024 )); then
               echo "${size} B"
             elif (( size < 1048576 )); then
-              echo "$(( size / 1024 )) KB"
+              printf "%.1f KB\n" "$(echo "scale=1; $size / 1024" | bc)"
             else
-              echo "$(( size / 1048576 )) MB"
+              printf "%.1f MB\n" "$(echo "scale=1; $size / 1048576" | bc)"
             fi
           }
           
-          # Get Windows exe size
-          WIN_EXE=$(find artifacts/windows -type f -name "*.exe" -printf '%s' | head -1)
-          WIN_SIZE=$(format_size $WIN_EXE)
+          # Get Windows exe size (Setup.exe is the actual installer)
+          WIN_EXE=$(find artifacts/windows -type f -name "*Setup.exe" -printf '%s\n' | sort -rn | head -1)
+          if [ -z "$WIN_EXE" ]; then
+            WIN_SIZE="Unknown"
+          else
+            WIN_SIZE=$(format_size $WIN_EXE)
+          fi
           
-          # Get Linux deb size
-          LINUX_DEB=$(find artifacts/linux -type f -name "*.deb" -printf '%s' | head -1)
-          LINUX_SIZE=$(format_size $LINUX_DEB)
+          # Get Linux deb size (latest/largest deb file)
+          LINUX_DEB=$(find artifacts/linux -type f -name "*.deb" -printf '%s\n' | sort -rn | head -1)
+          if [ -z "$LINUX_DEB" ]; then
+            LINUX_SIZE="Unknown"
+          else
+            LINUX_SIZE=$(format_size $LINUX_DEB)
+          fi
           
           cat > release_notes.md << EOF
           # Loopi ${{ github.ref_name }}

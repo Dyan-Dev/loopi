@@ -2,7 +2,8 @@ import { BookOpen, Plus, Upload } from "lucide-react";
 import { useState } from "react";
 import type { StoredAutomation } from "../types";
 import { importAutomation } from "../utils/automationIO";
-import { EXAMPLES, ExamplesComponent, YourAutomations } from "./dashboard";
+import { EXAMPLES, ExamplesComponent } from "./dashboard/ExamplesComponent";
+import { YourAutomations } from "./dashboard/YourAutomations";
 import { Button } from "./ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 
