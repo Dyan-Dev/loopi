@@ -22,6 +22,29 @@ pnpm start
 
 This launches the Electron app with hot reload for development.
 
+### Configuring App Settings
+
+Access app preferences via the settings icon (⚙️) in the dashboard header:
+
+**Theme Settings:**
+- **Light Mode** - Bright interface with dark text
+- **Dark Mode** - Dark interface with light text  
+- **System** - Automatically matches your OS preference
+
+Theme preference is saved and applied the next time you open the app.
+
+**Download Location:**
+- Default: Your system's Downloads folder
+- Click "Browse" to select a custom download folder
+- All automation downloads are saved to this location automatically
+- Directory is created if it doesn't exist
+
+**Notifications:**
+- Toggle to enable/disable app notifications
+- Preference is saved automatically
+
+All settings are persisted to disk and restored when you restart the application.
+
 ### Building for Distribution
 
 ```bash
