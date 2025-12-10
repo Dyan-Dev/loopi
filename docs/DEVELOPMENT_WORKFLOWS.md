@@ -154,6 +154,79 @@ pnpm start           # Development mode with live reload
 
 ---
 
+### Working with IPC and Main Process
+
+**When to add IPC handlers:**
+- Need to access file system (read/write files)
+- Need to access Electron APIs (dialog, session, etc.)
+- Need cross-process communication between renderer and main process
+
+**Adding a new IPC handler:**
+
+1. **Define the IPC handler** in `src/main/ipcHandlers.ts`:
+   ```typescript
+   ipcMain.handle("channel:name", async (event, arg) => {
+     // Handler code here
+     return result;
+   });
+   ```
+
+2. **Expose in preload** in `src/preload.ts`:
+   ```typescript
+   const electronAPI = {
+     yourAPI: {
+       method: () => ipcRenderer.invoke("channel:name"),
+     },
+   };
+   ```
+
+3. **Update types** in `src/types/globals.d.ts`:
+   ```typescript
+   interface ElectronAPI {
+     yourAPI: {
+       method: () => Promise<ReturnType>;
+     };
+   }
+   ```
+
+4. **Use from React** in components:
+   ```typescript
+   const result = await window.electronAPI.yourAPI.method();
+   ```
+
+**Working with Settings:**
+- Stored in `~/.config/[AppName]/settings.json`
+- Loaded/saved via `SettingsStore` service
+- Auto-persisted from Settings component
+- Loaded on app startup in `src/app.tsx`
+
+**Example - Adding a new setting:**
+```typescript
+// 1. Update AppSettings interface
+interface AppSettings {
+  theme: "light" | "dark" | "system";
+  enableNotifications: boolean;
+  downloadPath?: string;
+  newSetting?: string;  // Add this
+}
+
+// 2. Add UI in Settings.tsx
+<Input 
+  value={settings.newSetting}
+  onChange={(e) => setSettings(prev => ({
+    ...prev,
+    newSetting: e.target.value
+  }))}
+/>
+
+// 3. Auto-save via useEffect (already in component)
+useEffect(() => {
+  window.electronAPI.settings.save(settings);
+}, [settings]);
+```
+
+---
+
 ### Testing Your Changes
 
 **Manual Testing Checklist:**

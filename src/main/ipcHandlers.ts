@@ -1,8 +1,8 @@
-import { app, ipcMain } from "electron";
-import fs from "fs";
-import path from "path";
+import { dialog, ipcMain } from "electron";
 import { AutomationExecutor } from "./automationExecutor";
+import { setupDownloadHandler } from "./downloadManager";
 import { SelectorPicker } from "./selectorPicker";
+import { loadSettings, saveSettings } from "./settingsStore";
 import {
   defaultStorageFolder,
   deleteAutomation,
@@ -149,5 +149,48 @@ export function registerIPCHandlers(
   ipcMain.handle("loopi:initExamples", async () => {
     initializeExamples();
     return true;
+  });
+
+  /**
+   * Load app settings from Electron storage
+   */
+  ipcMain.handle("loopi:loadSettings", async () => {
+    return loadSettings();
+  });
+
+  /**
+   * Save app settings to Electron storage
+   */
+  ipcMain.handle("loopi:saveSettings", async (_event, settings: unknown) => {
+    const result = saveSettings(settings as Parameters<typeof saveSettings>[0]);
+
+    // Re-setup download handler with new settings
+    setupDownloadHandler();
+
+    return result;
+  });
+
+  /**
+   * Open folder selection dialog
+   */
+  ipcMain.handle("dialog:selectFolder", async (_event) => {
+    try {
+      const mainWindow = windowManager.getMainWindow();
+      if (!mainWindow) {
+        console.error("Main window not available for folder selection dialog");
+        return null;
+      }
+      const result = await dialog.showOpenDialog(mainWindow, {
+        properties: ["openDirectory"],
+        title: "Select Download Folder",
+        buttonLabel: "Select",
+      });
+      const selectedPath = result.canceled ? null : result.filePaths[0];
+      console.log("Folder selection result:", selectedPath);
+      return selectedPath;
+    } catch (error) {
+      console.error("Error in folder selection dialog:", error);
+      return null;
+    }
   });
 }

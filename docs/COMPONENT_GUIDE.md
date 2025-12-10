@@ -6,7 +6,7 @@ Detailed guide for understanding and extending React components in Loopi.
 
 ```
 App (src/app.tsx)
-├── Router → Dashboard | AutomationBuilder | Credentials
+├── Router → Dashboard | AutomationBuilder | Settings
 │
 ├── Dashboard (src/components/Dashboard.tsx)
 │   ├── Tabs: "Your Automations" | "Examples"
@@ -19,34 +19,40 @@ App (src/app.tsx)
 │       └── Lists 7 example automations
 │       └── "Load Example" button for each
 │
-└── AutomationBuilder (src/components/AutomationBuilder.tsx)
-    ├── BuilderHeader
-    │   ├── Title & Description
-    │   ├── Run/Stop buttons
-    │   └── Settings dialog
-    │
-    ├── BuilderCanvas (ReactFlow)
-    │   ├── AutomationNode (visual node)
-    │   ├── AddStepPopup (step type picker)
-    │   └── Edge connections
-    │
-    └── NodeDetails (right sidebar)
-        ├── NodeHeader (title + delete)
-        │
-        ├── StepEditor (routes to specific step editor)
-        │   ├── ClickStep (src/components/.../stepTypes/ClickStep.tsx)
-        │   ├── TypeStep
-        │   ├── ExtractStep
-        │   ├── ApiCallStep
-        │   ├── NavigateStep
-        │   ├── SetVariableStep
-        │   ├── ModifyVariableStep
-        │   └── ... other steps
-        │
-        └── ConditionEditor (if conditional node)
-            ├── Element existence conditions
-            ├── Value comparison conditions
-            └── Post-processing options
+├── AutomationBuilder (src/components/AutomationBuilder.tsx)
+│   ├── BuilderHeader
+│   │   ├── Title & Description
+│   │   ├── Run/Stop buttons
+│   │   └── Settings dialog
+│   │
+│   ├── BuilderCanvas (ReactFlow)
+│   │   ├── AutomationNode (visual node)
+│   │   ├── AddStepPopup (step type picker)
+│   │   └── Edge connections
+│   │
+│   └── NodeDetails (right sidebar)
+│       ├── NodeHeader (title + delete)
+│       │
+│       ├── StepEditor (routes to specific step editor)
+│       │   ├── ClickStep (src/components/.../stepTypes/ClickStep.tsx)
+│       │   ├── TypeStep
+│       │   ├── ExtractStep
+│       │   ├── ApiCallStep
+│       │   ├── NavigateStep
+│       │   ├── SetVariableStep
+│       │   ├── ModifyVariableStep
+│       │   └── ... other steps
+│       │
+│       └── ConditionEditor (if conditional node)
+│           ├── Element existence conditions
+│           ├── Value comparison conditions
+│           └── Post-processing options
+│
+└── Settings (src/components/Settings.tsx)
+    ├── Appearance (Theme selector: Light, Dark, System)
+    ├── Downloads (Download path configuration with folder picker)
+    ├── Notifications (Enable/Disable toggle)
+    └── About (App info and GitHub link)
 ```
 
 ### Key Components
@@ -422,6 +428,13 @@ Routes IPC messages to appropriate services.
 - `loopi:loadExample` → TreeStore.loadExample()
 - `loopi:deleteTree` → TreeStore.deleteAutomation()
 
+**Settings Handlers:**
+- `loopi:loadSettings` → SettingsStore.loadSettings() - Retrieves saved app settings
+- `loopi:saveSettings` → SettingsStore.saveSettings() - Persists settings and re-setup download handler
+
+**File Dialog Handlers:**
+- `dialog:selectFolder` → electron.dialog.showOpenDialog() - Opens native folder picker
+
 **Type Definitions (src/types/globals.d.ts):**
 ```typescript
 interface ElectronAPI {
@@ -432,6 +445,11 @@ interface ElectronAPI {
     loadExample: (fileName: string) => Promise<StoredAutomation>;
     delete: (automationId: string) => Promise<boolean>;
   };
+  settings: {
+    load: () => Promise<AppSettings>;
+    save: (settings: AppSettings) => Promise<void>;
+  };
+  selectFolder: () => Promise<string | null>;
 }
 
 declare global {
@@ -439,6 +457,159 @@ declare global {
     electronAPI: ElectronAPI;
   }
 }
+```
+
+### Settings Component (src/components/Settings.tsx)
+
+App-wide preferences and configuration interface.
+
+**Purpose:**
+Allows users to customize theme, manage download location, and configure notifications. All settings persist to disk via Electron storage and apply immediately without a save button.
+
+**Features:**
+- **Theme Selection**: Light, Dark, or System preference
+  - Stores selection in `~/.config/[AppName]/settings.json`
+  - Applies theme by toggling `dark` class on document root
+  - Respects system preference when "System" mode selected
+  - No page flicker: theme loads synchronously from storage before render
+  
+- **Download Path Configuration**: Custom download location
+  - Folder picker via native file dialog
+  - Stores full path in settings
+  - Auto-creates directory if doesn't exist
+  - Used by DownloadManager when processing downloads
+  
+- **Notifications Toggle**: Enable/disable app notifications
+  - Stores preference in settings
+  - Can be extended for toast notification control
+  
+- **About Section**: App info and links
+  - GitHub repository link
+  - App version and description
+
+**Implementation:**
+```typescript
+export function Settings() {
+  const [settings, setSettings] = useState<AppSettings>({
+    theme: "light",
+    enableNotifications: true,
+  });
+
+  // Load settings on mount
+  useEffect(() => {
+    window.electronAPI.settings.load().then(setSettings);
+  }, []);
+
+  // Auto-save on change
+  useEffect(() => {
+    window.electronAPI.settings.save(settings);
+  }, [settings]);
+
+  // Theme application
+  useEffect(() => {
+    if (settings.theme === "system") {
+      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      document.documentElement.classList.toggle("dark", prefersDark);
+    } else {
+      document.documentElement.classList.toggle("dark", settings.theme === "dark");
+    }
+  }, [settings.theme]);
+
+  const handleSelectFolder = async () => {
+    const path = await window.electronAPI.selectFolder();
+    if (path) {
+      setSettings(prev => ({ ...prev, downloadPath: path }));
+    }
+  };
+
+  return (
+    <div className="p-6 space-y-6">
+      {/* Theme Section */}
+      <div className="space-y-2">
+        <Label>Theme</Label>
+        <Select value={settings.theme} onValueChange={...}>
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="light">Light</SelectItem>
+            <SelectItem value="dark">Dark</SelectItem>
+            <SelectItem value="system">System</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Download Path Section */}
+      <div className="space-y-2">
+        <Label>Download Location</Label>
+        <div className="flex gap-2">
+          <Input 
+            value={settings.downloadPath || ""}
+            readOnly
+            className="text-xs"
+          />
+          <Button onClick={handleSelectFolder} variant="outline">
+            Browse
+          </Button>
+        </div>
+      </div>
+
+      {/* Notifications Section */}
+      <div className="flex items-center justify-between">
+        <Label>Enable Notifications</Label>
+        <Switch 
+          checked={settings.enableNotifications}
+          onCheckedChange={...}
+        />
+      </div>
+    </div>
+  );
+}
+```
+
+**Type Definition (src/types/globals.d.ts):**
+```typescript
+interface AppSettings {
+  theme: "light" | "dark" | "system";
+  enableNotifications: boolean;
+  downloadPath?: string;
+}
+
+interface ElectronAPI {
+  settings: {
+    load: () => Promise<AppSettings>;
+    save: (settings: AppSettings) => Promise<void>;
+  };
+  selectFolder: () => Promise<string | null>;
+  // ... other APIs
+}
+```
+
+**Backend Integration:**
+- Loads from `SettingsStore` (src/main/settingsStore.ts)
+- Saves to disk via IPC handler `loopi:saveSettings`
+- Load handler: `loopi:loadSettings`
+- Folder picker handler: `dialog:selectFolder`
+- Download handler re-setup after settings save
+
+**Dark Theme System:**
+The dark theme uses CSS class toggling and Tailwind's dark mode:
+```css
+.dark .react-flow {
+  background: #1f2937;
+}
+
+.dark .react-flow__controls {
+  background: #111827;
+  color: #f3f4f6;
+}
+```
+
+Tailwind classes automatically respect `.dark` class:
+```jsx
+<div className="bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100">
+  Content
+</div>
 ```
 
 ### UI Component Patterns

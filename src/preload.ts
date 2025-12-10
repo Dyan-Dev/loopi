@@ -28,6 +28,11 @@ contextBridge.exposeInMainWorld("electronAPI", {
     loadExample: (fileName: string) => ipcRenderer.invoke("loopi:loadExample", fileName),
     delete: (automationId: string) => ipcRenderer.invoke("loopi:deleteTree", automationId),
   },
+  settings: {
+    load: () => ipcRenderer.invoke("loopi:loadSettings"),
+    save: (settings: unknown) => ipcRenderer.invoke("loopi:saveSettings", settings),
+  },
+  selectFolder: () => ipcRenderer.invoke("dialog:selectFolder"),
   runStep: (step: AutomationStep) => ipcRenderer.invoke("browser:runStep", step),
   runConditional: (condition: unknown) => ipcRenderer.invoke("browser:runConditional", condition),
   initVariables: (vars?: Record<string, string>) =>

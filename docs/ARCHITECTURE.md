@@ -57,6 +57,29 @@ The main process runs Node.js and manages the application lifecycle. It's organi
   - `loopi:saveTree` → TreeStore: Save/update automation
   - `loopi:loadExample` → TreeStore: Load example from `docs/examples/`
   - `loopi:deleteTree` → TreeStore: Delete automation file from disk
+  - `loopi:loadSettings` → SettingsStore: Load app settings
+  - `loopi:saveSettings` → SettingsStore: Save app settings
+  - `dialog:selectFolder` → Dialog: Open folder picker for download path
+
+#### SettingsStore
+- **Purpose**: Persist application settings
+- **Storage**: `~/.config/loopi/settings.json`
+- **Manages**:
+  - Theme preference (light, dark, system)
+  - Notifications toggle
+  - Download path configuration
+- **API**:
+  - `loadSettings()`: Returns AppSettings with defaults if file doesn't exist
+  - `saveSettings(settings)`: Persists to disk, triggers download handler update
+
+#### DownloadManager
+- **Purpose**: Handle file downloads with configurable save path
+- **Features**:
+  - Auto-creates download directory if it doesn't exist
+  - Listens to `will-download` events on default session
+  - Sets full file path (directory + filename) for each download
+  - Falls back to system Downloads folder if custom path not set
+- **Integration**: Called on app startup and when settings change
 
 ### Renderer Process (`src/`)
 

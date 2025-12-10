@@ -1,8 +1,10 @@
-import { Bot, Grid } from "lucide-react";
+import { Bot, Grid, Settings as SettingsIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import * as ReactDOM from "react-dom/client";
 import { AutomationBuilder } from "./components/AutomationBuilder";
 import { Dashboard } from "./components/Dashboard";
+import { Settings } from "./components/Settings";
+import { Button } from "./components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "./components/ui/tabs";
 import "./index.css";
 import type { StoredAutomation } from "./types";
@@ -11,15 +13,36 @@ import type { StoredAutomation } from "./types";
  * App - Root application component
  *
  * Manages:
- * - View routing (Dashboard, Builder, Credentials)
+ * - View routing (Dashboard, Builder, Settings)
  * - Global automation state
- * - Credential management
  * - Create/Edit/Save automation workflows
  */
 export default function App() {
-  const [currentView, setCurrentView] = useState<"dashboard" | "builder">("dashboard");
+  const [currentView, setCurrentView] = useState<"dashboard" | "builder" | "settings">("dashboard");
   const [automations, setAutomations] = useState<StoredAutomation[]>([]);
   const [selectedAutomation, setSelectedAutomation] = useState<StoredAutomation | null>(null);
+
+  useEffect(() => {
+    const loadAndApplyTheme = async () => {
+      try {
+        const settings = await window.electronAPI?.settings.load();
+        if (settings) {
+          const root = document.documentElement;
+          if (settings.theme === "system") {
+            const isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+            root.classList.toggle("dark", isDark);
+          } else {
+            root.classList.toggle("dark", settings.theme === "dark");
+          }
+        }
+      } catch (error) {
+        console.error("Failed to load theme:", error);
+        document.documentElement.classList.remove("dark");
+      }
+    };
+
+    loadAndApplyTheme();
+  }, []);
 
   useEffect(() => {
     const loadSavedTrees = async () => {
@@ -65,10 +88,8 @@ export default function App() {
 
   const handleSaveAutomation = async (automation: StoredAutomation) => {
     if (selectedAutomation) {
-      // Update existing automation
       setAutomations((prev) => prev.map((a) => (a.id === automation.id ? automation : a)));
     } else {
-      // Add new automation
       setAutomations((prev) => [...prev, automation]);
     }
     try {
@@ -97,7 +118,9 @@ export default function App() {
             <Tabs
               value={currentView}
               onValueChange={(value: string) => {
-                if (value === "dashboard" || value === "builder") setCurrentView(value);
+                if (value === "dashboard" || value === "builder" || value === "settings") {
+                  setCurrentView(value as "dashboard" | "builder" | "settings");
+                }
               }}
             >
               <TabsList>
@@ -111,6 +134,16 @@ export default function App() {
                 </TabsTrigger>
               </TabsList>
             </Tabs>
+
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setCurrentView("settings")}
+              className={currentView === "settings" ? "bg-accent" : ""}
+              title="Settings"
+            >
+              <SettingsIcon className="h-5 w-5" />
+            </Button>
           </div>
         </div>
       </header>
@@ -133,6 +166,8 @@ export default function App() {
             onCancel={() => setCurrentView("dashboard")}
           />
         )}
+
+        {currentView === "settings" && <Settings />}
       </main>
     </div>
   );
