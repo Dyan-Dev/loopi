@@ -1,6 +1,12 @@
 import { Automation, StoredAutomation } from "./automation";
 import { AutomationStep } from "./steps";
 
+export interface AppSettings {
+  theme: "light" | "dark" | "system";
+  enableNotifications: boolean;
+  downloadPath?: string;
+}
+
 export interface ElectronAPI {
   openBrowser: (url: string) => Promise<void>;
   closeBrowser: () => Promise<void>;
@@ -17,12 +23,17 @@ export interface ElectronAPI {
   sendSelector: (selector: string) => void;
   cancelSelector: () => void;
   focusMainWindow?: () => void;
+  selectFolder: () => Promise<string | null>;
   tree: {
     list: () => Promise<Array<StoredAutomation> | []>;
     load: () => Promise<StoredAutomation | null>;
     save: (automation: StoredAutomation) => Promise<string>;
     delete: (automationId: string) => Promise<boolean>;
     loadExample: (fileName: string) => Promise<StoredAutomation>;
+  };
+  settings: {
+    load: () => Promise<AppSettings>;
+    save: (settings: AppSettings) => Promise<boolean>;
   };
 }
 

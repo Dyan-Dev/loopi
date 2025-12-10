@@ -1,6 +1,7 @@
 import { app, BrowserWindow } from "electron";
 import squirrelStartup from "electron-squirrel-startup";
 import { AutomationExecutor } from "./automationExecutor";
+import { setupDownloadHandler } from "./downloadManager";
 import { registerIPCHandlers } from "./ipcHandlers";
 import { SelectorPicker } from "./selectorPicker";
 import { initializeExamples } from "./treeStore";
@@ -15,6 +16,7 @@ import { WindowManager } from "./windowManager";
 if (process.platform === "linux") {
   app.commandLine.appendSwitch("no-sandbox");
   app.commandLine.appendSwitch("disable-gpu");
+  app.commandLine.appendSwitch("disable-dev-shm-usage");
 }
 
 // Handle auto-update installation on Windows (electron-squirrel-startup)
@@ -33,8 +35,9 @@ registerIPCHandlers(windowManager, executor, picker);
 /**
  * Application ready - create main window
  */
-app.on("ready", () => {
-  // Initialize examples storage from source files
+app.on("ready", async () => {
+  await new Promise(resolve => setTimeout(resolve, 100));
+  setupDownloadHandler();
   initializeExamples();
 
   const mainWindow = windowManager.createMainWindow();

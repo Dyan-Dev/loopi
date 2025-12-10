@@ -22,15 +22,13 @@ export const initializeExamples = (): void => {
   checkFolder(examplesStorageFolder);
 
   try {
-    // Try to load examples from source (development) or bundled location
     const possiblePaths = [
-      path.join(process.cwd(), "docs", "examples"), // Development
-      path.join(app.getAppPath(), "docs", "examples"), // Bundled app
-      path.join(app.getAppPath(), "..", "..", "docs", "examples"), // Fallback for packaged app
+      path.join(process.cwd(), "docs", "examples"),
+      path.join(app.getAppPath(), "docs", "examples"),
+      path.join(app.getAppPath(), "..", "..", "docs", "examples"),
     ];
 
     let examplesSourcePath: string | null = null;
-
     for (const possiblePath of possiblePaths) {
       if (fs.existsSync(possiblePath)) {
         examplesSourcePath = possiblePath;
@@ -39,18 +37,16 @@ export const initializeExamples = (): void => {
     }
 
     if (!examplesSourcePath) {
-      console.warn("No examples source folder found. Examples may not be available.");
+      console.warn("No examples source folder found");
       return;
     }
 
-    // Copy all JSON files from source to examples storage
     const files = fs.readdirSync(examplesSourcePath).filter((f) => f.endsWith(".json"));
 
     for (const file of files) {
       const sourcePath = path.join(examplesSourcePath, file);
       const destPath = path.join(examplesStorageFolder, file);
 
-      // Only copy if not already present
       if (!fs.existsSync(destPath)) {
         const content = fs.readFileSync(sourcePath, "utf-8");
         fs.writeFileSync(destPath, content, "utf-8");
@@ -66,7 +62,6 @@ export const initializeExamples = (): void => {
  */
 export const loadExample = (fileName: string): StoredAutomation => {
   checkFolder(examplesStorageFolder);
-
   const examplePath = path.join(examplesStorageFolder, fileName);
 
   if (!fs.existsSync(examplePath)) {

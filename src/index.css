@@ -189,3 +189,44 @@
 html {
   font-size: var(--font-size);
 }
+
+/* ReactFlow Dark Theme */
+.dark .react-flow {
+  background-color: oklch(0.145 0 0);
+}
+
+.dark .react-flow__background {
+  background-color: oklch(0.145 0 0);
+}
+
+.dark .react-flow__minimap {
+  background-color: oklch(0.205 0 0);
+}
+
+.dark .react-flow__controls {
+  background-color: oklch(0.205 0 0);
+  box-shadow: 0 0 0 1px oklch(0.269 0 0);
+}
+
+.dark .react-flow__controls-button {
+  background-color: oklch(0.269 0 0);
+  color: oklch(0.985 0 0);
+  border: none;
+}
+
+.dark .react-flow__controls-button:hover {
+  background-color: oklch(0.329 0 0);
+}
+
+.dark .react-flow__edge-path {
+  stroke: oklch(0.5 0 0);
+}
+
+.dark .react-flow__handle {
+  background-color: oklch(0.329 0 0);
+  border-color: oklch(0.5 0 0);
+}
+
+.dark .react-flow__handle.connectable:hover {
+  background-color: oklch(0.438 0 0);
+}
