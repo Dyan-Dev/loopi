@@ -57,7 +57,11 @@ export function DebugLogsPanel({ isDebugEnabled }: DebugLogsPanelProps) {
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [logStats, setLogStats] = useState<Record<string, number>>({});
   const [isDarkMode, setIsDarkMode] = useState(false);
-  const [exportStatus, setExportStatus] = useState<{ show: boolean; message: string; type: "success" | "error" }>({
+  const [exportStatus, setExportStatus] = useState<{
+    show: boolean;
+    message: string;
+    type: "success" | "error";
+  }>({
     show: false,
     message: "",
     type: "success",
@@ -228,8 +232,8 @@ export function DebugLogsPanel({ isDebugEnabled }: DebugLogsPanelProps) {
                 ? "bg-green-900/30 text-green-300 border-b border-green-700/50"
                 : "bg-green-100 text-green-800 border-b border-green-300"
               : isDarkMode
-              ? "bg-red-900/30 text-red-300 border-b border-red-700/50"
-              : "bg-red-100 text-red-800 border-b border-red-300"
+                ? "bg-red-900/30 text-red-300 border-b border-red-700/50"
+                : "bg-red-100 text-red-800 border-b border-red-300"
           }`}
         >
           {exportStatus.message}

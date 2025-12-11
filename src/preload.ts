@@ -39,8 +39,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
     getStatistics: () => ipcRenderer.invoke("debug:getStatistics"),
     setDebugMode: (enabled: boolean) => ipcRenderer.invoke("debug:setDebugMode", enabled),
   },
-  saveFile: (data: { filePath: string; content: string }) =>
-    ipcRenderer.invoke("file:save", data),
+  saveFile: (data: { filePath: string; content: string }) => ipcRenderer.invoke("file:save", data),
   selectFolder: () => ipcRenderer.invoke("dialog:selectFolder"),
   runStep: (step: AutomationStep) => ipcRenderer.invoke("browser:runStep", step),
   runConditional: (condition: unknown) => ipcRenderer.invoke("browser:runConditional", condition),

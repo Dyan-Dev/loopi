@@ -1,5 +1,5 @@
 import { dialog, ipcMain } from "electron";
-import { writeFileSync, mkdirSync } from "fs";
+import { mkdirSync, writeFileSync } from "fs";
 import { dirname } from "path";
 import { AutomationExecutor } from "./automationExecutor";
 import { debugLogger } from "./debugLogger";
@@ -240,23 +240,17 @@ export function registerIPCHandlers(
   /**
    * Save file to specified path (used for exporting logs)
    */
-  ipcMain.handle(
-    "file:save",
-    async (
-      _event,
-      data: { filePath: string; content: string }
-    ) => {
-      try {
-        const { filePath, content } = data;
-        // Create directory if it doesn't exist
-        mkdirSync(dirname(filePath), { recursive: true });
-        // Write file
-        writeFileSync(filePath, content, "utf-8");
-        return true;
-      } catch (error) {
-        console.error("Failed to save file:", error);
-        return false;
-      }
+  ipcMain.handle("file:save", async (_event, data: { filePath: string; content: string }) => {
+    try {
+      const { filePath, content } = data;
+      // Create directory if it doesn't exist
+      mkdirSync(dirname(filePath), { recursive: true });
+      // Write file
+      writeFileSync(filePath, content, "utf-8");
+      return true;
+    } catch (error) {
+      console.error("Failed to save file:", error);
+      return false;
     }
-  );
+  });
 }
