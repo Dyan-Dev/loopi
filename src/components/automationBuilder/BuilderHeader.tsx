@@ -1,4 +1,4 @@
-import { ArrowLeft, Download, Globe, Pause, Play, Save, Settings, Square } from "lucide-react";
+import { ArrowLeft, Bug, Download, Globe, Pause, Play, Save, Settings, Square } from "lucide-react";
 import React from "react";
 import { StoredAutomation } from "../../types";
 import { exportAutomation } from "../../utils/automationIO";
@@ -25,6 +25,8 @@ interface BuilderHeaderProps {
   onCancel: () => void;
   nodesLength: number;
   currentAutomation?: StoredAutomation;
+  isDebugEnabled: boolean;
+  setIsDebugEnabled: (v: boolean) => void;
 }
 
 /**
@@ -54,6 +56,8 @@ export const BuilderHeader: React.FC<BuilderHeaderProps> = ({
   onCancel,
   nodesLength,
   currentAutomation,
+  isDebugEnabled,
+  setIsDebugEnabled,
 }) => {
   const handleExport = () => {
     if (currentAutomation) {
@@ -74,6 +78,14 @@ export const BuilderHeader: React.FC<BuilderHeaderProps> = ({
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <Button
+            variant={isDebugEnabled ? "default" : "outline"}
+            onClick={() => setIsDebugEnabled(!isDebugEnabled)}
+            title="Toggle debug mode (Ctrl+Shift+D)"
+          >
+            <Bug className="h-4 w-4 mr-2" />
+            {isDebugEnabled ? "Debug: ON" : "Debug: OFF"}
+          </Button>
           <Dialog>
             <DialogTrigger asChild>
               <Button variant="outline">

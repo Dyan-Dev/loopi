@@ -52,7 +52,10 @@ export function YourAutomations({
       ) : (
         <div className="space-y-4">
           {automations.map((automation) => (
-            <Card key={automation.id} className="relative">
+            <Card
+              key={automation.id}
+              className="relative hover:shadow-lg transition-shadow hover:z-10 hover:bg-accent hover:border-accent"
+            >
               <CardHeader className="py-6">
                 <div className="flex items-start justify-between">
                   <div className="space-y-1">
@@ -79,6 +82,7 @@ export function YourAutomations({
                       size="sm"
                       onClick={() => onEditAutomation(automation)}
                       title="Edit"
+                      className="cursor-pointer"
                     >
                       <Edit className="h-4 w-4" />
                     </Button>
@@ -87,6 +91,7 @@ export function YourAutomations({
                       size="sm"
                       onClick={() => exportAutomation(automation)}
                       title="Export"
+                      className="cursor-pointer"
                     >
                       <Download className="h-4 w-4" />
                     </Button>
@@ -95,7 +100,7 @@ export function YourAutomations({
                       size="sm"
                       onClick={() => handleDelete(automation)}
                       title="Delete"
-                      className="text-destructive hover:text-destructive"
+                      className="text-destructive hover:text-destructive cursor-pointer"
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>

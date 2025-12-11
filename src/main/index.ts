@@ -36,7 +36,7 @@ registerIPCHandlers(windowManager, executor, picker);
  * Application ready - create main window
  */
 app.on("ready", async () => {
-  await new Promise(resolve => setTimeout(resolve, 100));
+  await new Promise((resolve) => setTimeout(resolve, 100));
   setupDownloadHandler();
   initializeExamples();
 

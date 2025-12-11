@@ -73,7 +73,10 @@ export function ExamplesComponent({ automations, onLoadExample }: ExamplesCompon
 
       <div className="grid gap-4">
         {EXAMPLES.map((example) => (
-          <Card key={example.id} className="hover:shadow-lg transition-shadow">
+          <Card
+            key={example.id}
+            className="hover:shadow-lg transition-shadow hover:z-10 hover:bg-accent hover:border-accent"
+          >
             <CardHeader className="py-6">
               <div className="flex items-start justify-between">
                 <div className="space-y-2 flex-1">
@@ -84,7 +87,7 @@ export function ExamplesComponent({ automations, onLoadExample }: ExamplesCompon
                 <Button
                   onClick={() => onLoadExample(example)}
                   size="sm"
-                  className="ml-4 self-start"
+                  className="ml-4 self-start cursor-pointer"
                 >
                   <Plus className="h-4 w-4 mr-2" />
                   Load Example

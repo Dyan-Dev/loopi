@@ -5,13 +5,7 @@ import { Button } from "./ui/button";
 import { Card } from "./ui/card";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "./ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Switch } from "./ui/switch";
 
 const applyTheme = (theme: "light" | "dark" | "system") => {
@@ -184,25 +178,18 @@ export function Settings() {
               <span className="font-semibold">Version:</span> 1.3.0
             </p>
             <p className="text-sm">
-              <span className="font-semibold">Platform:</span> Workflow
-              Automation
+              <span className="font-semibold">Platform:</span> Workflow Automation
             </p>
             <p className="text-sm">
               <span className="font-semibold">Developed by:</span> Loopi Team
-              <span className="text-xs text-muted-foreground ml-2">
-                (c) 2025
-              </span>
-              <span className="text-xs text-muted-foreground ml-2">
-                All rights reserved.
-              </span>
+              <span className="text-xs text-muted-foreground ml-2">(c) 2025</span>
+              <span className="text-xs text-muted-foreground ml-2">All rights reserved.</span>
             </p>
 
             <p className="text-sm">
               Loopi is an open-source project. Visit our GitHub repository at{" "}
-              <span className="text-primary font-medium">
-                https://github.com/Dyan-Dev/loopi
-              </span>{" "}
-              to contribute or report issues.
+              <span className="text-primary font-medium">https://github.com/Dyan-Dev/loopi</span> to
+              contribute or report issues.
             </p>
           </div>
         </Card>

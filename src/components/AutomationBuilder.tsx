@@ -45,6 +45,7 @@ export function AutomationBuilder({ automation, onSave, onCancel }: AutomationBu
   const [description, setDescription] = useState("");
   const [nodes, setNodes, onNodesChange] = useNodesState<NodeData>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<EdgeData>([]);
+  const [isDebugEnabled, setIsDebugEnabled] = useState(false);
   // State for tracking selected node
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   // State for tracking selected edges for deletion
@@ -83,17 +84,30 @@ export function AutomationBuilder({ automation, onSave, onCancel }: AutomationBu
     setSelectedEdgeIds([]);
   }, [selectedEdgeIds, setEdges]);
 
+  // Sync debug mode with main process
+  useEffect(() => {
+    window.electronAPI?.debug?.setDebugMode(isDebugEnabled).catch((error) => {
+      console.error("Failed to set debug mode:", error);
+    });
+  }, [isDebugEnabled]);
+
   // Keyboard shortcut: Delete/Backspace removes selected edges
   useEffect(() => {
     const keyHandler = (e: KeyboardEvent) => {
+      // Delete selected edges
       if ((e.key === "Delete" || e.key === "Backspace") && selectedEdgeIds.length > 0) {
         e.preventDefault();
         handleDeleteSelectedEdges();
       }
+      // Toggle debug mode with Ctrl+Shift+D
+      if (e.ctrlKey && e.shiftKey && e.key === "D") {
+        e.preventDefault();
+        setIsDebugEnabled(!isDebugEnabled);
+      }
     };
     window.addEventListener("keydown", keyHandler);
     return () => window.removeEventListener("keydown", keyHandler);
-  }, [selectedEdgeIds, handleDeleteSelectedEdges]);
+  }, [selectedEdgeIds, handleDeleteSelectedEdges, isDebugEnabled]);
 
   useEffect(() => {
     if (automation) {
@@ -212,6 +226,8 @@ export function AutomationBuilder({ automation, onSave, onCancel }: AutomationBu
         onCancel={onCancel}
         nodesLength={nodes.length}
         currentAutomation={currentAutomationForExport}
+        isDebugEnabled={isDebugEnabled}
+        setIsDebugEnabled={setIsDebugEnabled}
       />
 
       <BuilderCanvas
@@ -227,6 +243,7 @@ export function AutomationBuilder({ automation, onSave, onCancel }: AutomationBu
         handleNodeAction={handleNodeAction}
         selectedEdgeIds={selectedEdgeIds}
         onDeleteSelectedEdges={handleDeleteSelectedEdges}
+        isDebugEnabled={isDebugEnabled}
         setBrowserOpen={(arg?: boolean | string) => {
           if (typeof arg === "string") {
             openBrowser(arg);

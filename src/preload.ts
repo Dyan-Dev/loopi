@@ -32,6 +32,15 @@ contextBridge.exposeInMainWorld("electronAPI", {
     load: () => ipcRenderer.invoke("loopi:loadSettings"),
     save: (settings: unknown) => ipcRenderer.invoke("loopi:saveSettings", settings),
   },
+  debug: {
+    getLogs: () => ipcRenderer.invoke("debug:getLogs"),
+    clearLogs: () => ipcRenderer.invoke("debug:clearLogs"),
+    exportLogs: () => ipcRenderer.invoke("debug:exportLogs"),
+    getStatistics: () => ipcRenderer.invoke("debug:getStatistics"),
+    setDebugMode: (enabled: boolean) => ipcRenderer.invoke("debug:setDebugMode", enabled),
+  },
+  saveFile: (data: { filePath: string; content: string }) =>
+    ipcRenderer.invoke("file:save", data),
   selectFolder: () => ipcRenderer.invoke("dialog:selectFolder"),
   runStep: (step: AutomationStep) => ipcRenderer.invoke("browser:runStep", step),
   runConditional: (condition: unknown) => ipcRenderer.invoke("browser:runConditional", condition),

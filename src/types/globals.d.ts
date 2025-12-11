@@ -5,6 +5,7 @@ export interface AppSettings {
   theme: "light" | "dark" | "system";
   enableNotifications: boolean;
   downloadPath?: string;
+  debugMode?: boolean;
 }
 
 export interface ElectronAPI {
@@ -35,6 +36,14 @@ export interface ElectronAPI {
     load: () => Promise<AppSettings>;
     save: (settings: AppSettings) => Promise<boolean>;
   };
+  debug: {
+    getLogs: () => Promise<unknown[]>;
+    clearLogs: () => Promise<void>;
+    exportLogs: () => Promise<string>;
+    getStatistics: () => Promise<Record<string, number>>;
+    setDebugMode: (enabled: boolean) => Promise<void>;
+  };
+  saveFile: (data: { filePath: string; content: string }) => Promise<boolean>;
 }
 
 declare global {

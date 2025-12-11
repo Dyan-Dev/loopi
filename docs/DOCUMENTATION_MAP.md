@@ -10,6 +10,7 @@ Quick reference guide to all Loopi documentation files and how to use them.
 | [GETTING_STARTED.md](./GETTING_STARTED.md) | Installation, first automation, common patterns | ✅ Start here |
 | [VARIABLES.md](./VARIABLES.md) | Learn variable system, syntax, type detection | After first steps |
 | [STEPS_REFERENCE.md](./STEPS_REFERENCE.md) | Look up any step type with examples | When building automations |
+| [DEBUG_MODE.md](./DEBUG_MODE.md) | Debug logging, troubleshooting, performance monitoring | When debugging |
 | [examples/](./examples/) | Real-world automation examples to learn from | For inspiration |
 
 #### 👨‍💻 Developers (Want to modify Loopi)
@@ -46,6 +47,13 @@ Quick reference guide to all Loopi documentation files and how to use them.
 1. Read: [STEPS_REFERENCE.md](./STEPS_REFERENCE.md#extract-with-logic) - Extract With Logic step
 2. Reference: [VARIABLES.md](./VARIABLES.md#automatic-type-detection) - Type detection
 3. Learn: [GETTING_STARTED.md](./GETTING_STARTED.md#using-conditional-branches) - Condition workflow
+
+**...troubleshoot a failing automation**
+1. Enable: [DEBUG_MODE.md](./DEBUG_MODE.md#enabling-debug-mode) - Turn on debug logging
+2. Run: Execute the automation
+3. Review: [DEBUG_MODE.md](./DEBUG_MODE.md#understanding-log-output) - Analyze the logs
+4. Reference: [DEBUG_MODE.md](./DEBUG_MODE.md#troubleshooting-with-debug-logs) - Troubleshooting guide
+5. Export: [DEBUG_MODE.md](./DEBUG_MODE.md#exporting-logs) - Save logs for analysis
 
 **...add a new step type to Loopi**
 1. Read: [NEW_STEP_TEMPLATE.md](./NEW_STEP_TEMPLATE.md) - Complete step-by-step guide
@@ -97,6 +105,9 @@ docs/
 │   │
 │   ├── STEPS_REFERENCE.md
 │   │   └── All step types with JSON examples
+│   │
+│   ├── DEBUG_MODE.md
+│   │   └── Debug logging, troubleshooting, performance monitoring
 │   │
 │   └── examples/
 │       └── Real-world automation JSON files
@@ -181,6 +192,7 @@ DOCUMENTATION_GUIDE.md
 | How to use variables | [VARIABLES.md](./VARIABLES.md) |
 | Step type examples | [STEPS_REFERENCE.md](./STEPS_REFERENCE.md) |
 | How to build automation | [GETTING_STARTED.md](./GETTING_STARTED.md) |
+| Debug automation issues | [DEBUG_MODE.md](./DEBUG_MODE.md) |
 | System architecture | [ARCHITECTURE.md](./ARCHITECTURE.md) |
 | Adding new step type | [NEW_STEP_TEMPLATE.md](./NEW_STEP_TEMPLATE.md) |
 | Modifying components | [COMPONENT_GUIDE.md](./COMPONENT_GUIDE.md) |

@@ -1,5 +1,8 @@
 import { dialog, ipcMain } from "electron";
+import { writeFileSync, mkdirSync } from "fs";
+import { dirname } from "path";
 import { AutomationExecutor } from "./automationExecutor";
+import { debugLogger } from "./debugLogger";
 import { setupDownloadHandler } from "./downloadManager";
 import { SelectorPicker } from "./selectorPicker";
 import { loadSettings, saveSettings } from "./settingsStore";
@@ -193,4 +196,67 @@ export function registerIPCHandlers(
       return null;
     }
   });
+
+  /**
+   * Debug Mode: Get all logs
+   */
+  ipcMain.handle("debug:getLogs", async () => {
+    return debugLogger.getLogs();
+  });
+
+  /**
+   * Debug Mode: Clear all logs
+   */
+  ipcMain.handle("debug:clearLogs", async () => {
+    debugLogger.clearLogs();
+    return true;
+  });
+
+  /**
+   * Debug Mode: Export logs as JSON
+   */
+  ipcMain.handle("debug:exportLogs", async () => {
+    return debugLogger.exportLogs();
+  });
+
+  /**
+   * Debug Mode: Get logs statistics
+   */
+  ipcMain.handle("debug:getStatistics", async () => {
+    return debugLogger.getStatistics();
+  });
+
+  /**
+   * Debug Mode: Set debug mode enabled/disabled
+   */
+  ipcMain.handle("debug:setDebugMode", async (_event, enabled: boolean) => {
+    debugLogger.setEnabled(enabled);
+    if (enabled) {
+      debugLogger.info("Debug Mode", "Debug mode enabled by user");
+    }
+    return true;
+  });
+
+  /**
+   * Save file to specified path (used for exporting logs)
+   */
+  ipcMain.handle(
+    "file:save",
+    async (
+      _event,
+      data: { filePath: string; content: string }
+    ) => {
+      try {
+        const { filePath, content } = data;
+        // Create directory if it doesn't exist
+        mkdirSync(dirname(filePath), { recursive: true });
+        // Write file
+        writeFileSync(filePath, content, "utf-8");
+        return true;
+      } catch (error) {
+        console.error("Failed to save file:", error);
+        return false;
+      }
+    }
+  );
 }
