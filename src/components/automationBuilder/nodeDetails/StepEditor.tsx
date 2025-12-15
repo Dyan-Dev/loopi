@@ -11,7 +11,6 @@ import {
   ApiCallStep,
   ClickStep,
   ExtractStep,
-  ExtractWithLogicStep,
   ModifyVariableStep,
   NavigateStep,
   ScreenshotStep,
@@ -62,15 +61,6 @@ export default function StepEditor({
       case "extract":
         return (
           <ExtractStep
-            step={step}
-            id={id}
-            onUpdate={onUpdate}
-            onPickWithSetter={onPickWithSetter}
-          />
-        );
-      case "extractWithLogic":
-        return (
-          <ExtractWithLogicStep
             step={step}
             id={id}
             onUpdate={onUpdate}

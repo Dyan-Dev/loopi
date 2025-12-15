@@ -112,7 +112,6 @@ export default function useNodeActions({
       updates?: Partial<Node["data"]>
     ) => {
       if (type === "delete") {
-        if (sourceId === "1") return;
         setNodes((nds: ReactFlowNode[]) => {
           return nds.filter((node) => node.id !== sourceId);
         });
@@ -243,15 +242,6 @@ export default function useNodeActions({
                           description: `${label} step`,
                           selector: "",
                           storeKey: "",
-                        };
-                      case "extractWithLogic":
-                        return {
-                          id: newId,
-                          type: "extractWithLogic" as const,
-                          description: `${label} step`,
-                          selector: "",
-                          condition: "equals" as const,
-                          expectedValue: "",
                         };
                       case "apiCall":
                         return {

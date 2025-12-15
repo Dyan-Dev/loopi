@@ -1,35 +1,75 @@
 import { Plus } from "lucide-react";
-import { AutomationStep, stepTypes } from "../../types";
+import { useState } from "react";
+import { AutomationStep, stepCategories } from "../../types";
 import { Button } from "../ui/button";
 import { Card, CardContent, CardHeader } from "../ui/card";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "../ui/collapsible";
 
 interface AddStepPopupProps {
   onAdd: (type: AutomationStep["type"] | "conditional") => void;
 }
 
 const AddStepPopup: React.FC<AddStepPopupProps> = ({ onAdd }) => {
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set([]));
+
+  const toggleCategory = (category: string) => {
+    const newSet = new Set(expandedCategories);
+    if (newSet.has(category)) {
+      newSet.delete(category);
+    } else {
+      newSet.add(category);
+    }
+    setExpandedCategories(newSet);
+  };
+
   return (
-    <Card className="w-48">
+    <Card className="w-56">
       <CardHeader className="p-3">
-        <h3 className="text-sm font-medium">Add Next Step</h3>
+        <h3 className="text-sm font-medium">Add Step</h3>
       </CardHeader>
-      <CardContent className="p-3 space-y-1">
-        {stepTypes.map((stepType) => (
-          <Button
-            key={stepType.value}
-            variant="ghost"
-            className="w-full text-left justify-start text-xs py-1 px-2"
-            onClick={() => {
-              onAdd(stepType.value as AutomationStep["type"]);
-            }}
+      <CardContent className="p-3 space-y-2">
+        {stepCategories.map((categoryData) => (
+          <Collapsible
+            key={categoryData.category}
+            open={expandedCategories.has(categoryData.category)}
+            onOpenChange={() => toggleCategory(categoryData.category)}
           >
-            <stepType.icon className="h-4 w-4 mr-2" />
-            {stepType.label}
-          </Button>
+            <CollapsibleTrigger asChild>
+              <Button
+                variant="outline"
+                className="w-full text-left justify-between text-xs py-1 px-2 h-auto font-semibold"
+              >
+                <div className="flex items-center gap-2">
+                  {categoryData.icon && <categoryData.icon className="h-4 w-4" />}
+                  {categoryData.category}
+                </div>
+                <span className="text-xs">
+                  {expandedCategories.has(categoryData.category) ? "−" : "+"}
+                </span>
+              </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="space-y-1 pl-2 pt-1">
+              {categoryData.steps.map((stepType) => (
+                <Button
+                  key={stepType.value}
+                  variant="ghost"
+                  className="w-full text-left justify-start text-xs py-1 px-2 hover:bg-gray-100"
+                  onClick={() => {
+                    onAdd(stepType.value as AutomationStep["type"]);
+                  }}
+                >
+                  <stepType.icon className="h-4 w-4 mr-2" />
+                  {stepType.label}
+                </Button>
+              ))}
+            </CollapsibleContent>
+          </Collapsible>
         ))}
+
+        {/* Conditional section */}
         <Button
-          variant="ghost"
-          className="w-full text-left justify-start text-xs py-1 px-2"
+          variant="outline"
+          className="w-full text-left justify-start text-xs py-1 px-2 h-auto font-semibold"
           onClick={() => {
             onAdd("conditional");
           }}

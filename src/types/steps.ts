@@ -1,4 +1,4 @@
-import { Camera, Clock, Globe, Mouse, Type as TypeIcon, Zap } from "lucide-react";
+import { Camera, Clock, Code, Globe, Mouse, Type as TypeIcon, Zap } from "lucide-react";
 
 /**
  * Automation Step Type System
@@ -48,13 +48,6 @@ export interface StepExtract extends StepBase {
 }
 
 export type ComparisonOp = "equals" | "contains" | "greaterThan" | "lessThan";
-
-export interface StepExtractWithLogic extends StepBase {
-  type: "extractWithLogic";
-  selector: string;
-  condition: ComparisonOp;
-  expectedValue: string;
-}
 
 export interface StepApiCall extends StepBase {
   type: "apiCall";
@@ -115,7 +108,6 @@ export type AutomationStep =
   | StepWait
   | StepScreenshot
   | StepExtract
-  | StepExtractWithLogic
   | StepApiCall
   | StepScroll
   | StepSelectOption
@@ -124,8 +116,21 @@ export type AutomationStep =
   | StepSetVariable
   | StepModifyVariable;
 
-// UI meta for step type picker
-export const stepTypes = [
+// UI meta for step type picker - organized by category
+export interface StepTypeOption {
+  value: AutomationStep["type"];
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  description: string;
+}
+
+export interface StepCategory {
+  category: string;
+  icon?: React.ComponentType<{ className?: string }>;
+  steps: StepTypeOption[];
+}
+
+export const browserSteps: StepTypeOption[] = [
   { value: "navigate", label: "Navigate", icon: Globe, description: "Go to a URL" },
   { value: "click", label: "Click", icon: Mouse, description: "Click an element" },
   { value: "type", label: "Type", icon: TypeIcon, description: "Enter text" },
@@ -150,11 +155,20 @@ export const stepTypes = [
     description: "Scroll the page or to an element",
   },
   {
-    value: "apiCall",
-    label: "API Call",
-    icon: Zap,
-    description: "Make HTTP request (GET/POST)",
+    value: "hover",
+    label: "Hover",
+    icon: Mouse,
+    description: "Hover over an element",
   },
+  {
+    value: "fileUpload",
+    label: "File Upload",
+    icon: TypeIcon,
+    description: "Upload a file",
+  },
+];
+
+export const dataSteps: StepTypeOption[] = [
   {
     value: "setVariable",
     label: "Set Variable",
@@ -167,4 +181,34 @@ export const stepTypes = [
     icon: TypeIcon,
     description: "Increment / decrement / edit a variable",
   },
-] as const;
+];
+
+export const integrationSteps: StepTypeOption[] = [
+  {
+    value: "apiCall",
+    label: "API Call",
+    icon: Zap,
+    description: "Make HTTP request (GET/POST)",
+  },
+];
+
+export const stepCategories: StepCategory[] = [
+  {
+    category: "Browser",
+    icon: Globe,
+    steps: browserSteps,
+  },
+  {
+    category: "Data",
+    icon: TypeIcon,
+    steps: dataSteps,
+  },
+  {
+    category: "Integration",
+    icon: Code,
+    steps: integrationSteps,
+  },
+];
+
+// Flat array for backwards compatibility
+export const stepTypes = [...browserSteps, ...dataSteps, ...integrationSteps] as const;

@@ -132,23 +132,8 @@ export function AutomationBuilder({ automation, onSave, onCancel }: AutomationBu
         )
       );
     } else {
-      // Initialize with a default navigation node
-      const defaultNode: ReactFlowNode = {
-        id: "1",
-        type: "automationStep",
-        data: {
-          step: {
-            id: "1",
-            type: "navigate",
-            description: "Navigate to URL",
-            value: "https://",
-          },
-          onAddNode: handleNodeAction,
-          nodeRunning: false,
-        },
-        position: { x: 400, y: 50 },
-      };
-      setNodes([defaultNode]);
+      setNodes([]);
+      setEdges([]);
     }
   }, [automation, handleNodeAction]);
 

@@ -146,7 +146,7 @@ Stores extracted text as string:
 **Step 4: Type-safe comparison**
 ```json
 {
-  "type": "extractWithLogic",
+  "type": "conditional",
   "condition": "greaterThan",
   "expectedValue": "{{threshold}}",
   "parseAsNumber": true  // Numeric comparison (not string!)

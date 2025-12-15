@@ -1,7 +1,6 @@
 import { ApiCallStep } from "./ApiCallStep";
 import { ClickStep } from "./ClickStep";
 import { ExtractStep } from "./ExtractStep";
-import { ExtractWithLogicStep } from "./ExtractWithLogicStep";
 import { ModifyVariableStep } from "./ModifyVariableStep";
 import { NavigateStep } from "./NavigateStep";
 import { ScreenshotStep } from "./ScreenshotStep";
@@ -18,7 +17,6 @@ export {
   TypeStep,
   SelectOptionStep,
   ExtractStep,
-  ExtractWithLogicStep,
   WaitStep,
   ScreenshotStep,
   ScrollStep,

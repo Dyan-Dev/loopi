@@ -102,7 +102,7 @@ Extract text from an element and store in variable.
 Extract text and apply conditional logic.
 ```json
 {
-  "type": "extractWithLogic",
+  "type": "conditional",
   "selector": ".item-price",
   "condition": "greaterThan",
   "expectedValue": "100"

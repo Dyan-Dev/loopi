@@ -232,41 +232,6 @@ export class AutomationExecutor {
           break;
         }
 
-        case "extractWithLogic": {
-          const logicSelector = this.substituteVariables(step.selector);
-          debugLogger.debug(
-            "Extract with Logic",
-            `Extracting with condition from: ${logicSelector}`,
-            { condition: step.condition, expectedValue: step.expectedValue }
-          );
-          const extractedValue = await wc.executeJavaScript(
-            `document.querySelector(${JSON.stringify(logicSelector)})?.innerText || "";`
-          );
-          let conditionMet = false;
-
-          switch (step.condition) {
-            case "equals":
-              conditionMet = extractedValue === step.expectedValue;
-              break;
-            case "contains":
-              conditionMet = extractedValue.includes(step.expectedValue);
-              break;
-            case "greaterThan":
-              conditionMet = parseFloat(extractedValue) > parseFloat(step.expectedValue);
-              break;
-            case "lessThan":
-              conditionMet = parseFloat(extractedValue) < parseFloat(step.expectedValue);
-              break;
-          }
-
-          debugLogger.debug("Extract with Logic", `Condition result: ${conditionMet}`, {
-            extracted: extractedValue,
-            condition: step.condition,
-          });
-          result = { value: extractedValue, conditionMet };
-          break;
-        }
-
         case "apiCall": {
           try {
             const url = this.substituteVariables(step.url);

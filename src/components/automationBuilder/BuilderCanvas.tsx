@@ -81,12 +81,19 @@ export const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
             <MiniMap />
           </ReactFlow>
 
-          {selectedNodeId && (
+          {/* Show AddStepPopup when canvas is empty or when a node is selected */}
+          {(nodes.length === 0 || selectedNodeId) && (
             <div className="absolute left-4 top-1/2 -translate-y-1/2 z-50">
               <AddStepPopup
-                onAdd={(stepType: AutomationStep["type"]) =>
-                  handleNodeAction(selectedNodeId, stepType)
-                }
+                onAdd={(stepType: AutomationStep["type"]) => {
+                  if (selectedNodeId) {
+                    handleNodeAction(selectedNodeId, stepType);
+                  } else {
+                    // For empty canvas, create a root node with a unique ID
+                    const newNodeId = `node-${Date.now()}`;
+                    handleNodeAction(newNodeId, stepType);
+                  }
+                }}
               />
             </div>
           )}
