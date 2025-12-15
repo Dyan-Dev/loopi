@@ -22,7 +22,8 @@ export interface NodePosition {
  * A node can be either:
  * - An automation step (step is defined)
  * - A conditional node (conditionType, selector, expectedValue are defined)
- */ export interface NodeDataBase {
+ */
+export interface NodeDataBase {
   // When this node represents a step
   step?: AutomationStep;
   // When this node represents a conditional

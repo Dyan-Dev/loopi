@@ -14,6 +14,26 @@ Watch how to:
 - Compare values using conditions
 - Run the automation in a real browser window
 
+## 🚦 Getting Started
+
+### Installation
+
+```bash
+git clone https://github.com/Dyan-Dev/loopi.git
+cd loopi
+pnpm install
+pnpm start
+```
+
+For detailed setup instructions and your first automation, see [GETTING_STARTED.md](./docs/GETTING_STARTED.md).
+
+### Building
+
+```bash
+pnpm run make           # Package for current platform
+pnpm run publish        # Build and publish
+```
+
 ## 🚀 Features
 
 - **Visual Workflow Editor**: Drag-and-drop node graph using ReactFlow
@@ -182,26 +202,6 @@ Comprehensive documentation split into focused guides for different needs:
 
 ### Project Info
 - **[Contributing](./CONTRIBUTING.md)** - Contribution guidelines and code style (Biome)
-
-## 🚦 Getting Started
-
-### Installation
-
-```bash
-git clone https://github.com/Dyan-Dev/loopi.git
-cd loopi
-pnpm install
-pnpm start
-```
-
-For detailed setup instructions and your first automation, see [GETTING_STARTED.md](./docs/GETTING_STARTED.md).
-
-### Building
-
-```bash
-pnpm run make           # Package for current platform
-pnpm run publish        # Build and publish
-```
 
 ## 📚 Examples
 
