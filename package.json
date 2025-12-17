@@ -18,7 +18,7 @@
     "react-dev": "npx webpack serve --config webpack.dev.config.ts"
   },
   "keywords": [],
-  "license": "MIT",
+  "license": "O'Saasy",
   "repository": {
     "type": "git",
     "url": "https://github.com/Dyan-Dev/loopi.git"
