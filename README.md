@@ -1,5 +1,7 @@
 # Loopi - Visual Browser Automation Platform
 
+[![License: O'Saasy](https://img.shields.io/badge/license-O%27Saasy-blue.svg)](LICENSE)
+
 A powerful Electron-based desktop application for creating, managing, and executing browser automation workflows with a visual node-based editor.
 
 ## 🎬 Demo Video
@@ -281,7 +283,7 @@ For support, bug reports, or questions:
 
 ## 📄 License
 
-This project is licensed under the MIT License.
+This project is licensed under the O'Saasy License. See LICENSE for details.
 
 ## 🙏 Acknowledgments
 
