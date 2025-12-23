@@ -1,5 +1,7 @@
 # Loopi — Local‑First Typed Automation Platform
 
+[![License: O'Saasy](https://img.shields.io/badge/license-O%27Saasy-blue.svg)](LICENSE)
+
 ## What Is Loopi?
 
 Loopi is the open‑source, local‑first, typed automation platform that combines real browser automation with APIs and a visual, no‑code builder. It runs on Windows, macOS, and Linux, and uses a clean TypeScript architecture with Electron BrowserWindow + webContents control and auto‑typed variables to make building reliable automations simple and transparent.
@@ -21,10 +23,6 @@ Loopi is the open‑source, local‑first, typed automation platform that combin
 - **RPA suites:** Closed‑source and heavy‑weight; higher cost and vendor lock‑in.
 
 Loopi’s unique combo: a local desktop app + visual workflows + real browser control + API nodes + typed variables.
-
-[![License: O'Saasy](https://img.shields.io/badge/license-O%27Saasy-blue.svg)](LICENSE)
-
-A powerful Electron-based desktop application for creating, managing, and executing browser automation workflows with a visual node-based editor.
 
 ## 🎬 Demo Video
 
