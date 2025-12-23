@@ -1,4 +1,26 @@
-# Loopi - Visual Browser Automation Platform
+# Loopi — Local‑First Typed Automation Platform
+
+## What Is Loopi?
+
+Loopi is the open‑source, local‑first, typed automation platform that combines real browser automation with APIs and a visual, no‑code builder. It runs on Windows, macOS, and Linux, and uses a clean TypeScript architecture with Electron BrowserWindow + webContents control and auto‑typed variables to make building reliable automations simple and transparent.
+
+## About Loopi
+
+- **Local‑first:** Your workflows execute on your machine—no cloud lock‑in.
+- **Visual builder:** Drag‑and‑drop workflows with typed variables and clear data flow.
+- **Real browser control:** Electron BrowserWindow + webContents automation.
+- **API + browser:** Hybrid automation that fetches/transforms data and drives the UI.
+- **Typed data:** Automatic variable typing for safer, clearer pipelines.
+- **Open‑source:** Developer‑friendly TypeScript codebase and strong documentation.
+
+## How Loopi Is Different
+- **n8n:** API‑centric; lacks real browser control for UI‑heavy tasks.
+- **Zapier/Make:** Cloud‑only; not local‑first, limited privacy and offline use.
+- **Playwright/Puppeteer:** Code‑first libraries; no visual builder or typed workflows.
+- **Selenium IDE:** Fragile selectors; lower reliability on dynamic, complex sites.
+- **RPA suites:** Closed‑source and heavy‑weight; higher cost and vendor lock‑in.
+
+Loopi’s unique combo: a local desktop app + visual workflows + real browser control + API nodes + typed variables.
 
 [![License: O'Saasy](https://img.shields.io/badge/license-O%27Saasy-blue.svg)](LICENSE)
 
