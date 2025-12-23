@@ -29,21 +29,22 @@ export function ScrollStep({ step, id, onUpdate, onPickWithSetter }: StepProps) 
 
       {step.scrollType === "toElement" && (
         <div>
-          <Label className="text-xs">CSS Selector</Label>
+          <Label className="text-xs">Selector</Label>
           <div className="flex gap-2">
             <Input
               value={step.selector || ""}
-              placeholder="CSS Selector"
+              placeholder="Selector"
               onChange={(e) =>
                 onUpdate(id, "update", { step: { ...step, selector: e.target.value } })
               }
               className="text-xs flex-1"
             />
             <SelectorButton
-              onPick={async () =>
+              onPick={async (strategy) =>
                 onPickWithSetter &&
-                onPickWithSetter((selector) =>
-                  onUpdate(id, "update", { step: { ...step, selector } })
+                onPickWithSetter(
+                  (selector) => onUpdate(id, "update", { step: { ...step, selector } }),
+                  strategy
                 )
               }
             />

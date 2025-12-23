@@ -1,5 +1,7 @@
 import { Automation, StoredAutomation } from "./automation";
 import { AutomationStep } from "./steps";
+import type { LogEntry } from "@main/debugLogger";
+import type { ConditionalConfig, ConditionalResult } from "./conditions";
 
 export interface AppSettings {
   theme: "light" | "dark" | "system";
@@ -13,15 +15,19 @@ export interface ElectronAPI {
   closeBrowser: () => Promise<void>;
   navigate: (url: string) => Promise<void>;
   runStep: (step: AutomationStep) => Promise<unknown>;
-  runConditional: (
-    condition: unknown
-  ) => Promise<{ conditionResult: boolean; effectiveSelector?: string | null } | unknown>;
-  initVariables: (vars?: Record<string, string>) => Promise<void>;
-  getVariables: () => Promise<Record<string, string>>;
+  runConditional: (config: ConditionalConfig) => Promise<ConditionalResult>;
+  initVariables: (vars?: Record<string, unknown>) => Promise<void>;
+  getVariables: () => Promise<Record<string, unknown>>;
   onBrowserClosed: (callback: () => void) => void;
   removeBrowserClosed?: () => void;
-  pickSelector: (url: string) => Promise<string | null>;
-  sendSelector: (selector: string) => void;
+  pickSelector: (
+    url: string,
+    options?: {
+      strategy?: "css" | "xpath" | "dataAttr" | "id" | "aria";
+      dataAttrKeys?: string[];
+    }
+  ) => Promise<string | null>;
+  sendSelector: (selector: string | { selector: string; tagName?: string }) => void;
   cancelSelector: () => void;
   focusMainWindow?: () => void;
   selectFolder: () => Promise<string | null>;
@@ -37,7 +43,7 @@ export interface ElectronAPI {
     save: (settings: AppSettings) => Promise<boolean>;
   };
   debug: {
-    getLogs: () => Promise<unknown[]>;
+    getLogs: () => Promise<LogEntry[]>;
     clearLogs: () => Promise<void>;
     exportLogs: () => Promise<string>;
     getStatistics: () => Promise<Record<string, number>>;
@@ -49,7 +55,7 @@ export interface ElectronAPI {
 declare global {
   interface Window {
     electronAPI?: ElectronAPI;
-    automation?: { variables?: Record<string, string> };
+    automation?: { variables?: Record<string, unknown> };
   }
 }
 

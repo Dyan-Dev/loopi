@@ -1,6 +1,6 @@
+import type { AppSettings } from "@app-types/globals";
 import { FolderOpen, Moon, Sun } from "lucide-react";
 import { useEffect, useState } from "react";
-import type { AppSettings } from "../types/globals";
 import { Button } from "./ui/button";
 import { Card } from "./ui/card";
 import { Input } from "./ui/input";

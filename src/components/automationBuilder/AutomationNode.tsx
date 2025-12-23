@@ -1,5 +1,5 @@
+import { NodeData } from "@app-types";
 import { Handle, NodeProps, Position } from "reactflow";
-import { NodeData } from "../../types";
 
 const AutomationNode = ({ id, data, selected = false }: NodeProps<NodeData>) => {
   const isConditional = !data.step;
@@ -25,7 +25,7 @@ const AutomationNode = ({ id, data, selected = false }: NodeProps<NodeData>) => 
 
   return (
     <div className="relative">
-      {id !== "1" && <Handle type="target" position={Position.Top} style={{ top: -4 }} />}
+      <Handle type="target" position={Position.Top} style={{ top: -5 }} />
       <div
         className={`w-24 h-12 rounded-full flex items-center justify-center border-2 shadow-sm text-xs font-medium capitalize text-center cursor-pointer ${getNodeStyles()}`}
       >

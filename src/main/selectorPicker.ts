@@ -49,6 +49,7 @@ export class SelectorPicker {
    */
   async pickSelector(
     browserWindow: BrowserWindow,
+    options?: { strategy?: "css" | "xpath" | "dataAttr" | "id" | "aria"; dataAttrKeys?: string[] },
     timeout: number = 60000
   ): Promise<string | null> {
     return new Promise<string | null>((resolve) => {
@@ -63,14 +64,32 @@ export class SelectorPicker {
         ipcMain.removeListener("selector-cancel", onCancel);
       };
 
-      const onPick = (_event: Electron.IpcMainEvent, selector: string) => {
+      const onPick = (
+        _event: Electron.IpcMainEvent,
+        payload: string | { selector: string; tagName?: string }
+      ) => {
         cleanup();
+        const selector = typeof payload === "string" ? payload : payload.selector;
+        const tagName = typeof payload === "string" ? undefined : payload.tagName?.toLowerCase();
 
         // Handle select elements specially to capture option data
-        if (selector.includes("select")) {
+        if (tagName === "select") {
           const optionDataScript = `
             (() => {
-              const select = document.querySelector("${selector}");
+              let select;
+              try {
+                // Try CSS first
+                select = document.querySelector(${JSON.stringify(selector)});
+              } catch {}
+              if (!select) {
+                try {
+                  // Try XPath if CSS failed
+                  const result = document.evaluate(${JSON.stringify(
+                    selector
+                  )}, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null);
+                  select = result.singleNodeValue;
+                } catch {}
+              }
               if (select) {
                 return {
                   optionIndex: select.selectedIndex,
@@ -108,7 +127,7 @@ export class SelectorPicker {
       ipcMain.once("selector-cancel", onCancel);
 
       // injectPickerScript returns a promise; handle errors without using async executor
-      this.injectPickerScript(browserWindow).catch((err) => {
+      this.injectPickerScript(browserWindow, options).catch((err) => {
         console.error("Failed to inject picker script:", err);
         cleanup();
         resolve(null);
@@ -120,10 +139,15 @@ export class SelectorPicker {
    * Injects the interactive selector picker UI into the page
    * Users can hover to highlight elements and click to select them
    */
-  private async injectPickerScript(browserWindow: BrowserWindow): Promise<void> {
+  private async injectPickerScript(
+    browserWindow: BrowserWindow,
+    options?: { strategy?: "css" | "xpath" | "dataAttr" | "id" | "aria"; dataAttrKeys?: string[] }
+  ): Promise<void> {
+    const opts = options || {};
     const pickerScript = `
       (function() {
         try {
+          var __opts = ${JSON.stringify({ strategy: opts.strategy || "css", dataAttrKeys: opts.dataAttrKeys || ["data-testid", "data-test", "data-qa", "data-testId", "data-cy", "data-test-id"] })};
           function getUniqueSelector(parent, el) {
             if (!parent || !el) return el.tagName.toLowerCase();
             var tag = el.tagName.toLowerCase();
@@ -160,6 +184,72 @@ export class SelectorPicker {
             return parts.join(' > ');
           }
 
+          function generateXPath(el) {
+            if (!el || el.nodeType !== 1) return '';
+            if (el.id) {
+              return '//*[@id="' + el.id.replace(/"/g, '\\"') + '"]';
+            }
+            var parts = [];
+            for (; el && el.nodeType === 1; el = el.parentNode) {
+              var index = 1;
+              var sib = el.previousSibling;
+              for (; sib; sib = sib.previousSibling) {
+                if (sib.nodeType === 1 && sib.nodeName === el.nodeName) index++;
+              }
+              parts.unshift(el.nodeName.toLowerCase() + '[' + index + ']');
+            }
+            return '//' + parts.join('/');
+          }
+
+          function generateDataAttrSelector(el, keys) {
+            var current = el;
+            while (current && current.nodeType === 1) {
+              for (var i=0;i<keys.length;i++) {
+                var key = keys[i];
+                var val = current.getAttribute && current.getAttribute(key);
+                if (val) {
+                  var selector = '[' + key + '="' + String(val).replace(/"/g, '\\"') + '"]';
+                  try {
+                    if (document.querySelectorAll(selector).length === 1) return selector;
+                  } catch (e) {}
+                  return selector;
+                }
+              }
+              current = current.parentElement;
+            }
+            return generateCSSSelector(el);
+          }
+
+          function generateAriaSelector(el) {
+            if (!el || el.nodeType !== 1) return '';
+            var ariaLabel = el.getAttribute && el.getAttribute('aria-label');
+            if (ariaLabel) {
+              var sel = '[aria-label="' + String(ariaLabel).replace(/"/g, '\\"') + '"]';
+              try { if (document.querySelectorAll(sel).length === 1) return sel; } catch(e) {}
+              return sel;
+            }
+            var role = el.getAttribute && el.getAttribute('role');
+            if (role) {
+              return '[role="' + String(role).replace(/"/g, '\\"') + '"]';
+            }
+            return generateCSSSelector(el);
+          }
+
+          function generateIdSelector(el) {
+            if (el && el.id) return '#' + el.id;
+            return generateCSSSelector(el);
+          }
+
+          function chooseSelector(el) {
+            var strategy = (__opts.strategy || 'css');
+            if (strategy === 'css') return generateCSSSelector(el);
+            if (strategy === 'xpath') return generateXPath(el);
+            if (strategy === 'dataAttr') return generateDataAttrSelector(el, __opts.dataAttrKeys || []);
+            if (strategy === 'aria') return generateAriaSelector(el);
+            if (strategy === 'id') return generateIdSelector(el);
+            return generateCSSSelector(el);
+          }
+
           var style = document.createElement('style');
           style.id = 'picker-style';
           style.textContent = '* { transition: outline 0.2s ease !important; } .picker-highlight { outline: 3px solid #ff0000 !important; background: rgba(255, 0, 0, 0.1) !important; z-index: 999999 !important; } #picker-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 999998; display: flex; align-items: center; justify-content: center; color: white; font-size: 18px; font-family: sans-serif; pointer-events: none; }';
@@ -167,7 +257,7 @@ export class SelectorPicker {
 
           var overlay = document.createElement('div');
           overlay.id = 'picker-overlay';
-          overlay.textContent = 'Click on the element to select its CSS selector. Press Escape to cancel.';
+          overlay.textContent = 'Click to select (' + (__opts.strategy || 'css') + '). Press Escape to cancel.';
           document.body.appendChild(overlay);
 
           function handleMouseOver(e) {
@@ -187,12 +277,17 @@ export class SelectorPicker {
             
             var el = e.target;
             el.classList.remove('picker-highlight');
-            var selectorString = generateCSSSelector(el);
+            var selectorString = chooseSelector(el);
             
             cleanup();
             
             if (window.electronAPI && window.electronAPI.sendSelector) {
-              window.electronAPI.sendSelector(selectorString);
+              try {
+                window.electronAPI.sendSelector({ selector: selectorString, tagName: el.tagName.toLowerCase() });
+              } catch (e) {
+                // fallback to raw string
+                window.electronAPI.sendSelector(selectorString);
+              }
             }
           }
           

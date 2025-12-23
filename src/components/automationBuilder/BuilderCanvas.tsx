@@ -1,3 +1,4 @@
+import type { AutomationStep, NodeData, ReactFlowEdge, ReactFlowNode } from "@app-types";
 import React from "react";
 import type { NodeTypes } from "reactflow";
 import ReactFlow, {
@@ -9,7 +10,6 @@ import ReactFlow, {
   OnNodesChange,
   OnSelectionChangeParams,
 } from "reactflow";
-import type { AutomationStep, NodeData, ReactFlowEdge, ReactFlowNode } from "../../types";
 import "reactflow/dist/style.css";
 import AddStepPopup from "./AddStepPopup";
 import DebugLogsPanel from "./DebugLogsPanel";

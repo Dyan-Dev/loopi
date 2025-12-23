@@ -1,6 +1,6 @@
+import type { ConditionalResult, ReactFlowEdge, ReactFlowNode } from "@app-types";
 import type { Dispatch, SetStateAction } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { ReactFlowEdge, ReactFlowNode } from "../types";
 
 interface UseExecutionArgs {
   nodes: ReactFlowNode[];
@@ -86,11 +86,9 @@ export default function useExecution({ nodes, edges, setNodes }: UseExecutionArg
           parseAsNumber: node.data.parseAsNumber,
         };
 
-        type ConditionalResponse = { conditionResult?: boolean; effectiveSelector?: string | null };
-        const res = await window.electronAPI!.runConditional(conditionParams);
-        const response = res as ConditionalResponse;
+        const response: ConditionalResult =
+          await window.electronAPI!.runConditional(conditionParams);
         const conditionResult = response.conditionResult;
-        const _effectiveSelector = response.effectiveSelector; // Keep as unused variable
 
         return {
           conditionResult,
@@ -114,7 +112,7 @@ export default function useExecution({ nodes, edges, setNodes }: UseExecutionArg
     try {
       // Collect automation-level variables from nodes or a top-level automation export
       // For now, look for a node with type 'automationVars' or fall back to none
-      const vars: Record<string, string> | undefined = window.automation?.variables;
+      const vars: Record<string, unknown> | undefined = window.automation?.variables;
       if (window.electronAPI?.initVariables) {
         await window.electronAPI.initVariables(vars);
       }
@@ -155,8 +153,50 @@ export default function useExecution({ nodes, edges, setNodes }: UseExecutionArg
         }
       };
 
-      await executeGraph("1");
-      alert("Automation completed successfully!");
+      // Determine dynamic start nodes robustly using indegree analysis
+      const indegree = new Map<string, number>();
+      nodes.forEach((n) => indegree.set(n.id, 0));
+      edges.forEach((e) => {
+        const t = e.target;
+        if (t && indegree.has(t)) {
+          indegree.set(t, (indegree.get(t) || 0) + 1);
+        }
+      });
+
+      // Optional explicit start override via node.data.isStart === true
+      const explicitStarts = nodes.filter(
+        (n) => (n.data as { isStart?: boolean })?.isStart === true
+      );
+
+      // Primary: zero-indegree nodes; if explicit starts exist, prefer them
+      const startNodes =
+        explicitStarts.length > 0
+          ? explicitStarts
+          : nodes.filter((n) => (indegree.get(n.id) || 0) === 0);
+
+      if (startNodes.length === 0) {
+        // Fallback: choose nodes with minimal indegree instead of failing
+        let minIndegree = Infinity;
+        nodes.forEach((n) => {
+          const d = indegree.get(n.id) || 0;
+          if (d < minIndegree) minIndegree = d;
+        });
+        const fallbackStarts = nodes.filter((n) => (indegree.get(n.id) || 0) === minIndegree);
+        console.warn("No zero-indegree nodes; falling back to minimal indegree.", {
+          indegree: Object.fromEntries(indegree.entries()),
+          edges,
+          nodes: nodes.map((n) => ({ id: n.id, type: n.type })),
+        });
+        for (const startNode of fallbackStarts) {
+          await executeGraph(startNode.id);
+        }
+        alert("Automation completed successfully!");
+      } else {
+        for (const startNode of startNodes) {
+          await executeGraph(startNode.id);
+        }
+        alert("Automation completed successfully!");
+      }
     } catch (error) {
       console.error("Automation failed:", error);
       alert("Automation failed. Check console for details.");

@@ -1,6 +1,6 @@
+import { AutomationStep, stepCategories } from "@app-types";
 import { Plus } from "lucide-react";
 import { useState } from "react";
-import { AutomationStep, stepCategories } from "../../types";
 import { Button } from "../ui/button";
 import { Card, CardContent, CardHeader } from "../ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "../ui/collapsible";

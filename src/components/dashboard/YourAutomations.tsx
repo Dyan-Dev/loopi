@@ -1,6 +1,6 @@
+import type { StoredAutomation } from "@app-types";
+import { exportAutomation } from "@utils/automationIO";
 import { Download, Edit, Plus, Trash2 } from "lucide-react";
-import type { StoredAutomation } from "../../types";
-import { exportAutomation } from "../../utils/automationIO";
 import { Button } from "../ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
 import { formatDateTime } from "../ui/utils";

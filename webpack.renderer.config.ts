@@ -9,5 +9,12 @@ export const rendererConfig: Configuration = {
   plugins,
   resolve: {
     extensions: [".js", ".ts", ".jsx", ".tsx", ".css"],
+    alias: {
+      "@src": __dirname + "/src",
+      "@components": __dirname + "/src/components",
+      "@hooks": __dirname + "/src/hooks",
+      "@app-types": __dirname + "/src/types",
+      "@utils": __dirname + "/src/utils",
+    },
   },
 };
