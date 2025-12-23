@@ -13,7 +13,14 @@
     "resolveJsonModule": true,
     "jsx": "react-jsx",
     "paths": {
-      "*": ["node_modules/*"]
+      "*": ["node_modules/*"],
+      "@src/*": ["src/*"],
+      "@components/*": ["src/components/*"],
+      "@hooks/*": ["src/hooks/*"],
+      "@main/*": ["src/main/*"],
+      "@app-types/*": ["src/types/*"],
+      "@app-types": ["src/types/index.ts"],
+      "@utils/*": ["src/utils/*"]
     }
   },
   "include": ["src/**/*"]

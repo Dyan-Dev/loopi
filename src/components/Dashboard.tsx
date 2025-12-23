@@ -1,7 +1,7 @@
+import type { StoredAutomation } from "@app-types";
+import { importAutomation } from "@utils/automationIO";
 import { BookOpen, Plus, Upload } from "lucide-react";
 import { useState } from "react";
-import type { StoredAutomation } from "../types";
-import { importAutomation } from "../utils/automationIO";
 import { EXAMPLES, ExamplesComponent } from "./dashboard/ExamplesComponent";
 import { YourAutomations } from "./dashboard/YourAutomations";
 import { Button } from "./ui/button";

@@ -1,8 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { OnSelectionChangeParams, useEdgesState, useNodesState } from "reactflow";
 import "reactflow/dist/style.css";
-import useExecution from "../hooks/useExecution";
-import useNodeActions from "../hooks/useNodeActions";
 import type {
   Automation,
   AutomationStep,
@@ -13,7 +11,9 @@ import type {
   ReactFlowEdge,
   ReactFlowNode,
   StoredAutomation,
-} from "../types";
+} from "@app-types";
+import useExecution from "@hooks/useExecution";
+import useNodeActions from "@hooks/useNodeActions";
 import AutomationNode from "./automationBuilder/AutomationNode";
 import BuilderCanvas from "./automationBuilder/BuilderCanvas";
 import BuilderHeader from "./automationBuilder/BuilderHeader";

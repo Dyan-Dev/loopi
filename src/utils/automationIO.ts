@@ -1,4 +1,4 @@
-import { StoredAutomation } from "../types";
+import { StoredAutomation } from "@app-types";
 
 /**
  * Export automation to JSON file

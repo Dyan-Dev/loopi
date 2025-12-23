@@ -129,22 +129,29 @@ export function registerIPCHandlers(
   /**
    * Initiates element selector picking mode
    */
-  ipcMain.handle("pick-selector", async (_event, url: string) => {
-    const mainWindow = windowManager.getMainWindow();
-    if (!mainWindow) {
-      throw new Error("Main window not available");
+  ipcMain.handle(
+    "pick-selector",
+    async (
+      _event,
+      url: string,
+      options?: { strategy?: "css" | "xpath" | "dataAttr" | "id" | "aria"; dataAttrKeys?: string[] }
+    ) => {
+      const mainWindow = windowManager.getMainWindow();
+      if (!mainWindow) {
+        throw new Error("Main window not available");
+      }
+
+      // Ensure browser window is open and ready
+      const browserWindow = await windowManager.ensureBrowserWindow(url, () => {
+        mainWindow.webContents.send("browser:closed");
+      });
+
+      picker.injectNavigationBar(browserWindow);
+      browserWindow.focus();
+
+      return await picker.pickSelector(browserWindow, options);
     }
-
-    // Ensure browser window is open and ready
-    const browserWindow = await windowManager.ensureBrowserWindow(url, () => {
-      mainWindow.webContents.send("browser:closed");
-    });
-
-    picker.injectNavigationBar(browserWindow);
-    browserWindow.focus();
-
-    return await picker.pickSelector(browserWindow);
-  });
+  );
 
   /**
    * Initialize examples storage from source files

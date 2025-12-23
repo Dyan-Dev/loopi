@@ -4,7 +4,7 @@
  * Routes to appropriate step-specific editor based on step type.
  * Each step type has its own component with custom fields and validation.
  */
-import type { ReactFlowNode } from "../../../types";
+import type { ReactFlowNode } from "@app-types";
 import { Input } from "../../ui/input";
 import { Label } from "../../ui/label";
 import {
@@ -32,7 +32,10 @@ export default function StepEditor({
     type: "update",
     updates?: import("./stepTypes/types").UpdatePayload
   ) => void;
-  onPickWithSetter: (setter: (s: string) => void) => Promise<void>;
+  onPickWithSetter: (
+    setter: (s: string) => void,
+    strategy?: "css" | "xpath" | "dataAttr" | "id" | "aria"
+  ) => Promise<void>;
 }) {
   const { data, id } = node;
   const { step } = data;

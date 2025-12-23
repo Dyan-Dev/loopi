@@ -1,4 +1,3 @@
-import React from "react";
 /**
  * ConditionEditor - Configuration UI for conditional nodes
  *
@@ -6,7 +5,8 @@ import React from "react";
  * - elementExists: Check if element is present in DOM
  * - valueMatches: Compare element text content against expected value
  */
-import type { ReactFlowNode } from "../../../types";
+import type { ReactFlowNode } from "@app-types";
+import React from "react";
 import { Input } from "../../ui/input";
 import { Label } from "../../ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../ui/select";
@@ -24,7 +24,10 @@ export default function ConditionEditor({
     type: "update",
     updates?: import("./stepTypes/types").UpdatePayload
   ) => void;
-  onPickWithSetter: (setter: (s: string) => void) => Promise<void>;
+  onPickWithSetter: (
+    setter: (s: string) => void,
+    strategy?: "css" | "xpath" | "dataAttr" | "id" | "aria"
+  ) => Promise<void>;
 }) {
   const { data, id } = node;
 
@@ -48,17 +51,17 @@ export default function ConditionEditor({
 
       {["elementExists", "valueMatches"].includes(data.conditionType || "") && (
         <div className="space-y-2">
-          <Label className="text-xs">CSS Selector</Label>
+          <Label className="text-xs">Selector</Label>
           <div className="flex gap-2">
             <Input
               value={data.selector || ""}
               onChange={(e) => onUpdate(id, "update", { selector: e.target.value })}
-              placeholder="CSS Selector"
+              placeholder="Selector"
               className="text-xs flex-1"
             />
             <SelectorButton
-              onPick={async () =>
-                onPickWithSetter((selector) => onUpdate(id, "update", { selector }))
+              onPick={async (strategy) =>
+                onPickWithSetter((selector) => onUpdate(id, "update", { selector }), strategy)
               }
             />
           </div>

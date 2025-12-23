@@ -1,5 +1,5 @@
+import type { StoredAutomation } from "@app-types";
 import { Plus } from "lucide-react";
-import type { StoredAutomation } from "../../types";
 import { Button } from "../ui/button";
 import { Card, CardDescription, CardHeader, CardTitle } from "../ui/card";
 

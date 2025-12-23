@@ -1,7 +1,7 @@
+import type { AppSettings } from "@app-types/globals";
 import { app } from "electron";
 import fs from "fs";
 import path from "path";
-import type { AppSettings } from "../types/globals";
 
 const defaultSettings: AppSettings = {
   theme: "light",

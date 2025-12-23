@@ -1,7 +1,7 @@
+import { AutomationStep } from "@app-types/steps";
 import axios from "axios";
 import { BrowserWindow } from "electron";
 import fs from "fs";
-import { AutomationStep } from "../types/steps";
 import { debugLogger } from "./debugLogger";
 
 /**
@@ -169,9 +169,17 @@ export class AutomationExecutor {
         case "click": {
           const clickSelector = this.substituteVariables(step.selector);
           debugLogger.debug("Click", `Clicking element with selector: ${clickSelector}`);
-          await wc.executeJavaScript(
-            `document.querySelector(${JSON.stringify(clickSelector)})?.click();`
-          );
+          await wc.executeJavaScript(`
+            (() => {
+              const sel = ${JSON.stringify(clickSelector)};
+              let el = null;
+              try { el = document.querySelector(sel); } catch(e) {}
+              if (!el) {
+                try { const r = document.evaluate(sel, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null); el = r.singleNodeValue; } catch(e2) {}
+              }
+              if (el) el.click();
+            })();
+          `);
           result = undefined;
           break;
         }
@@ -182,7 +190,12 @@ export class AutomationExecutor {
           debugLogger.debug("Type", `Typing into selector: ${typeSelector}`, { value: typeValue });
           await wc.executeJavaScript(`
             (() => {
-              const el = document.querySelector("${typeSelector}");
+              const sel = ${JSON.stringify(typeSelector)};
+              let el = null;
+              try { el = document.querySelector(sel); } catch(e) {}
+              if (!el) {
+                try { const r = document.evaluate(sel, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null); el = r.singleNodeValue; } catch(e2) {}
+              }
               if (el) {
                 el.focus();
                 el.value = ${JSON.stringify(typeValue)};
@@ -219,9 +232,17 @@ export class AutomationExecutor {
         case "extract": {
           const extractSelector = this.substituteVariables(step.selector);
           debugLogger.debug("Extract", `Extracting text from selector: ${extractSelector}`);
-          const extracted = await wc.executeJavaScript(
-            `document.querySelector(${JSON.stringify(extractSelector)})?.innerText || "";`
-          );
+          const extracted = await wc.executeJavaScript(`
+            (() => {
+              const sel = ${JSON.stringify(extractSelector)};
+              let el = null;
+              try { el = document.querySelector(sel); } catch(e) {}
+              if (!el) {
+                try { const r = document.evaluate(sel, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null); el = r.singleNodeValue; } catch(e2) {}
+              }
+              return el?.innerText || "";
+            })();
+          `);
           if (step.storeKey) {
             this.variables[step.storeKey] = extracted;
             debugLogger.debug("Extract", `Stored extracted value in variable: ${step.storeKey}`, {
@@ -281,8 +302,13 @@ export class AutomationExecutor {
             debugLogger.debug("Scroll", `Scrolling to element: ${scrollSelector}`);
             await wc.executeJavaScript(`
               (() => {
-                const el = document.querySelector(${JSON.stringify(scrollSelector)});
-                if (el) el.scrollIntoView({ behavior: "smooth" });
+                const sel = ${JSON.stringify(scrollSelector)};
+                let el = null;
+                try { el = document.querySelector(sel); } catch(e) {}
+                if (!el) {
+                  try { const r = document.evaluate(sel, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null); el = r.singleNodeValue; } catch(e2) {}
+                }
+                if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
               })();
             `);
           } else if (step.scrollType === "byAmount") {
@@ -301,7 +327,12 @@ export class AutomationExecutor {
           });
           await wc.executeJavaScript(`
             (() => {
-              const select = document.querySelector(${JSON.stringify(selectSelector)});
+              const sel = ${JSON.stringify(selectSelector)};
+              let select = null;
+              try { select = document.querySelector(sel); } catch(e) {}
+              if (!select) {
+                try { const r = document.evaluate(sel, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null); select = r.singleNodeValue; } catch(e2) {}
+              }
               if (select) {
                 ${step.optionValue ? `select.value = ${JSON.stringify(optionValue)};` : `select.selectedIndex = ${step.optionIndex || 0};`}
                 select.dispatchEvent(new Event('change', { bubbles: true }));
@@ -320,7 +351,12 @@ export class AutomationExecutor {
           });
           await wc.executeJavaScript(`
             (() => {
-              const input = document.querySelector(${JSON.stringify(fuSelector)});
+              const sel = ${JSON.stringify(fuSelector)};
+              let input = null;
+              try { input = document.querySelector(sel); } catch(e) {}
+              if (!input) {
+                try { const r = document.evaluate(sel, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null); input = r.singleNodeValue; } catch(e2) {}
+              }
               if (input) {
                 const file = new File([""], ${JSON.stringify(fuFilePath)}, { type: "text/plain" });
                 const dataTransfer = new DataTransfer();
@@ -339,7 +375,12 @@ export class AutomationExecutor {
           debugLogger.debug("Hover", `Hovering over element: ${hoverSelector}`);
           await wc.executeJavaScript(`
             (() => {
-              const el = document.querySelector(${JSON.stringify(hoverSelector)});
+              const sel = ${JSON.stringify(hoverSelector)};
+              let el = null;
+              try { el = document.querySelector(sel); } catch(e) {}
+              if (!el) {
+                try { const r = document.evaluate(sel, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null); el = r.singleNodeValue; } catch(e2) {}
+              }
               if (el) {
                 const event = new MouseEvent('mouseover', { bubbles: true });
                 el.dispatchEvent(event);
@@ -480,16 +521,32 @@ export class AutomationExecutor {
     let conditionResult = false;
 
     if (conditionType === "elementExists") {
-      conditionResult = await wc.executeJavaScript(
-        `!!document.querySelector(${JSON.stringify(runtimeSelector)});`
-      );
+      conditionResult = await wc.executeJavaScript(`
+        (() => {
+          const sel = ${JSON.stringify(runtimeSelector)};
+          let el = null;
+          try { el = document.querySelector(sel); } catch(e) {}
+          if (!el) {
+            try { const r = document.evaluate(sel, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null); el = r.singleNodeValue; } catch(e2) {}
+          }
+          return !!el;
+        })();
+      `);
       debugLogger.debug("Conditional", `Element ${conditionResult ? "found" : "not found"}`, {
         selector: runtimeSelector,
       });
     } else if (conditionType === "valueMatches") {
-      const rawValue: string = await wc.executeJavaScript(
-        `document.querySelector(${JSON.stringify(runtimeSelector)})?.innerText || "";`
-      );
+      const rawValue: string = await wc.executeJavaScript(`
+        (() => {
+          const sel = ${JSON.stringify(runtimeSelector)};
+          let el = null;
+          try { el = document.querySelector(sel); } catch(e) {}
+          if (!el) {
+            try { const r = document.evaluate(sel, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null); el = r.singleNodeValue; } catch(e2) {}
+          }
+          return el?.innerText || "";
+        })();
+      `);
       const transformed = applyTransform(rawValue);
       const expected = this.substituteVariables(expectedValue || "");
       const op = config.condition || "equals";

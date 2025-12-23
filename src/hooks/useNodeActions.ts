@@ -1,6 +1,3 @@
-import type { Dispatch, SetStateAction } from "react";
-import { useCallback } from "react";
-import { addEdge, Connection } from "reactflow";
 import type {
   AutomationStep,
   Edge,
@@ -9,8 +6,11 @@ import type {
   NodeData,
   ReactFlowEdge,
   ReactFlowNode,
-} from "../types";
-import { stepTypes } from "../types";
+} from "@app-types";
+import { stepTypes } from "@app-types";
+import type { Dispatch, SetStateAction } from "react";
+import { useCallback } from "react";
+import { addEdge, Connection } from "reactflow";
 
 interface UseNodeActionsArgs {
   nodes: ReactFlowNode[];

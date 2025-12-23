@@ -11,5 +11,11 @@ export const mainConfig: Configuration = {
   },
   resolve: {
     extensions: [".js", ".ts", ".jsx", ".tsx", ".css", ".json"],
+    alias: {
+      "@src": __dirname + "/src",
+      "@main": __dirname + "/src/main",
+      "@app-types": __dirname + "/src/types",
+      "@utils": __dirname + "/src/utils",
+    },
   },
 };

@@ -47,7 +47,10 @@ contextBridge.exposeInMainWorld("electronAPI", {
     ipcRenderer.invoke("executor:initVariables", vars),
   getVariables: () => ipcRenderer.invoke("executor:getVariables"),
   onBrowserClosed: (callback: () => void) => ipcRenderer.on("browser:closed", callback),
-  pickSelector: (url: string) => ipcRenderer.invoke("pick-selector", url),
+  pickSelector: (
+    url: string,
+    options?: { strategy?: "css" | "xpath" | "dataAttr" | "id" | "aria"; dataAttrKeys?: string[] }
+  ) => ipcRenderer.invoke("pick-selector", url, options),
   sendSelector: (selector: string) => ipcRenderer.send("selector-picked", selector),
   cancelSelector: () => ipcRenderer.send("selector-cancel"),
 });

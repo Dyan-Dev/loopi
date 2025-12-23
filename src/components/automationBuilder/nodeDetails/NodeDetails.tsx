@@ -1,4 +1,4 @@
-import { Node, ReactFlowNode } from "../../../types";
+import { Node, ReactFlowNode } from "@app-types";
 import { Card, CardContent, CardHeader } from "../../ui/card";
 import ConditionEditor from "./ConditionEditor";
 import NodeHeader from "./NodeHeader";
@@ -29,7 +29,10 @@ export default function NodeDetails({
    * Initiates interactive element selector picking in the browser window
    * Special handling for select elements to capture option data
    */
-  const handlePickSelector = async (setter: (selector: string) => void) => {
+  const handlePickSelector = async (
+    setter: (selector: string) => void,
+    strategy: "css" | "xpath" | "dataAttr" | "id" | "aria" = "css"
+  ) => {
     if (!window.electronAPI?.pickSelector) {
       alert("Electron API not available. Ensure the browser is set up.");
       return;
@@ -37,7 +40,7 @@ export default function NodeDetails({
 
     try {
       const urlToOpen = recentUrl || "https://";
-      const selector = await window.electronAPI.pickSelector(urlToOpen);
+      const selector = await window.electronAPI.pickSelector(urlToOpen, { strategy });
 
       if (selector) {
         // Parse select element data: "selector||optionIndex||optionValue"

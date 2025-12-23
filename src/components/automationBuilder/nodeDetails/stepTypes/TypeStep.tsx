@@ -9,20 +9,21 @@ export function TypeStep({ step, id, onUpdate, onPickWithSetter }: StepProps) {
   return (
     <>
       <div className="space-y-2">
-        <Label className="text-xs">CSS Selector</Label>
+        <Label className="text-xs">Selector</Label>
         <div className="flex gap-2">
           <Input
             value={step.selector || ""}
-            placeholder="CSS Selector"
+            placeholder="Selector"
             onChange={(e) =>
               onUpdate(id, "update", { step: { ...step, selector: e.target.value } })
             }
             className="text-xs flex-1"
           />
           <SelectorButton
-            onPick={async () =>
-              onPickWithSetter((selector) =>
-                onUpdate(id, "update", { step: { ...step, selector } })
+            onPick={async (strategy) =>
+              onPickWithSetter(
+                (selector) => onUpdate(id, "update", { step: { ...step, selector } }),
+                strategy
               )
             }
           />
