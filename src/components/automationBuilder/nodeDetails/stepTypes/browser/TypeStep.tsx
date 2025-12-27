@@ -1,7 +1,7 @@
-import { Input } from "../../../ui/input";
-import { Label } from "../../../ui/label";
-import { SelectorButton } from "../customComponents";
-import { StepProps } from "./types";
+import { SelectorButton } from "@components/automationBuilder/nodeDetails/customComponents";
+import { StepProps } from "@components/automationBuilder/nodeDetails/stepTypes/types";
+import { Input } from "@components/ui/input";
+import { Label } from "@components/ui/label";
 
 export function TypeStep({ step, id, onUpdate, onPickWithSetter }: StepProps) {
   if (step.type !== "type") return null;
@@ -15,6 +15,14 @@ export function TypeStep({ step, id, onUpdate, onPickWithSetter }: StepProps) {
             value={step.selector || ""}
             placeholder="Selector"
             onChange={(e) =>
+              onUpdate(id, "update", { step: { ...step, selector: e.target.value } })
+            }
+            className="text-xs flex-1"
+          />
+          <Input
+            value={step.selector || ""}
+            placeholder="Selector"
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
               onUpdate(id, "update", { step: { ...step, selector: e.target.value } })
             }
             className="text-xs flex-1"

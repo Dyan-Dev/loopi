@@ -1,6 +1,6 @@
-import { Input } from "../../../ui/input";
-import { Label } from "../../../ui/label";
-import { StepProps } from "./types";
+import { StepProps } from "@components/automationBuilder/nodeDetails/stepTypes/types";
+import { Input } from "@components/ui/input";
+import { Label } from "@components/ui/label";
 
 export function ScreenshotStep({ step, id, onUpdate }: StepProps) {
   if (step.type !== "screenshot") return null;

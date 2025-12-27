@@ -1,6 +1,6 @@
-import { Input } from "../../../ui/input";
-import { Label } from "../../../ui/label";
-import { StepProps } from "./types";
+import { StepProps } from "@components/automationBuilder/nodeDetails/stepTypes/types";
+import { Input } from "@components/ui/input";
+import { Label } from "@components/ui/label";
 
 export function SetVariableStep({ step, id, onUpdate }: StepProps) {
   if (step.type !== "setVariable") return null;
@@ -13,6 +13,14 @@ export function SetVariableStep({ step, id, onUpdate }: StepProps) {
           value={step.variableName || ""}
           placeholder="e.g. productTitle"
           onChange={(e) =>
+            onUpdate(id, "update", { step: { ...step, variableName: e.target.value } })
+          }
+          className="text-xs"
+        />
+        <Input
+          value={step.variableName || ""}
+          placeholder="e.g. productTitle"
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
             onUpdate(id, "update", { step: { ...step, variableName: e.target.value } })
           }
           className="text-xs"

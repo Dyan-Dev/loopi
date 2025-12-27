@@ -1,14 +1,14 @@
-import { ApiCallStep } from "./ApiCallStep";
-import { ClickStep } from "./ClickStep";
-import { ExtractStep } from "./ExtractStep";
-import { ModifyVariableStep } from "./ModifyVariableStep";
-import { NavigateStep } from "./NavigateStep";
-import { ScreenshotStep } from "./ScreenshotStep";
-import { ScrollStep } from "./ScrollStep";
-import { SelectOptionStep } from "./SelectOptionStep";
-import { SetVariableStep } from "./SetVariableStep";
-import { TypeStep } from "./TypeStep";
-import { WaitStep } from "./WaitStep";
+import { ClickStep } from "./browser/ClickStep";
+import { ExtractStep } from "./browser/ExtractStep";
+import { NavigateStep } from "./browser/NavigateStep";
+import { ScreenshotStep } from "./browser/ScreenshotStep";
+import { ScrollStep } from "./browser/ScrollStep";
+import { SelectOptionStep } from "./browser/SelectOptionStep";
+import { TypeStep } from "./browser/TypeStep";
+import { WaitStep } from "./browser/WaitStep";
+import { ApiCallStep } from "./integration/ApiCallStep";
+import { ModifyVariableStep } from "./variable/ModifyVariableStep";
+import { SetVariableStep } from "./variable/SetVariableStep";
 
 export {
   ApiCallStep,

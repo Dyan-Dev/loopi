@@ -1,0 +1,145 @@
+import type { AutomationStep, ReactFlowNode } from "@app-types";
+import { stepTypes } from "@app-types";
+import type { NodeDataBase } from "@app-types/flow";
+
+/**
+ * Factory function to create a new node of a given type.
+ * Handles both conditional and automation step nodes.
+ */
+export function createNode({
+  type,
+  newId,
+  sourceNode,
+  handleNodeAction,
+  currentNodes,
+}: {
+  type: AutomationStep["type"] | "conditional";
+  newId: string;
+  sourceNode?: ReactFlowNode;
+  handleNodeAction: (
+    sourceId: string,
+    type: AutomationStep["type"] | "conditional" | "update" | "delete",
+    updates?: Partial<NodeDataBase>
+  ) => void;
+  currentNodes: ReactFlowNode[];
+}): ReactFlowNode {
+  if (type === "conditional") {
+    return {
+      id: newId,
+      type: "conditional",
+      data: {
+        conditionType: "elementExists",
+        selector: "",
+        onAddNode: handleNodeAction,
+        nodeRunning: false,
+      },
+      position: {
+        x: sourceNode ? sourceNode.position.x : 250,
+        y: sourceNode ? sourceNode.position.y + 100 : currentNodes.length * 150 + 50,
+      },
+    };
+  }
+  const label = stepTypes.find((s) => s.value === (type as string))?.label || "Step";
+  let step: AutomationStep;
+  switch (type) {
+    case "navigate":
+      step = { id: newId, type: "navigate", description: `${label} step`, value: "https://" };
+      break;
+    case "click":
+      step = { id: newId, type: "click", description: `${label} step`, selector: "body" };
+      break;
+    case "type":
+      step = { id: newId, type: "type", description: `${label} step`, selector: "body", value: "" };
+      break;
+    case "wait":
+      step = { id: newId, type: "wait", description: `${label} step`, value: "1" };
+      break;
+    case "screenshot":
+      step = { id: newId, type: "screenshot", description: `${label} step`, savePath: "" };
+      break;
+    case "selectOption":
+      step = {
+        id: newId,
+        type: "selectOption",
+        description: `${label} step`,
+        selector: "",
+        optionValue: "",
+      };
+      break;
+    case "extract":
+      step = {
+        id: newId,
+        type: "extract",
+        description: `${label} step`,
+        selector: "",
+        storeKey: "",
+      };
+      break;
+    case "apiCall":
+      step = {
+        id: newId,
+        type: "apiCall",
+        description: `${label} step`,
+        method: "GET",
+        url: "",
+        headers: {},
+        body: "",
+      };
+      break;
+    case "scroll":
+      step = {
+        id: newId,
+        type: "scroll",
+        description: `${label} step`,
+        scrollType: "toElement",
+        selector: "",
+      };
+      break;
+    case "fileUpload":
+      step = {
+        id: newId,
+        type: "fileUpload",
+        description: `${label} step`,
+        selector: "",
+        filePath: "",
+      };
+      break;
+    case "hover":
+      step = { id: newId, type: "hover", description: `${label} step`, selector: "" };
+      break;
+    case "setVariable":
+      step = {
+        id: newId,
+        type: "setVariable",
+        description: `${label} step`,
+        variableName: "",
+        value: "",
+      };
+      break;
+    case "modifyVariable":
+      step = {
+        id: newId,
+        type: "modifyVariable",
+        description: `${label} step`,
+        variableName: "",
+        operation: "set",
+        value: "",
+      };
+      break;
+    default:
+      step = { id: newId, type: "click", description: `${label} step`, selector: "body" };
+  }
+  return {
+    id: newId,
+    type: "automationStep",
+    data: {
+      step,
+      onAddNode: handleNodeAction,
+      nodeRunning: false,
+    },
+    position: {
+      x: sourceNode ? sourceNode.position.x : 250,
+      y: sourceNode ? sourceNode.position.y + 100 : currentNodes.length * 150 + 50,
+    },
+  };
+}
