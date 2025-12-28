@@ -126,6 +126,91 @@ export function createNode({
         value: "",
       };
       break;
+    case "twitterCreateTweet":
+      step = {
+        id: newId,
+        type: "twitterCreateTweet",
+        description: `${label} step`,
+        text: "",
+        apiKey: "",
+        apiSecret: "",
+        accessToken: "",
+        accessSecret: "",
+      };
+      break;
+    case "twitterDeleteTweet":
+      step = {
+        id: newId,
+        type: "twitterDeleteTweet",
+        description: `${label} step`,
+        tweetId: "",
+        apiKey: "",
+        apiSecret: "",
+        accessToken: "",
+        accessSecret: "",
+      };
+      break;
+    case "twitterLikeTweet":
+      step = {
+        id: newId,
+        type: "twitterLikeTweet",
+        description: `${label} step`,
+        tweetId: "",
+        apiKey: "",
+        apiSecret: "",
+        accessToken: "",
+        accessSecret: "",
+      };
+      break;
+    case "twitterRetweet":
+      step = {
+        id: newId,
+        type: "twitterRetweet",
+        description: `${label} step`,
+        tweetId: "",
+        apiKey: "",
+        apiSecret: "",
+        accessToken: "",
+        accessSecret: "",
+      };
+      break;
+    case "twitterSearchTweets":
+      step = {
+        id: newId,
+        type: "twitterSearchTweets",
+        description: `${label} step`,
+        searchQuery: "",
+        apiKey: "",
+        apiSecret: "",
+        accessToken: "",
+        accessSecret: "",
+      };
+      break;
+    case "twitterSendDM":
+      step = {
+        id: newId,
+        type: "twitterSendDM",
+        description: `${label} step`,
+        userId: "",
+        text: "",
+        apiKey: "",
+        apiSecret: "",
+        accessToken: "",
+        accessSecret: "",
+      };
+      break;
+    case "twitterSearchUser":
+      step = {
+        id: newId,
+        type: "twitterSearchUser",
+        description: `${label} step`,
+        username: "",
+        apiKey: "",
+        apiSecret: "",
+        accessToken: "",
+        accessSecret: "",
+      };
+      break;
     default:
       step = { id: newId, type: "click", description: `${label} step`, selector: "body" };
   }

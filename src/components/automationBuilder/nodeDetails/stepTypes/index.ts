@@ -7,6 +7,13 @@ import { SelectOptionStep } from "./browser/SelectOptionStep";
 import { TypeStep } from "./browser/TypeStep";
 import { WaitStep } from "./browser/WaitStep";
 import { ApiCallStep } from "./integration/ApiCallStep";
+import { TwitterCreateTweetStep } from "./twitter/TwitterCreateTweetStep";
+import { TwitterDeleteTweetStep } from "./twitter/TwitterDeleteTweetStep";
+import { TwitterLikeTweetStep } from "./twitter/TwitterLikeTweetStep";
+import { TwitterRetweetStep } from "./twitter/TwitterRetweetStep";
+import { TwitterSearchTweetsStep } from "./twitter/TwitterSearchTweetsStep";
+import { TwitterSearchUserStep } from "./twitter/TwitterSearchUserStep";
+import { TwitterSendDMStep } from "./twitter/TwitterSendDMStep";
 import { ModifyVariableStep } from "./variable/ModifyVariableStep";
 import { SetVariableStep } from "./variable/SetVariableStep";
 
@@ -22,4 +29,11 @@ export {
   ScrollStep,
   ModifyVariableStep,
   SetVariableStep,
+  TwitterCreateTweetStep,
+  TwitterDeleteTweetStep,
+  TwitterLikeTweetStep,
+  TwitterRetweetStep,
+  TwitterSearchTweetsStep,
+  TwitterSearchUserStep,
+  TwitterSendDMStep,
 };

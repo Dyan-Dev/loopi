@@ -1,4 +1,4 @@
-import { Camera, Clock, Code, Globe, Mouse, Type as TypeIcon, Zap } from "lucide-react";
+import { Camera, Clock, Code, Globe, Mouse, Twitter, Type as TypeIcon, Zap } from "lucide-react";
 
 /**
  * Automation Step Type System
@@ -100,6 +100,85 @@ export interface StepModifyVariable extends StepBase {
   value: string; // supports {{var}} substitution
 }
 
+// Twitter Integration Steps
+export interface StepTwitterCreateTweet extends StepBase {
+  type: "twitterCreateTweet";
+  text: string;
+  apiKey: string;
+  apiSecret: string;
+  accessToken: string;
+  accessSecret: string;
+  replyToTweetId?: string;
+  quoteTweetId?: string;
+  mediaId?: string;
+  storeKey?: string;
+}
+
+export interface StepTwitterDeleteTweet extends StepBase {
+  type: "twitterDeleteTweet";
+  tweetId: string;
+  apiKey: string;
+  apiSecret: string;
+  accessToken: string;
+  accessSecret: string;
+  storeKey?: string;
+}
+
+export interface StepTwitterLikeTweet extends StepBase {
+  type: "twitterLikeTweet";
+  tweetId: string;
+  apiKey: string;
+  apiSecret: string;
+  accessToken: string;
+  accessSecret: string;
+  storeKey?: string;
+}
+
+export interface StepTwitterRetweet extends StepBase {
+  type: "twitterRetweet";
+  tweetId: string;
+  apiKey: string;
+  apiSecret: string;
+  accessToken: string;
+  accessSecret: string;
+  storeKey?: string;
+}
+
+export interface StepTwitterSearchTweets extends StepBase {
+  type: "twitterSearchTweets";
+  searchQuery: string;
+  apiKey: string;
+  apiSecret: string;
+  accessToken: string;
+  accessSecret: string;
+  maxResults?: number;
+  startTime?: string;
+  endTime?: string;
+  storeKey?: string;
+}
+
+export interface StepTwitterSendDM extends StepBase {
+  type: "twitterSendDM";
+  userId: string;
+  text: string;
+  apiKey: string;
+  apiSecret: string;
+  accessToken: string;
+  accessSecret: string;
+  mediaId?: string;
+  storeKey?: string;
+}
+
+export interface StepTwitterSearchUser extends StepBase {
+  type: "twitterSearchUser";
+  username: string;
+  apiKey: string;
+  apiSecret: string;
+  accessToken: string;
+  accessSecret: string;
+  storeKey?: string;
+}
+
 // Union of all supported steps used throughout the app
 export type AutomationStep =
   | StepNavigate
@@ -114,7 +193,14 @@ export type AutomationStep =
   | StepFileUpload
   | StepHover
   | StepSetVariable
-  | StepModifyVariable;
+  | StepModifyVariable
+  | StepTwitterCreateTweet
+  | StepTwitterDeleteTweet
+  | StepTwitterLikeTweet
+  | StepTwitterRetweet
+  | StepTwitterSearchTweets
+  | StepTwitterSendDM
+  | StepTwitterSearchUser;
 
 // UI meta for step type picker - organized by category
 export interface StepTypeOption {
@@ -192,6 +278,51 @@ export const integrationSteps: StepTypeOption[] = [
   },
 ];
 
+export const twitterSteps: StepTypeOption[] = [
+  {
+    value: "twitterCreateTweet",
+    label: "Create Tweet",
+    icon: Twitter,
+    description: "Post a new tweet to Twitter/X",
+  },
+  {
+    value: "twitterDeleteTweet",
+    label: "Delete Tweet",
+    icon: Twitter,
+    description: "Delete a tweet from Twitter/X",
+  },
+  {
+    value: "twitterLikeTweet",
+    label: "Like Tweet",
+    icon: Twitter,
+    description: "Like a tweet on Twitter/X",
+  },
+  {
+    value: "twitterRetweet",
+    label: "Retweet",
+    icon: Twitter,
+    description: "Retweet a tweet on Twitter/X",
+  },
+  {
+    value: "twitterSearchTweets",
+    label: "Search Tweets",
+    icon: Twitter,
+    description: "Search for tweets on Twitter/X",
+  },
+  {
+    value: "twitterSendDM",
+    label: "Send Direct Message",
+    icon: Twitter,
+    description: "Send a DM on Twitter/X",
+  },
+  {
+    value: "twitterSearchUser",
+    label: "Search User",
+    icon: Twitter,
+    description: "Search for a user on Twitter/X",
+  },
+];
+
 export const stepCategories: StepCategory[] = [
   {
     category: "Browser",
@@ -208,7 +339,16 @@ export const stepCategories: StepCategory[] = [
     icon: Code,
     steps: integrationSteps,
   },
+  {
+    category: "Twitter/X",
+    icon: Twitter,
+    steps: twitterSteps,
+  },
 ];
 
-// Flat array for backwards compatibility
-export const stepTypes = [...browserSteps, ...dataSteps, ...integrationSteps] as const;
+export const stepTypes = [
+  ...browserSteps,
+  ...dataSteps,
+  ...integrationSteps,
+  ...twitterSteps,
+] as const;

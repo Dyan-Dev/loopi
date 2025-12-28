@@ -1,0 +1,71 @@
+{
+  "name": "Twitter DM Automation",
+  "description": "Search for users and send them a direct message",
+  "nodes": [
+    {
+      "id": "1",
+      "type": "automationStep",
+      "position": { "x": 250, "y": 50 },
+      "data": {
+        "step": {
+          "id": "1",
+          "type": "setVariable",
+          "description": "Set target username",
+          "variableName": "targetUser",
+          "value": "example_user"
+        }
+      }
+    },
+    {
+      "id": "2",
+      "type": "automationStep",
+      "position": { "x": 250, "y": 200 },
+      "data": {
+        "step": {
+          "id": "2",
+          "type": "twitterSearchUser",
+          "description": "Find the user",
+          "username": "{{targetUser}}",
+          "apiKey": "YOUR_API_KEY",
+          "apiSecret": "YOUR_API_SECRET",
+          "accessToken": "YOUR_ACCESS_TOKEN",
+          "accessSecret": "YOUR_ACCESS_SECRET",
+          "storeKey": "userInfo"
+        }
+      }
+    },
+    {
+      "id": "3",
+      "type": "automationStep",
+      "position": { "x": 250, "y": 350 },
+      "data": {
+        "step": {
+          "id": "3",
+          "type": "twitterSendDM",
+          "description": "Send a direct message",
+          "userId": "{{userInfo.id}}",
+          "text": "Hello! I found your profile through automation. Hope you're having a great day!",
+          "apiKey": "YOUR_API_KEY",
+          "apiSecret": "YOUR_API_SECRET",
+          "accessToken": "YOUR_ACCESS_TOKEN",
+          "accessSecret": "YOUR_ACCESS_SECRET",
+          "storeKey": "dmResponse"
+        }
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1-2",
+      "source": "1",
+      "target": "2",
+      "type": "smoothstep"
+    },
+    {
+      "id": "e2-3",
+      "source": "2",
+      "target": "3",
+      "type": "smoothstep"
+    }
+  ]
+}

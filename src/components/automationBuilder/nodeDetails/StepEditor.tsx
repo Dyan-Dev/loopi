@@ -17,6 +17,13 @@ import {
   ScrollStep,
   SelectOptionStep,
   SetVariableStep,
+  TwitterCreateTweetStep,
+  TwitterDeleteTweetStep,
+  TwitterLikeTweetStep,
+  TwitterRetweetStep,
+  TwitterSearchTweetsStep,
+  TwitterSearchUserStep,
+  TwitterSendDMStep,
   TypeStep,
   WaitStep,
 } from "./stepTypes";
@@ -84,6 +91,20 @@ export default function StepEditor({
         return <ModifyVariableStep step={step} id={id} onUpdate={onUpdate} />;
       case "setVariable":
         return <SetVariableStep step={step} id={id} onUpdate={onUpdate} />;
+      case "twitterCreateTweet":
+        return <TwitterCreateTweetStep step={step} id={id} onUpdate={onUpdate} />;
+      case "twitterDeleteTweet":
+        return <TwitterDeleteTweetStep step={step} id={id} onUpdate={onUpdate} />;
+      case "twitterLikeTweet":
+        return <TwitterLikeTweetStep step={step} id={id} onUpdate={onUpdate} />;
+      case "twitterRetweet":
+        return <TwitterRetweetStep step={step} id={id} onUpdate={onUpdate} />;
+      case "twitterSearchTweets":
+        return <TwitterSearchTweetsStep step={step} id={id} onUpdate={onUpdate} />;
+      case "twitterSendDM":
+        return <TwitterSendDMStep step={step} id={id} onUpdate={onUpdate} />;
+      case "twitterSearchUser":
+        return <TwitterSearchUserStep step={step} id={id} onUpdate={onUpdate} />;
       default:
         return null;
     }

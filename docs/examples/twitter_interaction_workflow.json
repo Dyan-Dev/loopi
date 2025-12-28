@@ -1,0 +1,75 @@
+{
+  "name": "Twitter Interaction Workflow",
+  "description": "Search for a user, like and retweet their latest tweet",
+  "nodes": [
+    {
+      "id": "2",
+      "type": "automationStep",
+      "position": { "x": 250, "y": 200 },
+      "data": {
+        "step": {
+          "id": "2",
+          "type": "twitterSearchTweets",
+          "description": "Search for tweets from user",
+          "searchQuery": "from:elonmusk",
+          "apiKey": "YOUR_API_KEY",
+          "apiSecret": "YOUR_API_SECRET",
+          "accessToken": "YOUR_ACCESS_TOKEN",
+          "accessSecret": "YOUR_ACCESS_SECRET",
+          "maxResults": 1,
+          "storeKey": "latestTweet"
+        }
+      }
+    },
+    {
+      "id": "3",
+      "type": "automationStep",
+      "position": { "x": 250, "y": 350 },
+      "data": {
+        "step": {
+          "id": "3",
+          "type": "twitterLikeTweet",
+          "description": "Like the tweet",
+          "tweetId": "{{latestTweet[0].id}}",
+          "apiKey": "YOUR_API_KEY",
+          "apiSecret": "YOUR_API_SECRET",
+          "accessToken": "YOUR_ACCESS_TOKEN",
+          "accessSecret": "YOUR_ACCESS_SECRET",
+          "storeKey": "likeResult"
+        }
+      }
+    },
+    {
+      "id": "4",
+      "type": "automationStep",
+      "position": { "x": 250, "y": 500 },
+      "data": {
+        "step": {
+          "id": "4",
+          "type": "twitterRetweet",
+          "description": "Retweet the tweet",
+          "tweetId": "{{latestTweet[0].id}}",
+          "apiKey": "YOUR_API_KEY",
+          "apiSecret": "YOUR_API_SECRET",
+          "accessToken": "YOUR_ACCESS_TOKEN",
+          "accessSecret": "YOUR_ACCESS_SECRET",
+          "storeKey": "retweetResult"
+        }
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e2-3",
+      "source": "2",
+      "target": "3",
+      "type": "smoothstep"
+    },
+    {
+      "id": "e2-4",
+      "source": "3",
+      "target": "4",
+      "type": "smoothstep"
+    }
+  ]
+}
