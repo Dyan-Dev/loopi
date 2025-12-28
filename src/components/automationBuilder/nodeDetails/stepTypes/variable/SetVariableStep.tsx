@@ -17,14 +17,6 @@ export function SetVariableStep({ step, id, onUpdate }: StepProps) {
           }
           className="text-xs"
         />
-        <Input
-          value={step.variableName || ""}
-          placeholder="e.g. productTitle"
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-            onUpdate(id, "update", { step: { ...step, variableName: e.target.value } })
-          }
-          className="text-xs"
-        />
       </div>
       <div className="space-y-2">
         <Label className="text-xs">Value (supports {"{{otherVar}}"} references)</Label>

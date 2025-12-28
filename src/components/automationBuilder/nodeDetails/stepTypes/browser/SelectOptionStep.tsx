@@ -23,14 +23,6 @@ export function SelectOptionStep({ step, id, onUpdate, onPickWithSetter }: StepP
             }
             className="text-xs flex-1"
           />
-          <Input
-            value={step.selector || ""}
-            placeholder="Selector"
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-              onUpdate(id, "update", { step: { ...step, selector: e.target.value } })
-            }
-            className="text-xs flex-1"
-          />
           <SelectorButton
             onPick={async (strategy) =>
               onPickWithSetter(
