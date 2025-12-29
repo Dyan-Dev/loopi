@@ -1,7 +1,6 @@
 import type { Credential } from "@app-types/globals";
-import { Key, Plus } from "lucide-react";
+import { Key } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Button } from "./button";
 import { Label } from "./label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./select";
 
@@ -10,7 +9,6 @@ interface CredentialSelectorProps {
   onChange: (credentialId: string) => void;
   type?: Credential["type"];
   label?: string;
-  onAddNew?: () => void;
 }
 
 export function CredentialSelector({
@@ -18,7 +16,6 @@ export function CredentialSelector({
   onChange,
   type = "twitter",
   label = "Credential",
-  onAddNew,
 }: CredentialSelectorProps) {
   const [credentials, setCredentials] = useState<Credential[]>([]);
   const [loading, setLoading] = useState(true);
@@ -36,15 +33,6 @@ export function CredentialSelector({
       console.error("Failed to load credentials:", error);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleAddNew = () => {
-    if (onAddNew) {
-      onAddNew();
-    } else {
-      // Navigate to settings/credentials
-      window.location.hash = "#/settings";
     }
   };
 
@@ -73,19 +61,10 @@ export function CredentialSelector({
             )}
           </SelectContent>
         </Select>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={handleAddNew}
-          title="Add new credential"
-        >
-          <Plus className="h-4 w-4" />
-        </Button>
       </div>
       {credentials.length === 0 && !loading && (
         <p className="text-xs text-muted-foreground">
-          No {type} credentials found. Click + to add one.
+          No {type} credentials found.
         </p>
       )}
     </div>
