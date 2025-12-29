@@ -104,10 +104,11 @@ export interface StepModifyVariable extends StepBase {
 export interface StepTwitterCreateTweet extends StepBase {
   type: "twitterCreateTweet";
   text: string;
-  apiKey: string;
-  apiSecret: string;
-  accessToken: string;
-  accessSecret: string;
+  credentialId?: string; // ID of saved credential
+  apiKey?: string; // Optional: direct input (legacy)
+  apiSecret?: string;
+  accessToken?: string;
+  accessSecret?: string;
   replyToTweetId?: string;
   quoteTweetId?: string;
   mediaId?: string;
@@ -117,40 +118,44 @@ export interface StepTwitterCreateTweet extends StepBase {
 export interface StepTwitterDeleteTweet extends StepBase {
   type: "twitterDeleteTweet";
   tweetId: string;
-  apiKey: string;
-  apiSecret: string;
-  accessToken: string;
-  accessSecret: string;
+  credentialId?: string;
+  apiKey?: string;
+  apiSecret?: string;
+  accessToken?: string;
+  accessSecret?: string;
   storeKey?: string;
 }
 
 export interface StepTwitterLikeTweet extends StepBase {
   type: "twitterLikeTweet";
   tweetId: string;
-  apiKey: string;
-  apiSecret: string;
-  accessToken: string;
-  accessSecret: string;
+  credentialId?: string;
+  apiKey?: string;
+  apiSecret?: string;
+  accessToken?: string;
+  accessSecret?: string;
   storeKey?: string;
 }
 
 export interface StepTwitterRetweet extends StepBase {
   type: "twitterRetweet";
   tweetId: string;
-  apiKey: string;
-  apiSecret: string;
-  accessToken: string;
-  accessSecret: string;
+  credentialId?: string;
+  apiKey?: string;
+  apiSecret?: string;
+  accessToken?: string;
+  accessSecret?: string;
   storeKey?: string;
 }
 
 export interface StepTwitterSearchTweets extends StepBase {
   type: "twitterSearchTweets";
   searchQuery: string;
-  apiKey: string;
-  apiSecret: string;
-  accessToken: string;
-  accessSecret: string;
+  credentialId?: string;
+  apiKey?: string;
+  apiSecret?: string;
+  accessToken?: string;
+  accessSecret?: string;
   maxResults?: number;
   startTime?: string;
   endTime?: string;
@@ -161,10 +166,11 @@ export interface StepTwitterSendDM extends StepBase {
   type: "twitterSendDM";
   userId: string;
   text: string;
-  apiKey: string;
-  apiSecret: string;
-  accessToken: string;
-  accessSecret: string;
+  credentialId?: string;
+  apiKey?: string;
+  apiSecret?: string;
+  accessToken?: string;
+  accessSecret?: string;
   mediaId?: string;
   storeKey?: string;
 }
@@ -172,10 +178,11 @@ export interface StepTwitterSendDM extends StepBase {
 export interface StepTwitterSearchUser extends StepBase {
   type: "twitterSearchUser";
   username: string;
-  apiKey: string;
-  apiSecret: string;
-  accessToken: string;
-  accessSecret: string;
+  credentialId?: string;
+  apiKey?: string;
+  apiSecret?: string;
+  accessToken?: string;
+  accessSecret?: string;
   storeKey?: string;
 }
 

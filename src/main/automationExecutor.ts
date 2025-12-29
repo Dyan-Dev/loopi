@@ -3,6 +3,7 @@ import axios from "axios";
 import crypto from "crypto";
 import { BrowserWindow } from "electron";
 import fs from "fs";
+import { getCredential } from "./credentialsStore";
 import { debugLogger } from "./debugLogger";
 
 /**
@@ -447,10 +448,8 @@ export class AutomationExecutor {
         case "twitterCreateTweet": {
           try {
             const text = this.substituteVariables(step.text);
-            const apiKey = this.substituteVariables(step.apiKey);
-            const apiSecret = this.substituteVariables(step.apiSecret);
-            const accessToken = this.substituteVariables(step.accessToken);
-            const accessSecret = this.substituteVariables(step.accessSecret);
+            const { apiKey, apiSecret, accessToken, accessSecret } =
+              await this.resolveTwitterCredentials(step);
 
             debugLogger.debug("Twitter Create Tweet", "Creating tweet", { text });
 
@@ -505,10 +504,8 @@ export class AutomationExecutor {
         case "twitterDeleteTweet": {
           try {
             const tweetId = this.extractTweetId(this.substituteVariables(step.tweetId));
-            const apiKey = this.substituteVariables(step.apiKey);
-            const apiSecret = this.substituteVariables(step.apiSecret);
-            const accessToken = this.substituteVariables(step.accessToken);
-            const accessSecret = this.substituteVariables(step.accessSecret);
+            const { apiKey, apiSecret, accessToken, accessSecret } =
+              await this.resolveTwitterCredentials(step);
 
             debugLogger.debug("Twitter Delete Tweet", "Deleting tweet", { tweetId });
 
@@ -542,10 +539,8 @@ export class AutomationExecutor {
         case "twitterLikeTweet": {
           try {
             const tweetId = this.extractTweetId(this.substituteVariables(step.tweetId));
-            const apiKey = this.substituteVariables(step.apiKey);
-            const apiSecret = this.substituteVariables(step.apiSecret);
-            const accessToken = this.substituteVariables(step.accessToken);
-            const accessSecret = this.substituteVariables(step.accessSecret);
+            const { apiKey, apiSecret, accessToken, accessSecret } =
+              await this.resolveTwitterCredentials(step);
 
             debugLogger.debug("Twitter Like Tweet", "Liking tweet", { tweetId });
 
@@ -601,10 +596,8 @@ export class AutomationExecutor {
         case "twitterRetweet": {
           try {
             const tweetId = this.extractTweetId(this.substituteVariables(step.tweetId));
-            const apiKey = this.substituteVariables(step.apiKey);
-            const apiSecret = this.substituteVariables(step.apiSecret);
-            const accessToken = this.substituteVariables(step.accessToken);
-            const accessSecret = this.substituteVariables(step.accessSecret);
+            const { apiKey, apiSecret, accessToken, accessSecret } =
+              await this.resolveTwitterCredentials(step);
 
             debugLogger.debug("Twitter Retweet", "Retweeting", { tweetId });
 
@@ -661,10 +654,8 @@ export class AutomationExecutor {
         case "twitterSearchTweets": {
           try {
             const searchQuery = this.substituteVariables(step.searchQuery);
-            const apiKey = this.substituteVariables(step.apiKey);
-            const apiSecret = this.substituteVariables(step.apiSecret);
-            const accessToken = this.substituteVariables(step.accessToken);
-            const accessSecret = this.substituteVariables(step.accessSecret);
+            const { apiKey, apiSecret, accessToken, accessSecret } =
+              await this.resolveTwitterCredentials(step);
 
             debugLogger.debug("Twitter Search Tweets", "Searching tweets", { searchQuery });
 
@@ -717,10 +708,8 @@ export class AutomationExecutor {
           try {
             const userId = this.substituteVariables(step.userId).replace("@", "");
             const text = this.substituteVariables(step.text);
-            const apiKey = this.substituteVariables(step.apiKey);
-            const apiSecret = this.substituteVariables(step.apiSecret);
-            const accessToken = this.substituteVariables(step.accessToken);
-            const accessSecret = this.substituteVariables(step.accessSecret);
+            const { apiKey, apiSecret, accessToken, accessSecret } =
+              await this.resolveTwitterCredentials(step);
 
             debugLogger.debug("Twitter Send DM", "Sending direct message", { userId });
 
@@ -788,10 +777,8 @@ export class AutomationExecutor {
         case "twitterSearchUser": {
           try {
             const username = this.substituteVariables(step.username).replace("@", "");
-            const apiKey = this.substituteVariables(step.apiKey);
-            const apiSecret = this.substituteVariables(step.apiSecret);
-            const accessToken = this.substituteVariables(step.accessToken);
-            const accessSecret = this.substituteVariables(step.accessSecret);
+            const { apiKey, apiSecret, accessToken, accessSecret } =
+              await this.resolveTwitterCredentials(step);
 
             debugLogger.debug("Twitter Search User", "Searching user", { username });
 
@@ -1078,5 +1065,43 @@ export class AutomationExecutor {
     debugLogger.logOperation("Conditional", `Condition evaluated to: ${conditionResult}`, duration);
 
     return { conditionResult, effectiveSelector: runtimeSelector };
+  }
+
+  /**
+   * Resolve Twitter credentials from either credentialId or direct fields
+   */
+  private async resolveTwitterCredentials(step: {
+    credentialId?: string;
+    apiKey?: string;
+    apiSecret?: string;
+    accessToken?: string;
+    accessSecret?: string;
+  }): Promise<{
+    apiKey: string;
+    apiSecret: string;
+    accessToken: string;
+    accessSecret: string;
+  }> {
+    // If credentialId is provided, fetch from store
+    if (step.credentialId) {
+      const credential = await getCredential(step.credentialId);
+      if (!credential || credential.type !== "twitter") {
+        throw new Error("Invalid or missing Twitter credential");
+      }
+      return {
+        apiKey: credential.data.apiKey || "",
+        apiSecret: credential.data.apiSecret || "",
+        accessToken: credential.data.accessToken || "",
+        accessSecret: credential.data.accessSecret || "",
+      };
+    }
+
+    // Otherwise use direct fields (legacy support)
+    return {
+      apiKey: this.substituteVariables(step.apiKey || ""),
+      apiSecret: this.substituteVariables(step.apiSecret || ""),
+      accessToken: this.substituteVariables(step.accessToken || ""),
+      accessSecret: this.substituteVariables(step.accessSecret || ""),
+    };
   }
 }

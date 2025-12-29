@@ -3,6 +3,15 @@ import { AutomationStep } from "./steps";
 import type { LogEntry } from "@main/debugLogger";
 import type { ConditionalConfig, ConditionalResult } from "./conditions";
 
+export interface Credential {
+  id: string;
+  name: string;
+  type: "twitter" | "oauth" | "apiKey" | "basic" | "custom";
+  createdAt: string;
+  updatedAt: string;
+  data: Record<string, string>;
+}
+
 export interface AppSettings {
   theme: "light" | "dark" | "system";
   enableNotifications: boolean;
@@ -41,6 +50,16 @@ export interface ElectronAPI {
   settings: {
     load: () => Promise<AppSettings>;
     save: (settings: AppSettings) => Promise<boolean>;
+  };
+  credentials: {
+    list: () => Promise<Credential[]>;
+    get: (id: string) => Promise<Credential | null>;
+    add: (credential: Omit<Credential, "id" | "createdAt" | "updatedAt">) => Promise<Credential>;
+    update: (
+      id: string,
+      updates: Partial<Omit<Credential, "id" | "createdAt">>
+    ) => Promise<boolean>;
+    delete: (id: string) => Promise<boolean>;
   };
   debug: {
     getLogs: () => Promise<LogEntry[]>;

@@ -1,6 +1,7 @@
 import { StepProps } from "@components/automationBuilder/nodeDetails/stepTypes/types";
 import { Input } from "@components/ui/input";
 import { Label } from "@components/ui/label";
+import { TwitterCredentialField } from "./TwitterCredentialField";
 
 export function TwitterLikeTweetStep({ step, id, onUpdate }: StepProps) {
   if (step.type !== "twitterLikeTweet") return null;
@@ -21,53 +22,14 @@ export function TwitterLikeTweetStep({ step, id, onUpdate }: StepProps) {
         </p>
       </div>
 
-      <div className="space-y-2">
-        <Label className="text-xs">API Key</Label>
-        <Input
-          value={step.apiKey || ""}
-          placeholder="Your Twitter API Key"
-          onChange={(e) => onUpdate(id, "update", { step: { ...step, apiKey: e.target.value } })}
-          className="text-xs"
-          type="password"
-        />
-      </div>
-
-      <div className="space-y-2">
-        <Label className="text-xs">API Secret</Label>
-        <Input
-          value={step.apiSecret || ""}
-          placeholder="Your Twitter API Secret"
-          onChange={(e) => onUpdate(id, "update", { step: { ...step, apiSecret: e.target.value } })}
-          className="text-xs"
-          type="password"
-        />
-      </div>
-
-      <div className="space-y-2">
-        <Label className="text-xs">Access Token</Label>
-        <Input
-          value={step.accessToken || ""}
-          placeholder="Your Twitter Access Token"
-          onChange={(e) =>
-            onUpdate(id, "update", { step: { ...step, accessToken: e.target.value } })
-          }
-          className="text-xs"
-          type="password"
-        />
-      </div>
-
-      <div className="space-y-2">
-        <Label className="text-xs">Access Token Secret</Label>
-        <Input
-          value={step.accessSecret || ""}
-          placeholder="Your Twitter Access Token Secret"
-          onChange={(e) =>
-            onUpdate(id, "update", { step: { ...step, accessSecret: e.target.value } })
-          }
-          className="text-xs"
-          type="password"
-        />
-      </div>
+      <TwitterCredentialField
+        credentialId={step.credentialId}
+        apiKey={step.apiKey}
+        apiSecret={step.apiSecret}
+        accessToken={step.accessToken}
+        accessSecret={step.accessSecret}
+        onUpdate={(creds) => onUpdate(id, "update", { step: { ...step, ...creds } })}
+      />
 
       <div className="space-y-2">
         <Label className="text-xs">Store Response in Variable (Optional)</Label>

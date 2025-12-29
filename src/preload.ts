@@ -32,6 +32,13 @@ contextBridge.exposeInMainWorld("electronAPI", {
     load: () => ipcRenderer.invoke("loopi:loadSettings"),
     save: (settings: unknown) => ipcRenderer.invoke("loopi:saveSettings", settings),
   },
+  credentials: {
+    list: () => ipcRenderer.invoke("credentials:list"),
+    get: (id: string) => ipcRenderer.invoke("credentials:get", id),
+    add: (credential: unknown) => ipcRenderer.invoke("credentials:add", credential),
+    update: (id: string, updates: unknown) => ipcRenderer.invoke("credentials:update", id, updates),
+    delete: (id: string) => ipcRenderer.invoke("credentials:delete", id),
+  },
   debug: {
     getLogs: () => ipcRenderer.invoke("debug:getLogs"),
     clearLogs: () => ipcRenderer.invoke("debug:clearLogs"),

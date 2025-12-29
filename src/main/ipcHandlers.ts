@@ -2,6 +2,13 @@ import { dialog, ipcMain } from "electron";
 import { mkdirSync, writeFileSync } from "fs";
 import { dirname } from "path";
 import { AutomationExecutor } from "./automationExecutor";
+import {
+  addCredential,
+  deleteCredential,
+  getCredential,
+  loadCredentials,
+  updateCredential,
+} from "./credentialsStore";
 import { debugLogger } from "./debugLogger";
 import { setupDownloadHandler } from "./downloadManager";
 import { SelectorPicker } from "./selectorPicker";
@@ -259,5 +266,40 @@ export function registerIPCHandlers(
       console.error("Failed to save file:", error);
       return false;
     }
+  });
+
+  /**
+   * Credentials: Load all credentials
+   */
+  ipcMain.handle("credentials:list", async () => {
+    return loadCredentials();
+  });
+
+  /**
+   * Credentials: Get single credential by ID
+   */
+  ipcMain.handle("credentials:get", async (_event, id: string) => {
+    return getCredential(id);
+  });
+
+  /**
+   * Credentials: Add new credential
+   */
+  ipcMain.handle("credentials:add", async (_event, credential) => {
+    return addCredential(credential);
+  });
+
+  /**
+   * Credentials: Update credential
+   */
+  ipcMain.handle("credentials:update", async (_event, id: string, updates) => {
+    return updateCredential(id, updates);
+  });
+
+  /**
+   * Credentials: Delete credential
+   */
+  ipcMain.handle("credentials:delete", async (_event, id: string) => {
+    return deleteCredential(id);
   });
 }
