@@ -46,6 +46,15 @@ contextBridge.exposeInMainWorld("electronAPI", {
     getStatistics: () => ipcRenderer.invoke("debug:getStatistics"),
     setDebugMode: (enabled: boolean) => ipcRenderer.invoke("debug:setDebugMode", enabled),
   },
+  schedules: {
+    list: () => ipcRenderer.invoke("schedules:list"),
+    save: (schedule: unknown) => ipcRenderer.invoke("schedules:save", schedule),
+    delete: (scheduleId: string) => ipcRenderer.invoke("schedules:delete", scheduleId),
+    update: (scheduleId: string, updates: unknown) =>
+      ipcRenderer.invoke("schedules:update", scheduleId, updates),
+    getByWorkflow: (workflowId: string) =>
+      ipcRenderer.invoke("schedules:getByWorkflow", workflowId),
+  },
   saveFile: (data: { filePath: string; content: string }) => ipcRenderer.invoke("file:save", data),
   selectFolder: () => ipcRenderer.invoke("dialog:selectFolder"),
   runStep: (step: AutomationStep) => ipcRenderer.invoke("browser:runStep", step),

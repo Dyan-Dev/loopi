@@ -10,6 +10,7 @@ import {
   updateCredential,
 } from "./credentialsStore";
 import { debugLogger } from "./debugLogger";
+import { DesktopScheduler } from "./desktopScheduler";
 import { setupDownloadHandler } from "./downloadManager";
 import { SelectorPicker } from "./selectorPicker";
 import { loadSettings, saveSettings } from "./settingsStore";
@@ -30,7 +31,8 @@ import { WindowManager } from "./windowManager";
 export function registerIPCHandlers(
   windowManager: WindowManager,
   executor: AutomationExecutor,
-  picker: SelectorPicker
+  picker: SelectorPicker,
+  scheduler: DesktopScheduler
 ): void {
   /**
    * Opens the browser automation window
@@ -301,5 +303,67 @@ export function registerIPCHandlers(
    */
   ipcMain.handle("credentials:delete", async (_event, id: string) => {
     return deleteCredential(id);
+  });
+
+  /**
+   * Schedules: List all schedules
+   */
+  ipcMain.handle("schedules:list", async () => {
+    const { ScheduleStore } = await import("./scheduleStore");
+    const store = new ScheduleStore();
+    return store.list();
+  });
+
+  /**
+   * Schedules: Save a schedule
+   */
+  ipcMain.handle("schedules:save", async (_event, schedule) => {
+    const { ScheduleStore } = await import("./scheduleStore");
+    const store = new ScheduleStore();
+    store.save(schedule);
+
+    // Reload and reactivate all schedules
+    await scheduler.loadAndActivateSchedules();
+
+    return schedule.id;
+  });
+
+  /**
+   * Schedules: Delete a schedule
+   */
+  ipcMain.handle("schedules:delete", async (_event, scheduleId: string) => {
+    const { ScheduleStore } = await import("./scheduleStore");
+    const store = new ScheduleStore();
+    
+    // Unschedule from the scheduler BEFORE deleting
+    scheduler.unscheduleAutomation(scheduleId);
+    
+    // Delete from storage
+    const result = store.delete(scheduleId);
+
+    return result;
+  });
+
+  /**
+   * Schedules: Update a schedule
+   */
+  ipcMain.handle("schedules:update", async (_event, scheduleId: string, updates) => {
+    const { ScheduleStore } = await import("./scheduleStore");
+    const store = new ScheduleStore();
+    const result = store.update(scheduleId, updates);
+
+    // Reload and reactivate all schedules
+    await scheduler.loadAndActivateSchedules();
+
+    return result;
+  });
+
+  /**
+   * Schedules: Get schedules for a workflow
+   */
+  ipcMain.handle("schedules:getByWorkflow", async (_event, workflowId: string) => {
+    const { ScheduleStore } = await import("./scheduleStore");
+    const store = new ScheduleStore();
+    return store.getByWorkflow(workflowId);
   });
 }

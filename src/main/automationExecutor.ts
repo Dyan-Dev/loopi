@@ -144,11 +144,11 @@ export class AutomationExecutor {
 
   /**
    * Executes a single automation step
-   * @param browserWindow - The browser window to execute the step in
+   * @param browserWindow - The browser window to execute the step in (optional for non-browser steps)
    * @param step - The step configuration object
    */
-  async executeStep(browserWindow: BrowserWindow, step: AutomationStep): Promise<unknown> {
-    const wc = browserWindow.webContents;
+  async executeStep(browserWindow: BrowserWindow | null, step: AutomationStep): Promise<unknown> {
+    const wc = browserWindow?.webContents;
     const startTime = performance.now();
 
     debugLogger.debug("Step Execution", `Starting ${step.type} step`, {
@@ -161,6 +161,7 @@ export class AutomationExecutor {
 
       switch (step.type) {
         case "navigate": {
+          if (!wc) throw new Error("Browser window required for navigate step");
           const url = this.substituteVariables(step.value);
           debugLogger.debug("Navigate", `Loading URL: ${url}`);
           await wc.loadURL(url);
@@ -169,6 +170,7 @@ export class AutomationExecutor {
         }
 
         case "click": {
+          if (!wc) throw new Error("Browser window required for click step");
           const clickSelector = this.substituteVariables(step.selector);
           debugLogger.debug("Click", `Clicking element with selector: ${clickSelector}`);
           await wc.executeJavaScript(`
@@ -187,6 +189,7 @@ export class AutomationExecutor {
         }
 
         case "type": {
+          if (!wc) throw new Error("Browser window required for type step");
           const typeSelector = this.substituteVariables(step.selector);
           const typeValue = this.substituteVariables(step.value);
           debugLogger.debug("Type", `Typing into selector: ${typeSelector}`, { value: typeValue });
@@ -221,6 +224,7 @@ export class AutomationExecutor {
         }
 
         case "screenshot": {
+          if (!wc) throw new Error("Browser window required for screenshot step");
           debugLogger.debug("Screenshot", "Capturing page screenshot");
           const img = await wc.capturePage();
           const timestamp = new Date().toISOString().replace(/[-:.]/g, "").slice(0, 15);
@@ -232,6 +236,7 @@ export class AutomationExecutor {
         }
 
         case "extract": {
+          if (!wc) throw new Error("Browser window required for extract step");
           const extractSelector = this.substituteVariables(step.selector);
           debugLogger.debug("Extract", `Extracting text from selector: ${extractSelector}`);
           const extracted = await wc.executeJavaScript(`
@@ -299,6 +304,7 @@ export class AutomationExecutor {
         }
 
         case "scroll": {
+          if (!wc) throw new Error("Browser window required for scroll step");
           if (step.scrollType === "toElement") {
             const scrollSelector = this.substituteVariables(step.selector || "");
             debugLogger.debug("Scroll", `Scrolling to element: ${scrollSelector}`);
@@ -322,6 +328,7 @@ export class AutomationExecutor {
         }
 
         case "selectOption": {
+          if (!wc) throw new Error("Browser window required for selectOption step");
           const selectSelector = this.substituteVariables(step.selector);
           const optionValue = this.substituteVariables(step.optionValue);
           debugLogger.debug("Select Option", `Selecting option in: ${selectSelector}`, {
@@ -346,6 +353,7 @@ export class AutomationExecutor {
         }
 
         case "fileUpload": {
+          if (!wc) throw new Error("Browser window required for fileUpload step");
           const fuSelector = this.substituteVariables(step.selector);
           const fuFilePath = this.substituteVariables(step.filePath);
           debugLogger.debug("File Upload", `Uploading file to: ${fuSelector}`, {
@@ -373,6 +381,7 @@ export class AutomationExecutor {
         }
 
         case "hover": {
+          if (!wc) throw new Error("Browser window required for hover step");
           const hoverSelector = this.substituteVariables(step.selector);
           debugLogger.debug("Hover", `Hovering over element: ${hoverSelector}`);
           await wc.executeJavaScript(`

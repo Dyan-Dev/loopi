@@ -63,9 +63,7 @@ export function CredentialSelector({
         </Select>
       </div>
       {credentials.length === 0 && !loading && (
-        <p className="text-xs text-muted-foreground">
-          No {type} credentials found.
-        </p>
+        <p className="text-xs text-muted-foreground">No {type} credentials found.</p>
       )}
     </div>
   );

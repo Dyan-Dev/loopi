@@ -6,6 +6,7 @@ import { Dashboard } from "./components/Dashboard";
 import { Settings } from "./components/Settings";
 import { Button } from "./components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "./components/ui/tabs";
+import { WorkflowScheduler } from "./components/WorkflowScheduler";
 import "./index.css";
 import type { StoredAutomation } from "./types";
 
@@ -18,7 +19,9 @@ import type { StoredAutomation } from "./types";
  * - Create/Edit/Save automation workflows
  */
 export default function App() {
-  const [currentView, setCurrentView] = useState<"dashboard" | "builder" | "settings">("dashboard");
+  const [currentView, setCurrentView] = useState<
+    "dashboard" | "builder" | "scheduler" | "settings"
+  >("dashboard");
   const [automations, setAutomations] = useState<StoredAutomation[]>([]);
   const [selectedAutomation, setSelectedAutomation] = useState<StoredAutomation | null>(null);
 
@@ -118,8 +121,13 @@ export default function App() {
             <Tabs
               value={currentView}
               onValueChange={(value: string) => {
-                if (value === "dashboard" || value === "builder" || value === "settings") {
-                  setCurrentView(value as "dashboard" | "builder" | "settings");
+                if (
+                  value === "dashboard" ||
+                  value === "builder" ||
+                  value === "scheduler" ||
+                  value === "settings"
+                ) {
+                  setCurrentView(value as "dashboard" | "builder" | "scheduler" | "settings");
                 }
               }}
             >
@@ -131,6 +139,10 @@ export default function App() {
                 <TabsTrigger value="builder">
                   <Bot className="h-4 w-4 mr-1" />
                   Builder
+                </TabsTrigger>
+                <TabsTrigger value="scheduler">
+                  <SettingsIcon className="h-4 w-4 mr-1" />
+                  Scheduler
                 </TabsTrigger>
               </TabsList>
             </Tabs>
@@ -166,6 +178,8 @@ export default function App() {
             onCancel={() => setCurrentView("dashboard")}
           />
         )}
+
+        {currentView === "scheduler" && <WorkflowScheduler automations={automations} />}
 
         {currentView === "settings" && <Settings />}
       </main>

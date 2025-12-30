@@ -1,6 +1,12 @@
 import type { Edge, Node } from "./flow";
 import type { AutomationStep } from "./steps";
 
+export type ScheduleType =
+  | { type: "manual" } // No schedule, manual execution only
+  | { type: "interval"; intervalMinutes: number } // Run every X minutes
+  | { type: "cron"; expression: string } // Cron expression (e.g., "0 9 * * *")
+  | { type: "once"; datetime: string }; // Run once at specific datetime (ISO string)
+
 export interface Automation {
   id: string;
   name: string;
@@ -9,6 +15,8 @@ export interface Automation {
   edges: Edge[];
   variables?: Record<string, unknown>;
   steps: AutomationStep[];
+  schedule?: ScheduleType;
+  enabled?: boolean; // Whether the schedule is active
 }
 
 export interface StoredAutomation extends Automation {

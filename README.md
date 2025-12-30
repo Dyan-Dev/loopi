@@ -14,6 +14,7 @@ Loopi is the open‑source, local‑first, typed automation platform that combin
 - **API + browser:** Hybrid automation that fetches/transforms data and drives the UI.
 - **Typed data:** Automatic variable typing for safer, clearer pipelines.
 - **Open‑source:** Developer‑friendly TypeScript codebase and strong documentation.
+- **Custom scheduling:** Interval, cron expressions, or one-time execution.
 
 ## How Loopi Is Different
 - **n8n:** API‑centric; lacks real browser control for UI‑heavy tasks.
@@ -64,6 +65,7 @@ pnpm run publish        # Build and publish
 - **Data Extraction**: Extract text from elements and store in variables for reuse
 - **Variable System**: Set, modify, and substitute variables using `{{varName}}` syntax
 - **Conditional Logic**: Branching flows; use condition nodes together with variables for explicit loop control
+- **Custom Scheduling**: Interval-based, cron expressions, or one-time schedules
 - **Import/Export**: Save and share automation workflows as JSON
 - **TypeScript**: Fully typed codebase with discriminated unions for type safety
 
@@ -85,15 +87,17 @@ src/
 │   ├── windowManager.ts      # Window creation and management
 │   ├── automationExecutor.ts # Step execution engine
 │   ├── selectorPicker.ts     # Interactive element picker
+│   ├── desktopScheduler.ts   # Workflow scheduling
 │   └── ipcHandlers.ts        # IPC communication bridge
 ├── components/               # React components
 │   ├── AutomationBuilder.tsx # Visual workflow editor
-│   ├── Dashboard.tsx         # Automation management (Edit/Export actions rendered as buttons)
+│   ├── Dashboard.tsx         # Automation management
 │   └── automationBuilder/    # Builder subcomponents
 │       ├── BuilderHeader.tsx
 │       ├── BuilderCanvas.tsx
 │       ├── AutomationNode.tsx
 │       ├── AddStepPopup.tsx
+│       ├── ScheduleConfig.tsx
 │       └── nodeDetails/      # Node configuration UI
 │           ├── NodeDetails.tsx
 │           ├── NodeHeader.tsx

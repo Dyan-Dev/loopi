@@ -1,6 +1,7 @@
 import { app, BrowserWindow } from "electron";
 import squirrelStartup from "electron-squirrel-startup";
 import { AutomationExecutor } from "./automationExecutor";
+import { DesktopScheduler } from "./desktopScheduler";
 import { setupDownloadHandler } from "./downloadManager";
 import { registerIPCHandlers } from "./ipcHandlers";
 import { SelectorPicker } from "./selectorPicker";
@@ -28,9 +29,13 @@ if (squirrelStartup) {
 const windowManager = new WindowManager();
 const executor = new AutomationExecutor();
 const picker = new SelectorPicker();
+const scheduler = new DesktopScheduler();
+
+// Give scheduler access to window manager
+scheduler.setWindowManager(windowManager);
 
 // Register all IPC communication handlers
-registerIPCHandlers(windowManager, executor, picker);
+registerIPCHandlers(windowManager, executor, picker, scheduler);
 
 /**
  * Application ready - create main window
@@ -42,6 +47,11 @@ app.on("ready", async () => {
 
   const mainWindow = windowManager.createMainWindow();
 
+  // Load and activate schedules
+  scheduler.loadAndActivateSchedules().catch((error) => {
+    console.error("Failed to load schedules:", error);
+  });
+
   // Close browser window when main window is closed
   mainWindow.on("close", () => {
     windowManager.closeBrowserWindow();
@@ -52,6 +62,7 @@ app.on("ready", async () => {
  * Clean up before quitting to prevent "Object has been destroyed" errors
  */
 app.on("before-quit", () => {
+  scheduler.cleanup();
   windowManager.cleanup();
 });
 
