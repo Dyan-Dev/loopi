@@ -17,6 +17,7 @@ export interface Automation {
   steps: AutomationStep[];
   schedule?: ScheduleType;
   enabled?: boolean; // Whether the schedule is active
+  headless?: boolean; // Whether to run browser in background (no visible window)
 }
 
 export interface StoredAutomation extends Automation {

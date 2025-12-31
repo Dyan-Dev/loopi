@@ -6,24 +6,15 @@
 
 import type { ScheduleType, StoredAutomation } from "@app-types/automation";
 import type { AutomationStep } from "@app-types/steps";
+import { createLogger } from "@utils/logger";
 import { app, BrowserWindow } from "electron";
 import fs from "fs";
 import path from "path";
 import { AutomationExecutor } from "./automationExecutor";
+import { executeAutomationGraph } from "./graphExecutor";
 import type { WindowManager } from "./windowManager";
 
-interface ConditionalNodeData {
-  conditionType: string;
-  selector: string;
-  expectedValue?: string;
-  nodeId?: string;
-  condition?: string;
-  transformType?: string;
-  transformPattern?: string;
-  transformReplace?: string;
-  transformChars?: string;
-  parseAsNumber?: boolean;
-}
+const logger = createLogger("DesktopScheduler");
 
 interface ScheduledTask {
   scheduleId: string;
@@ -76,7 +67,7 @@ export class DesktopScheduler {
    */
   scheduleAutomation(automation: StoredAutomation, scheduleId: string): boolean {
     if (!automation.schedule || automation.schedule.type === "manual") {
-      console.log(`[DesktopScheduler] Automation ${automation.id} has no schedule`);
+      logger.info(`Automation ${automation.id} has no schedule`);
       return false;
     }
 
@@ -103,8 +94,8 @@ export class DesktopScheduler {
     }
 
     this.tasks.set(scheduleId, task);
-    console.log(
-      `[DesktopScheduler] Scheduled automation ${automation.id} (schedule ${scheduleId}): ${automation.schedule.type}`
+    logger.info(
+      `Scheduled automation ${automation.id} (schedule ${scheduleId}): ${automation.schedule.type}`
     );
     return true;
   }
@@ -144,10 +135,8 @@ export class DesktopScheduler {
         }
       });
     } catch (error) {
-      console.error(`[DesktopScheduler] Failed to schedule cron task:`, error);
-      console.error(
-        `[DesktopScheduler] Install node-cron to use cron expressions: pnpm add node-cron`
-      );
+      logger.error("Failed to schedule cron task", error);
+      logger.error("Install node-cron to use cron expressions: pnpm add node-cron");
       return undefined;
     }
   }
@@ -162,9 +151,7 @@ export class DesktopScheduler {
     const delay = targetTime - now;
 
     if (delay <= 0) {
-      console.log(
-        `[DesktopScheduler] One-time schedule for ${automation.id} is in the past, executing now`
-      );
+      logger.info(`One-time schedule for ${automation.id} is in the past, executing now`);
       // Execute immediately
       this.executeScheduledAutomation(automation);
       return setTimeout(() => {
@@ -185,45 +172,47 @@ export class DesktopScheduler {
    * Execute a scheduled automation using the existing AutomationExecutor
    */
   private async executeScheduledAutomation(automation: StoredAutomation): Promise<void> {
-    console.log(
-      `[DesktopScheduler] Executing scheduled automation: ${automation.id} - ${automation.name}`
+    logger.info(
+      `Executing scheduled automation: ${automation.id} - ${automation.name} (headless: ${automation.headless ?? true})`
     );
 
     const startTime = Date.now();
     let success = false;
     let error: string | undefined;
     const stepResults: Array<{ success: boolean }> = [];
+    const useHeadless = automation.headless ?? true; // Default to true headless for scheduled workflows
 
     try {
-      // Initialize variables
-      this.executor.initVariables({});
+      // Use true headless (Puppeteer) when headless flag is enabled
+      if (useHeadless && this.requiresBrowser(automation)) {
+        logger.info("Using Puppeteer for true headless execution");
+        await this.executeWithPuppeteer(automation, stepResults);
+      } else {
+        // Use Electron for visible browser or non-browser workflows
+        this.executor.initVariables({});
 
-      // Check if workflow requires browser
-      const needsBrowser = this.requiresBrowser(automation);
+        const needsBrowser = this.requiresBrowser(automation);
 
-      // Ensure browser window is available for browser-based workflows
-      if (needsBrowser && this.windowManager) {
-        const browserWindow = this.windowManager.getBrowserWindow();
-        if (!browserWindow || browserWindow.isDestroyed()) {
-          console.log(
-            `[DesktopScheduler] Opening browser window for scheduled automation: ${automation.id}`
+        if (needsBrowser && this.windowManager) {
+          const browserWindow = this.windowManager.getBrowserWindow();
+          if (!browserWindow || browserWindow.isDestroyed()) {
+            logger.info(`Opening browser window for scheduled automation: ${automation.id}`);
+            await this.windowManager.ensureBrowserWindow("https://www.google.com/");
+          }
+        } else if (needsBrowser && !this.windowManager) {
+          throw new Error(
+            "WindowManager not available. Cannot execute browser-based workflows. This is a configuration error."
           );
-          await this.windowManager.ensureBrowserWindow();
         }
-      } else if (needsBrowser && !this.windowManager) {
-        throw new Error(
-          "WindowManager not available. Cannot execute browser-based workflows. This is a configuration error."
-        );
+
+        await this.executeWorkflowGraph(automation, stepResults);
       }
 
-      // Execute workflow using graph traversal (nodes + edges) to support loops and conditionals
-      await this.executeWorkflowGraph(automation, stepResults);
-
       success = true;
-      console.log(`[DesktopScheduler] Scheduled automation completed: ${automation.id}`);
+      logger.info(`Scheduled automation completed: ${automation.id}`);
     } catch (err) {
       error = err instanceof Error ? err.message : String(err);
-      console.error(`[DesktopScheduler] Scheduled automation failed: ${automation.id}`, error);
+      logger.error(`Scheduled automation failed: ${automation.id}`, err);
     }
 
     const duration = Date.now() - startTime;
@@ -234,7 +223,29 @@ export class DesktopScheduler {
       duration,
       error,
       steps: stepResults,
-      variables: this.executor.getVariables(),
+      variables: useHeadless ? {} : this.executor.getVariables(),
+    });
+  }
+
+  /**
+   * Execute workflow using Puppeteer for true headless mode
+   */
+  private async executeWithPuppeteer(
+    automation: StoredAutomation,
+    stepResults: Array<{ success: boolean }>
+  ): Promise<void> {
+    await executeAutomationGraph({
+      nodes: automation.nodes,
+      edges: automation.edges,
+      executor: this.executor,
+      headless: true,
+      onNodeStatus: (nodeId, status, error) => {
+        if (status === "success") {
+          stepResults.push({ success: true });
+        } else if (status === "error") {
+          stepResults.push({ success: false });
+        }
+      },
     });
   }
 
@@ -246,118 +257,22 @@ export class DesktopScheduler {
     automation: StoredAutomation,
     stepResults: Array<{ success: boolean }>
   ): Promise<void> {
-    const { nodes, edges } = automation;
-    if (!nodes || nodes.length === 0) {
-      console.log("[DesktopScheduler] No nodes to execute");
-      return;
-    }
+    const browserWindow = this.windowManager?.getBrowserWindow() || null;
 
-    const visited = new Set<string>();
-    const maxIterations = 10000; // Prevent infinite loops
-    let iterations = 0;
-
-    const executeGraph = async (nodeId: string): Promise<void> => {
-      // Safety check for infinite loops
-      if (iterations++ > maxIterations) {
-        throw new Error("Maximum iteration limit reached - possible infinite loop");
-      }
-
-      // Track visited nodes (but don't prevent re-execution for loops)
-      visited.add(nodeId);
-
-      const node = nodes.find((n) => n.id === nodeId);
-      if (!node) return;
-
-      // Execute the node
-      let conditionResult: boolean | undefined;
-
-      if (node.type === "conditional") {
-        // Execute conditional node
-        if (!this.windowManager) {
-          throw new Error("WindowManager required for conditional evaluation");
-        }
-        const browserWindow = this.windowManager.getBrowserWindow();
-        if (!browserWindow) {
-          throw new Error("Browser window required for conditional evaluation");
-        }
-
-        const result = (await this.executor.evaluateConditional(
-          browserWindow,
-          node.data as ConditionalNodeData
-        )) as {
-          conditionResult?: boolean;
-        };
-        conditionResult = result.conditionResult;
-        stepResults.push({ success: true });
-      } else if (node.data.step) {
-        // Execute automation step
-        try {
-          await this.executeStep(node.data.step);
+    await executeAutomationGraph({
+      nodes: automation.nodes,
+      edges: automation.edges,
+      browserWindow,
+      executor: this.executor,
+      headless: false,
+      onNodeStatus: (nodeId, status, error) => {
+        if (status === "success") {
           stepResults.push({ success: true });
-        } catch (stepError) {
+        } else if (status === "error") {
           stepResults.push({ success: false });
-          throw stepError;
         }
-      }
-
-      // Determine next nodes based on edges
-      let nextNodes: string[] = [];
-
-      if (node.type === "conditional" && conditionResult !== undefined) {
-        // Follow conditional branch
-        const branch = conditionResult ? "if" : "else";
-        nextNodes = edges
-          .filter((e) => e.source === nodeId && e.sourceHandle === branch)
-          .map((e) => e.target);
-      } else {
-        // Follow normal edges
-        nextNodes = edges.filter((e) => e.source === nodeId).map((e) => e.target);
-      }
-
-      // Execute next nodes
-      for (const nextNodeId of nextNodes) {
-        await executeGraph(nextNodeId);
-      }
-    };
-
-    // Determine start nodes using indegree analysis (matching useExecution.ts)
-    const indegree = new Map<string, number>();
-    nodes.forEach((n) => indegree.set(n.id, 0));
-    edges.forEach((e) => {
-      const t = e.target;
-      if (t && indegree.has(t)) {
-        indegree.set(t, (indegree.get(t) || 0) + 1);
-      }
+      },
     });
-
-    // Check for explicit start nodes
-    const explicitStarts = nodes.filter((n) => (n.data as { isStart?: boolean })?.isStart === true);
-
-    // Primary: zero-indegree nodes; if explicit starts exist, prefer them
-    const startNodes =
-      explicitStarts.length > 0
-        ? explicitStarts
-        : nodes.filter((n) => (indegree.get(n.id) || 0) === 0);
-
-    if (startNodes.length === 0) {
-      // Fallback: choose nodes with minimal indegree
-      let minIndegree = Infinity;
-      nodes.forEach((n) => {
-        const d = indegree.get(n.id) || 0;
-        if (d < minIndegree) minIndegree = d;
-      });
-      const fallbackStarts = nodes.filter((n) => (indegree.get(n.id) || 0) === minIndegree);
-      console.warn("[DesktopScheduler] No zero-indegree nodes; falling back to minimal indegree");
-
-      for (const startNode of fallbackStarts) {
-        await executeGraph(startNode.id);
-      }
-    } else {
-      // Execute from all start nodes
-      for (const startNode of startNodes) {
-        await executeGraph(startNode.id);
-      }
-    }
   }
 
   /**
@@ -456,7 +371,7 @@ export class DesktopScheduler {
     }
 
     this.tasks.delete(scheduleId);
-    console.log(`[DesktopScheduler] Unscheduled schedule: ${scheduleId} (automation: ${task.automationId})`);
+    logger.info(`Unscheduled schedule: ${scheduleId} (automation: ${task.automationId})`);
     return true;
   }
 
@@ -468,8 +383,8 @@ export class DesktopScheduler {
     if (!task) return false;
 
     task.enabled = enabled;
-    console.log(
-      `[DesktopScheduler] Schedule ${scheduleId} (automation ${task.automationId}) ${enabled ? "enabled" : "disabled"}`
+    logger.info(
+      `Schedule ${scheduleId} (automation ${task.automationId}) ${enabled ? "enabled" : "disabled"}`
     );
     return true;
   }
@@ -523,7 +438,7 @@ export class DesktopScheduler {
     for (const [scheduleId] of this.tasks) {
       this.unscheduleAutomation(scheduleId);
     }
-    console.log("[DesktopScheduler] All scheduled tasks cleaned up");
+    logger.info("All scheduled tasks cleaned up");
   }
 
   /**
@@ -535,12 +450,12 @@ export class DesktopScheduler {
       const store = new ScheduleStore();
       const schedules = store.list();
 
-      console.log(`[DesktopScheduler] Loading ${schedules.length} schedules`);
+      logger.info(`Loading ${schedules.length} schedules`);
 
       for (const schedule of schedules) {
         if (!schedule.enabled) {
-          console.log(
-            `[DesktopScheduler] Skipping disabled schedule: ${schedule.id} for workflow ${schedule.workflowId}`
+          logger.info(
+            `Skipping disabled schedule: ${schedule.id} for workflow ${schedule.workflowId}`
           );
           continue;
         }
@@ -550,9 +465,7 @@ export class DesktopScheduler {
         const workflow = await loadAutomation(schedule.workflowId, defaultStorageFolder);
 
         if (!workflow) {
-          console.error(
-            `[DesktopScheduler] Workflow ${schedule.workflowId} not found for schedule ${schedule.id}`
-          );
+          logger.error(`Workflow ${schedule.workflowId} not found for schedule ${schedule.id}`);
           continue;
         }
 
@@ -561,14 +474,15 @@ export class DesktopScheduler {
           ...workflow,
           schedule: schedule.schedule,
           enabled: schedule.enabled,
+          headless: schedule.headless ?? true, // Default to headless for scheduled workflows
         };
 
         this.scheduleAutomation(workflowWithSchedule, schedule.id);
       }
 
-      console.log(`[DesktopScheduler] Activated ${this.tasks.size} schedules`);
+      logger.info(`Activated ${this.tasks.size} schedules`);
     } catch (error) {
-      console.error("[DesktopScheduler] Failed to load schedules:", error);
+      logger.error("Failed to load schedules", error);
     }
   }
 }

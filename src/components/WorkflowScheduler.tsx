@@ -21,6 +21,7 @@ import {
   DialogTrigger,
 } from "./ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
+import { Switch } from "./ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./ui/table";
 
 interface WorkflowSchedulerProps {
@@ -33,6 +34,7 @@ export const WorkflowScheduler: React.FC<WorkflowSchedulerProps> = ({ automation
   const [selectedWorkflowId, setSelectedWorkflowId] = useState<string>("");
   const [newSchedule, setNewSchedule] = useState<ScheduleType>({ type: "manual" });
   const [newEnabled, setNewEnabled] = useState(true);
+  const [newHeadless, setNewHeadless] = useState(true);
 
   // Load schedules on mount
   useEffect(() => {
@@ -64,6 +66,7 @@ export const WorkflowScheduler: React.FC<WorkflowSchedulerProps> = ({ automation
       workflowName: workflow.name,
       schedule: newSchedule,
       enabled: newEnabled,
+      headless: newHeadless,
       createdAt: new Date().toISOString(),
     };
 
@@ -74,6 +77,7 @@ export const WorkflowScheduler: React.FC<WorkflowSchedulerProps> = ({ automation
       setSelectedWorkflowId("");
       setNewSchedule({ type: "manual" });
       setNewEnabled(true);
+      setNewHeadless(true);
     } catch (error) {
       console.error("Failed to save schedule:", error);
       alert("Failed to save schedule");
@@ -168,12 +172,25 @@ export const WorkflowScheduler: React.FC<WorkflowSchedulerProps> = ({ automation
 
               {/* Schedule Configuration */}
               {selectedWorkflowId && (
-                <ScheduleConfig
-                  schedule={newSchedule}
-                  enabled={newEnabled}
-                  onScheduleChange={setNewSchedule}
-                  onEnabledChange={setNewEnabled}
-                />
+                <>
+                  <ScheduleConfig
+                    schedule={newSchedule}
+                    enabled={newEnabled}
+                    onScheduleChange={setNewSchedule}
+                    onEnabledChange={setNewEnabled}
+                  />
+
+                  {/* Headless Mode Toggle */}
+                  <div className="flex items-center justify-between p-4 border rounded-md">
+                    <div className="space-y-1">
+                      <label className="text-sm font-medium">Headless Mode</label>
+                      <p className="text-xs text-muted-foreground">
+                        Run browser in background (no visible window)
+                      </p>
+                    </div>
+                    <Switch checked={newHeadless} onCheckedChange={setNewHeadless} />
+                  </div>
+                </>
               )}
 
               {/* Action Buttons */}

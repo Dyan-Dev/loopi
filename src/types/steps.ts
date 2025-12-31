@@ -1,4 +1,15 @@
-import { Camera, Clock, Code, Globe, Mouse, Twitter, Type as TypeIcon, Zap } from "lucide-react";
+import {
+  Camera,
+  Clock,
+  Code,
+  GitBranch,
+  Globe,
+  Mouse,
+  Twitter,
+  Type as TypeIcon,
+  Variable,
+  Zap,
+} from "lucide-react";
 
 /**
  * Automation Step Type System
@@ -98,6 +109,34 @@ export interface StepModifyVariable extends StepBase {
   variableName: string;
   operation: ModifyOp;
   value: string; // supports {{var}} substitution
+}
+
+// Browser Conditional (DOM-based)
+export interface StepBrowserConditional extends StepBase {
+  type: "browserConditional";
+  browserConditionType: "elementExists" | "valueMatches";
+  selector: string;
+  expectedValue?: string;
+  condition?: "equals" | "contains" | "greaterThan" | "lessThan";
+  transformType?: "none" | "stripCurrency" | "stripNonNumeric" | "regexReplace" | "removeChars";
+  transformPattern?: string;
+  transformReplace?: string;
+  transformChars?: string;
+  parseAsNumber?: boolean;
+}
+
+// Variable Conditional (variable-based)
+export interface StepVariableConditional extends StepBase {
+  type: "variableConditional";
+  variableConditionType:
+    | "variableEquals"
+    | "variableContains"
+    | "variableGreaterThan"
+    | "variableLessThan"
+    | "variableExists";
+  variableName: string;
+  expectedValue?: string;
+  parseAsNumber?: boolean;
 }
 
 // Twitter Integration Steps
@@ -201,6 +240,8 @@ export type AutomationStep =
   | StepHover
   | StepSetVariable
   | StepModifyVariable
+  | StepBrowserConditional
+  | StepVariableConditional
   | StepTwitterCreateTweet
   | StepTwitterDeleteTweet
   | StepTwitterLikeTweet
@@ -276,6 +317,21 @@ export const dataSteps: StepTypeOption[] = [
   },
 ];
 
+export const logicSteps: StepTypeOption[] = [
+  {
+    value: "browserConditional",
+    label: "Browser Conditional",
+    icon: GitBranch,
+    description: "Branch based on DOM element or value",
+  },
+  {
+    value: "variableConditional",
+    label: "Variable Conditional",
+    icon: Variable,
+    description: "Branch based on variable condition",
+  },
+];
+
 export const integrationSteps: StepTypeOption[] = [
   {
     value: "apiCall",
@@ -342,6 +398,11 @@ export const stepCategories: StepCategory[] = [
     steps: dataSteps,
   },
   {
+    category: "Logic",
+    icon: GitBranch,
+    steps: logicSteps,
+  },
+  {
     category: "Integration",
     icon: Code,
     steps: integrationSteps,
@@ -356,6 +417,7 @@ export const stepCategories: StepCategory[] = [
 export const stepTypes = [
   ...browserSteps,
   ...dataSteps,
+  ...logicSteps,
   ...integrationSteps,
   ...twitterSteps,
 ] as const;

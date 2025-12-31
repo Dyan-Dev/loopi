@@ -1,7 +1,10 @@
 import type { StoredAutomation } from "@app-types";
+import { createLogger } from "@utils/logger";
 import { app } from "electron";
 import fs from "fs";
 import path from "path";
+
+const logger = createLogger("TreeStore");
 
 export const defaultStorageFolder = path.join(app.getPath("userData"), ".trees");
 const examplesStorageFolder = path.join(app.getPath("userData"), ".examples");
@@ -37,7 +40,7 @@ export const initializeExamples = (): void => {
     }
 
     if (!examplesSourcePath) {
-      console.warn("No examples source folder found");
+      logger.warn("No examples source folder found");
       return;
     }
 
@@ -47,10 +50,8 @@ export const initializeExamples = (): void => {
       const sourcePath = path.join(examplesSourcePath, file);
       const destPath = path.join(examplesStorageFolder, file);
 
-      if (!fs.existsSync(destPath)) {
-        const content = fs.readFileSync(sourcePath, "utf-8");
-        fs.writeFileSync(destPath, content, "utf-8");
-      }
+      const content = fs.readFileSync(sourcePath, "utf-8");
+      fs.writeFileSync(destPath, content, "utf-8");
     }
   } catch (error) {
     console.error("Failed to initialize examples:", error);

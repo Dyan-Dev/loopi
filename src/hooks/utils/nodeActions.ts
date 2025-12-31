@@ -6,14 +6,14 @@ import type { NodeDataBase } from "@app-types/flow";
  */
 export interface UpdateOrDeleteNodeArgs {
   sourceId: string;
-  type: AutomationStep["type"] | "conditional" | "update" | "delete";
+  type: AutomationStep["type"] | "update" | "delete";
   updates?: Partial<NodeDataBase>;
   setNodes: (updater: (nds: ReactFlowNode[]) => ReactFlowNode[]) => void;
   setEdges: (updater: (eds: ReactFlowEdge[]) => ReactFlowEdge[]) => void;
   setSelectedNodeId: (id: string | null) => void;
   handleNodeAction: (
     sourceId: string,
-    type: AutomationStep["type"] | "conditional" | "update" | "delete",
+    type: AutomationStep["type"] | "update" | "delete",
     updates?: Partial<NodeDataBase>
   ) => void;
 }

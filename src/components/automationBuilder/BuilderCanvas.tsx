@@ -27,7 +27,7 @@ interface BuilderCanvasProps {
   selectedNode: ReactFlowNode | null;
   handleNodeAction: (
     sourceId: string,
-    type: AutomationStep["type"] | "conditional" | "update" | "delete",
+    type: AutomationStep["type"] | "update" | "delete",
     updates?: Partial<NodeData>
   ) => void;
   setBrowserOpen: (arg?: boolean | string) => void;

@@ -1,11 +1,23 @@
 import { StoredAutomation } from "@app-types";
 import { exportAutomation } from "@utils/automationIO";
-import { ArrowLeft, Bug, Download, Globe, Pause, Play, Save, Settings, Square } from "lucide-react";
-import React from "react";
+import {
+  ArrowLeft,
+  Bug,
+  Download,
+  EyeOff,
+  Globe,
+  Pause,
+  Play,
+  Save,
+  Settings,
+  Square,
+} from "lucide-react";
+import React, { useState } from "react";
 import { Button } from "../ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../ui/dialog";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
+import { Switch } from "../ui/switch";
 import { Textarea } from "../ui/textarea";
 
 interface BuilderHeaderProps {
@@ -15,10 +27,10 @@ interface BuilderHeaderProps {
   description: string;
   setDescription: (v: string) => void;
   isBrowserOpen: boolean;
-  openBrowser: () => Promise<void>;
+  openBrowser: (url?: string) => Promise<void>;
   closeBrowser: () => Promise<void>;
   isAutomationRunning: boolean;
-  runAutomation: () => Promise<void>;
+  runAutomation: (headless?: boolean) => Promise<void>;
   pauseAutomation: () => void;
   stopAutomation: () => void;
   handleSave: (e: React.MouseEvent<HTMLButtonElement>) => void;
@@ -59,6 +71,8 @@ export const BuilderHeader: React.FC<BuilderHeaderProps> = ({
   isDebugEnabled,
   setIsDebugEnabled,
 }) => {
+  const [headlessMode, setHeadlessMode] = useState(false);
+
   const handleExport = () => {
     if (currentAutomation) {
       exportAutomation(currentAutomation);
@@ -124,28 +138,48 @@ export const BuilderHeader: React.FC<BuilderHeaderProps> = ({
               Open Browser
             </Button>
           ) : (
-            <>
-              <Button variant="outline" onClick={() => closeBrowser()}>
-                <Square className="h-4 w-4 mr-2" />
-                Close Browser
+            <Button variant="outline" onClick={() => closeBrowser()}>
+              <Square className="h-4 w-4 mr-2" />
+              Close Browser
+            </Button>
+          )}
+
+          {/* Run Automation Controls with Headless Toggle */}
+          {!isAutomationRunning ? (
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 border rounded-md px-3 py-2">
+                <Label
+                  htmlFor="headless-mode"
+                  className="text-sm cursor-pointer flex items-center gap-2"
+                >
+                  {headlessMode && <EyeOff className="h-4 w-4" />}
+                  Headless
+                </Label>
+                <Switch
+                  id="headless-mode"
+                  checked={headlessMode}
+                  onCheckedChange={setHeadlessMode}
+                />
+              </div>
+              <Button
+                variant="default"
+                onClick={() => runAutomation(headlessMode)}
+                disabled={nodesLength === 0}
+              >
+                <Play className="h-4 w-4 mr-2" />
+                Run Automation
               </Button>
-              {!isAutomationRunning ? (
-                <Button variant="default" onClick={runAutomation} disabled={nodesLength === 0}>
-                  <Play className="h-4 w-4 mr-2" />
-                  Run Automation
-                </Button>
-              ) : (
-                <>
-                  <Button variant="outline" onClick={pauseAutomation}>
-                    <Pause className="h-4 w-4 mr-2" />
-                    Pause
-                  </Button>
-                  <Button variant="destructive" onClick={stopAutomation}>
-                    <Square className="h-4 w-4 mr-2" />
-                    Stop
-                  </Button>
-                </>
-              )}
+            </div>
+          ) : (
+            <>
+              <Button variant="outline" onClick={pauseAutomation}>
+                <Pause className="h-4 w-4 mr-2" />
+                Pause
+              </Button>
+              <Button variant="destructive" onClick={stopAutomation}>
+                <Square className="h-4 w-4 mr-2" />
+                Stop
+              </Button>
             </>
           )}
           {currentAutomation && (

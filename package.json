@@ -63,6 +63,7 @@
     "next-themes": "^0.4.6",
     "node-cron": "^3.0.3",
     "postcss": "^8.5.3",
+    "puppeteer": "^24.34.0",
     "radix-ui": "^1.4.3",
     "react": "^19.1.0",
     "react-day-picker": "^9.11.0",

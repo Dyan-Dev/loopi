@@ -33,8 +33,39 @@ export default function useExecution({ nodes, edges, setNodes }: UseExecutionArg
       setIsAutomationRunning(false);
       setCurrentNodeId(null);
     };
-    // register browser closed callback if available
+
+    const handleNodeStatus = ({
+      nodeId,
+      status,
+      error,
+    }: {
+      nodeId: string;
+      status: string;
+      error?: string;
+    }) => {
+      setCurrentNodeId(nodeId);
+      setNodes((nds) =>
+        nds.map((node) => {
+          if (node.id === nodeId) {
+            return {
+              ...node,
+              data: {
+                ...node.data,
+                nodeRunning: status === "running",
+                nodeStatus: status as "idle" | "running" | "success" | "error",
+                nodeError: error,
+              },
+            };
+          }
+          return node;
+        })
+      );
+    };
+
+    // register callbacks if available
     window.electronAPI?.onBrowserClosed(handleBrowserClosed);
+    window.electronAPI?.onNodeStatus(handleNodeStatus);
+
     return () => {
       try {
         window.electronAPI?.removeBrowserClosed?.();
@@ -42,7 +73,7 @@ export default function useExecution({ nodes, edges, setNodes }: UseExecutionArg
         // ignore
       }
     };
-  }, []);
+  }, [setNodes]);
 
   const openBrowser = useCallback(async (url?: string) => {
     try {
@@ -64,148 +95,74 @@ export default function useExecution({ nodes, edges, setNodes }: UseExecutionArg
     }
   }, []);
 
-  const executeNode = useCallback(
-    async (node: ReactFlowNode) => {
-      setCurrentNodeId(node.id);
-      setNodes((nds: ReactFlowNode[]) =>
-        nds.map((n) => (n.id === node.id ? { ...n, data: { ...n.data, nodeRunning: true } } : n))
+  const runAutomation = useCallback(
+    async (headless: boolean = false) => {
+      if (nodes.length === 0) {
+        alert("No nodes to execute");
+        return;
+      }
+
+      setIsAutomationRunning(true);
+      stopGraphExecutionRef.current = false;
+
+      // Reset all node statuses before execution
+      setNodes((nds) =>
+        nds.map((node) => ({
+          ...node,
+          data: {
+            ...node.data,
+            nodeRunning: false,
+            nodeStatus: "idle" as const,
+
+          },
+        }))
       );
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      if (node.type === "automationStep" && node.data.step) {
-        return await window.electronAPI?.runStep(node.data.step);
-      } else if (node.type === "conditional") {
-        const conditionParams = {
-          conditionType: node.data.conditionType,
-          selector: node.data.selector,
-          expectedValue: node.data.expectedValue,
-          condition: node.data.condition,
-          transformType: node.data.transformType,
-          transformPattern: node.data.transformPattern,
-          transformReplace: node.data.transformReplace,
-          transformChars: node.data.transformChars,
-          parseAsNumber: node.data.parseAsNumber,
-        };
 
-        const response: ConditionalResult =
-          await window.electronAPI!.runConditional(conditionParams);
-        const conditionResult = response.conditionResult;
+      try {
+        // Serialize nodes and edges to remove non-cloneable properties (like functions)
+        const serializedNodes = nodes.map((node) => ({
+          id: node.id,
+          type: node.type,
+          position: node.position,
+          data: {
+            step: node.data.step,
+            // Variable fields
+            variableName: node.data.variableName,
+            value: node.data.value,
+            operation: node.data.operation,
+            nodeRunning: node.data.nodeRunning,
+          },
+        }));
 
-        return {
-          conditionResult,
-        };
+        const serializedEdges = edges.map((edge) => ({
+          id: edge.id,
+          source: edge.source,
+          target: edge.target,
+          sourceHandle: edge.sourceHandle,
+          data: edge.data,
+        }));
+
+        const result = await window.electronAPI?.executeAutomation({
+          nodes: serializedNodes,
+          edges: serializedEdges,
+          headless,
+        });
+
+        if (result?.success) {
+          alert("Automation completed successfully!");
+        } else {
+          alert(`Automation failed: ${result?.error || "Unknown error"}`);
+        }
+      } catch (error) {
+        console.error("Automation failed:", error);
+        alert("Automation failed. Check console for details.");
+      } finally {
+        setIsAutomationRunning(false);
+        setCurrentNodeId(null);
       }
     },
-    [setNodes]
+    [nodes, edges]
   );
-
-  const runAutomation = useCallback(async () => {
-    if (nodes.length === 0) {
-      alert("No nodes to execute");
-      return;
-    }
-
-    if (!isBrowserOpen) {
-      await openBrowser();
-    }
-
-    // Initialize executor variables from automation-level variables if provided
-    try {
-      // Collect automation-level variables from nodes or a top-level automation export
-      // For now, look for a node with type 'automationVars' or fall back to none
-      const vars: Record<string, unknown> | undefined = window.automation?.variables;
-      if (window.electronAPI?.initVariables) {
-        await window.electronAPI.initVariables(vars);
-      }
-    } catch (_e) {
-      // Initialization failed — keep as debug-level behavior without noisy logging
-    }
-
-    setIsAutomationRunning(true);
-    setCurrentNodeId(null);
-
-    try {
-      const visited = new Set<string>();
-      const executeGraph = async (nodeId: string) => {
-        if (stopGraphExecutionRef.current) return;
-        visited.add(nodeId);
-
-        const node = nodes.find((n) => n.id === nodeId) as ReactFlowNode | undefined;
-        if (!node) return;
-
-        const result = await executeNode(node);
-        const execResult = result as { conditionResult?: boolean } | undefined | null;
-        setNodes((nds: ReactFlowNode[]) =>
-          nds.map((n) => (n.id === node.id ? { ...n, data: { ...n.data, nodeRunning: false } } : n))
-        );
-        let nextNodes: string[] = [];
-
-        if (node.type === "conditional" && execResult?.conditionResult !== undefined) {
-          const branch = execResult.conditionResult ? "if" : "else";
-          nextNodes = edges
-            .filter((e) => e.source === nodeId && e.sourceHandle === branch)
-            .map((e) => e.target);
-        } else {
-          nextNodes = edges.filter((e) => e.source === nodeId).map((e) => e.target);
-        }
-
-        for (const nextNodeId of nextNodes) {
-          await executeGraph(nextNodeId);
-        }
-      };
-
-      // Determine dynamic start nodes robustly using indegree analysis
-      const indegree = new Map<string, number>();
-      nodes.forEach((n) => indegree.set(n.id, 0));
-      edges.forEach((e) => {
-        const t = e.target;
-        if (t && indegree.has(t)) {
-          indegree.set(t, (indegree.get(t) || 0) + 1);
-        }
-      });
-
-      // Optional explicit start override via node.data.isStart === true
-      const explicitStarts = nodes.filter(
-        (n) => (n.data as { isStart?: boolean })?.isStart === true
-      );
-
-      // Primary: zero-indegree nodes; if explicit starts exist, prefer them
-      const startNodes =
-        explicitStarts.length > 0
-          ? explicitStarts
-          : nodes.filter((n) => (indegree.get(n.id) || 0) === 0);
-
-      if (startNodes.length === 0) {
-        // Fallback: choose nodes with minimal indegree instead of failing
-        let minIndegree = Infinity;
-        nodes.forEach((n) => {
-          const d = indegree.get(n.id) || 0;
-          if (d < minIndegree) minIndegree = d;
-        });
-        const fallbackStarts = nodes.filter((n) => (indegree.get(n.id) || 0) === minIndegree);
-        console.warn("No zero-indegree nodes; falling back to minimal indegree.", {
-          indegree: Object.fromEntries(indegree.entries()),
-          edges,
-          nodes: nodes.map((n) => ({ id: n.id, type: n.type })),
-        });
-        for (const startNode of fallbackStarts) {
-          await executeGraph(startNode.id);
-        }
-        alert("Automation completed successfully!");
-      } else {
-        for (const startNode of startNodes) {
-          await executeGraph(startNode.id);
-        }
-        alert("Automation completed successfully!");
-      }
-    } catch (error) {
-      console.error("Automation failed:", error);
-      alert("Automation failed. Check console for details.");
-    } finally {
-      setIsAutomationRunning(false);
-      setCurrentNodeId(null);
-      stopGraphExecutionRef.current = false;
-    }
-  }, [nodes, edges, executeNode, openBrowser, setNodes, isBrowserOpen]);
 
   const pauseAutomation = useCallback(() => {
     setIsAutomationRunning(false);

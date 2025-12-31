@@ -14,6 +14,7 @@ export interface WorkflowSchedule {
   workflowName: string;
   schedule: ScheduleType;
   enabled: boolean;
+  headless?: boolean;
   createdAt: string;
 }
 

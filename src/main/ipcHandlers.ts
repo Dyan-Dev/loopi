@@ -1,6 +1,8 @@
 import { dialog, ipcMain } from "electron";
 import { mkdirSync, writeFileSync } from "fs";
 import { dirname } from "path";
+import type { Edge, Node } from "../types/flow";
+import { createLogger } from "../utils/logger";
 import { AutomationExecutor } from "./automationExecutor";
 import {
   addCredential,
@@ -12,6 +14,7 @@ import {
 import { debugLogger } from "./debugLogger";
 import { DesktopScheduler } from "./desktopScheduler";
 import { setupDownloadHandler } from "./downloadManager";
+import { executeAutomationGraph } from "./graphExecutor";
 import { SelectorPicker } from "./selectorPicker";
 import { loadSettings, saveSettings } from "./settingsStore";
 import {
@@ -24,6 +27,17 @@ import {
   saveAutomation,
 } from "./treeStore";
 import { WindowManager } from "./windowManager";
+
+const logger = createLogger("IPCHandlers");
+
+/**
+ * Type for automation execution request from frontend
+ */
+interface AutomationExecuteRequest {
+  nodes: Node[];
+  edges: Edge[];
+  headless?: boolean;
+}
 
 /**
  * Registers all IPC handlers for communication between renderer and main process
@@ -54,43 +68,93 @@ export function registerIPCHandlers(
   });
 
   /**
-   * Executes an automation step in the browser window
+   * Execute entire automation workflow in backend
+   * Handles complete ReactFlow nodes/edges directly, sends node status updates to frontend
    */
-  ipcMain.handle("browser:runStep", async (_event, step) => {
-    const browserWindow = windowManager.getBrowserWindow();
-    if (!browserWindow) {
-      throw new Error("Browser window not available");
-    }
-    return await executor.executeStep(browserWindow, step);
-  });
+  ipcMain.handle("automation:execute", async (event, automation: AutomationExecuteRequest) => {
+    const mainWindow = windowManager.getMainWindow();
+    const { nodes, edges, headless } = automation;
 
-  /**
-   * Initialize executor variable context from renderer
-   */
-  ipcMain.handle(
-    "executor:initVariables",
-    async (_event, vars: Record<string, string> | undefined) => {
-      executor.initVariables(vars);
-      return true;
+    try {
+      // Extract clean node data (ReactFlow nodes contain extra UI properties)
+      const cleanNodes = nodes.map((node) => ({
+        id: node.id,
+        type: node.type,
+        data: {
+          step: node.data.step,
+          // Variable step fields
+          variableName: node.data.variableName,
+          value: node.data.value,
+          operation: node.data.operation,
+        },
+        position: node.position,
+      })) as Node[];
+
+      const cleanEdges = edges.map((edge) => ({
+        id: edge.id,
+        source: edge.source,
+        target: edge.target,
+        sourceHandle: edge.sourceHandle,
+      })) as Edge[];
+
+      // Check if workflow has browser steps
+      const browserSteps = [
+        "navigate",
+        "click",
+        "type",
+        "screenshot",
+        "extract",
+        "scroll",
+        "selectOption",
+        "fileUpload",
+        "hover",
+        "browserConditional",
+      ];
+      const hasBrowserSteps = cleanNodes.some(
+        (node: Node) =>
+          node.type === "automationStep" &&
+          node.data.step &&
+          browserSteps.includes(node.data.step.type)
+      );
+
+      // Open browser if needed (non-headless mode with browser steps)
+      if (hasBrowserSteps && !headless) {
+        const browserWindow = windowManager.getBrowserWindow();
+        if (!browserWindow || browserWindow.isDestroyed()) {
+          await windowManager.ensureBrowserWindow("https://google.com");
+          await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait for browser to initialize
+        }
+      }
+
+      const browserWindow = hasBrowserSteps && !headless ? windowManager.getBrowserWindow() : null;
+
+      // Execute using shared graph executor
+      await executeAutomationGraph({
+        nodes: cleanNodes,
+        edges: cleanEdges,
+        browserWindow,
+        executor,
+        headless,
+        onNodeStatus: (nodeId, status, error) => {
+          mainWindow?.webContents.send("node:status", {
+            nodeId,
+            status,
+            ...(error && { error }),
+          });
+        },
+      });
+
+      return { success: true, variables: executor.getVariables() };
+    } catch (error) {
+      return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
-  );
+  });
 
   /**
    * Return a copy of current executor variables
    */
   ipcMain.handle("executor:getVariables", async () => {
     return executor.getVariables();
-  });
-
-  /**
-   * Evaluates a conditional node (for loops and branching logic)
-   */
-  ipcMain.handle("browser:runConditional", async (_event, config) => {
-    const browserWindow = windowManager.getBrowserWindow();
-    if (!browserWindow) {
-      throw new Error("Browser window not available");
-    }
-    return await executor.evaluateConditional(browserWindow, config);
   });
 
   /**
@@ -150,10 +214,19 @@ export function registerIPCHandlers(
         throw new Error("Main window not available");
       }
 
-      // Ensure browser window is open and ready
-      const browserWindow = await windowManager.ensureBrowserWindow(url, () => {
-        mainWindow.webContents.send("browser:closed");
-      });
+      // If browser is already open, load the URL into it; otherwise ensure a new browser window
+      let browserWindow = windowManager.getBrowserWindow();
+      if (browserWindow) {
+        try {
+          await browserWindow.webContents.loadURL(url);
+        } catch (err) {
+          logger.warn("Failed to load URL in existing browser window", err);
+        }
+      } else {
+        browserWindow = await windowManager.ensureBrowserWindow(url, () => {
+          mainWindow.webContents.send("browser:closed");
+        });
+      }
 
       picker.injectNavigationBar(browserWindow);
       browserWindow.focus();
@@ -196,7 +269,7 @@ export function registerIPCHandlers(
     try {
       const mainWindow = windowManager.getMainWindow();
       if (!mainWindow) {
-        console.error("Main window not available for folder selection dialog");
+        logger.error("Main window not available for folder selection dialog");
         return null;
       }
       const result = await dialog.showOpenDialog(mainWindow, {
@@ -205,10 +278,10 @@ export function registerIPCHandlers(
         buttonLabel: "Select",
       });
       const selectedPath = result.canceled ? null : result.filePaths[0];
-      console.log("Folder selection result:", selectedPath);
+      logger.debug("Folder selection result", { selectedPath });
       return selectedPath;
     } catch (error) {
-      console.error("Error in folder selection dialog:", error);
+      logger.error("Error in folder selection dialog", error);
       return null;
     }
   });
@@ -334,10 +407,10 @@ export function registerIPCHandlers(
   ipcMain.handle("schedules:delete", async (_event, scheduleId: string) => {
     const { ScheduleStore } = await import("./scheduleStore");
     const store = new ScheduleStore();
-    
+
     // Unschedule from the scheduler BEFORE deleting
     scheduler.unscheduleAutomation(scheduleId);
-    
+
     // Delete from storage
     const result = store.delete(scheduleId);
 

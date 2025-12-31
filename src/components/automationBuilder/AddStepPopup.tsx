@@ -1,12 +1,12 @@
 import { AutomationStep, stepCategories } from "@app-types";
-import { Plus } from "lucide-react";
+import { GitBranch, Plus, Variable } from "lucide-react";
 import { useState } from "react";
 import { Button } from "../ui/button";
 import { Card, CardContent, CardHeader } from "../ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "../ui/collapsible";
 
 interface AddStepPopupProps {
-  onAdd: (type: AutomationStep["type"] | "conditional") => void;
+  onAdd: (type: AutomationStep["type"]) => void;
 }
 
 const AddStepPopup: React.FC<AddStepPopupProps> = ({ onAdd }) => {
@@ -66,17 +66,30 @@ const AddStepPopup: React.FC<AddStepPopupProps> = ({ onAdd }) => {
           </Collapsible>
         ))}
 
-        {/* Conditional section */}
-        <Button
-          variant="outline"
-          className="w-full text-left justify-start text-xs py-1 px-2 h-auto font-semibold"
-          onClick={() => {
-            onAdd("conditional");
-          }}
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          Conditional
-        </Button>
+        {/* Conditionals section */}
+        <div className="space-y-1">
+          <div className="text-xs font-semibold text-gray-500 px-2 py-1">Conditionals</div>
+          <Button
+            variant="outline"
+            className="w-full text-left justify-start text-xs py-1 px-2 h-auto"
+            onClick={() => {
+              onAdd("browserConditional");
+            }}
+          >
+            <GitBranch className="h-4 w-4 mr-2" />
+            Browser Conditional
+          </Button>
+          <Button
+            variant="outline"
+            className="w-full text-left justify-start text-xs py-1 px-2 h-auto"
+            onClick={() => {
+              onAdd("variableConditional");
+            }}
+          >
+            <Variable className="h-4 w-4 mr-2" />
+            Variable Conditional
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );

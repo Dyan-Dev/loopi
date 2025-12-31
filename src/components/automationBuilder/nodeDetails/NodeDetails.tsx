@@ -1,15 +1,17 @@
 import { Node, ReactFlowNode } from "@app-types";
 import { Card, CardContent, CardHeader } from "../../ui/card";
-import ConditionEditor from "./ConditionEditor";
+import BrowserConditionEditor from "./ConditionEditor";
 import NodeHeader from "./NodeHeader";
 import StepEditor from "./StepEditor";
+import VariableConditionEditor from "./VariableConditionEditor";
 
 /**
  * NodeDetails - Displays and manages properties for automation steps and conditional nodes
  *
  * Provides a detail panel for editing node properties, including:
  * - Step configuration (URL, selectors, values, etc.)
- * - Conditional logic settings
+ * - Browser conditional logic settings (DOM-based)
+ * - Variable conditional logic settings (variable-based)
  * - Interactive selector picking via Electron IPC
  */
 export default function NodeDetails({
@@ -68,20 +70,37 @@ export default function NodeDetails({
     }
   };
 
+  const getNodeTitle = () => {
+    if (data.step) {
+      if (data.step.type === "browserConditional") return "Browser Conditional";
+      if (data.step.type === "variableConditional") return "Variable Conditional";
+      return data.step.type;
+    }
+    return "Conditional";
+  };
+
   return (
     <Card className="w-80 max-h-[80vh] overflow-y-auto">
       <CardHeader className="p-3">
         <NodeHeader
-          title={data.step ? data.step.type : "Conditional"}
+          title={getNodeTitle()}
           id={id}
           onDelete={(nodeId) => onUpdate(nodeId, "delete")}
         />
       </CardHeader>
       <CardContent className="p-3 space-y-4">
-        {data.step ? (
+        {data.step && data.step.type === "browserConditional" ? (
+          <BrowserConditionEditor
+            node={node}
+            onUpdate={onUpdate}
+            onPickWithSetter={handlePickSelector}
+          />
+        ) : data.step && data.step.type === "variableConditional" ? (
+          <VariableConditionEditor node={node} onUpdate={onUpdate} />
+        ) : data.step ? (
           <StepEditor node={node} onUpdate={onUpdate} onPickWithSetter={handlePickSelector} />
         ) : (
-          <ConditionEditor node={node} onUpdate={onUpdate} onPickWithSetter={handlePickSelector} />
+          <p className="text-sm text-muted-foreground">No step data available.</p>
         )}
       </CardContent>
     </Card>

@@ -15,7 +15,6 @@
  */
 import { contextBridge, ipcRenderer } from "electron";
 import { Automation } from "./types";
-import type { AutomationStep } from "./types/steps";
 
 contextBridge.exposeInMainWorld("electronAPI", {
   openBrowser: (url: string) => ipcRenderer.invoke("browser:open", url),
@@ -57,10 +56,10 @@ contextBridge.exposeInMainWorld("electronAPI", {
   },
   saveFile: (data: { filePath: string; content: string }) => ipcRenderer.invoke("file:save", data),
   selectFolder: () => ipcRenderer.invoke("dialog:selectFolder"),
-  runStep: (step: AutomationStep) => ipcRenderer.invoke("browser:runStep", step),
-  runConditional: (condition: unknown) => ipcRenderer.invoke("browser:runConditional", condition),
-  initVariables: (vars?: Record<string, string>) =>
-    ipcRenderer.invoke("executor:initVariables", vars),
+  executeAutomation: (automation: Automation & { headless?: boolean }) =>
+    ipcRenderer.invoke("automation:execute", automation),
+  onNodeStatus: (callback: (data: { nodeId: string; status: string; error?: string }) => void) =>
+    ipcRenderer.on("node:status", (_event, data) => callback(data)),
   getVariables: () => ipcRenderer.invoke("executor:getVariables"),
   onBrowserClosed: (callback: () => void) => ipcRenderer.on("browser:closed", callback),
   pickSelector: (

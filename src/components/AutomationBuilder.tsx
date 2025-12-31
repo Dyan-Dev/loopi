@@ -20,7 +20,8 @@ import BuilderHeader from "./automationBuilder/BuilderHeader";
 
 const nodeTypes = {
   automationStep: AutomationNode,
-  conditional: AutomationNode,
+  browserConditional: AutomationNode,
+  variableConditional: AutomationNode,
 };
 
 interface AutomationBuilderProps {
@@ -153,18 +154,10 @@ export function AutomationBuilder({ automation, onSave, onCancel }: AutomationBu
         data: {
           // step nodes keep their step object
           step: data.step,
-          // conditional node fields
-          conditionType: data.conditionType,
-          selector: data.selector,
-          expectedValue: data.expectedValue,
-          // comparison operator (equals/contains/greaterThan/lessThan)
-          condition: data.condition,
-          // post-processing transform options
-          transformType: data.transformType,
-          transformPattern: data.transformPattern,
-          transformReplace: data.transformReplace,
-          transformChars: data.transformChars,
-          parseAsNumber: data.parseAsNumber,
+          // variable fields
+          variableName: data.variableName,
+          value: data.value,
+          operation: data.operation,
         },
         position,
       })) as Node[],

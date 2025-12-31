@@ -8,8 +8,16 @@ import type { AutomationStep } from "./steps";
  * Nodes can represent either automation steps or conditional logic.
  */
 
-/** Condition types for branching logic */
-export type ConditionType = "elementExists" | "valueMatches";
+/** Browser condition types (DOM-based) */
+export type BrowserConditionType = "elementExists" | "valueMatches";
+
+/** Variable condition types (non-DOM) */
+export type VariableConditionType =
+  | "variableEquals"
+  | "variableContains"
+  | "variableGreaterThan"
+  | "variableLessThan"
+  | "variableExists";
 
 export interface NodePosition {
   x: number;
@@ -21,27 +29,26 @@ export interface NodePosition {
  *
  * A node can be either:
  * - An automation step (step is defined)
- * - A conditional node (conditionType, selector, expectedValue are defined)
+ * - A browser conditional (browserConditionType, selector, expectedValue are defined)
+ * - A variable conditional (variableConditionType, variableName are defined)
  */
 export interface NodeDataBase {
-  // When this node represents a step
   step?: AutomationStep;
-  // When this node represents a conditional
-  conditionType?: ConditionType;
-  selector?: string;
-  expectedValue?: string;
-  condition?: "equals" | "contains" | "greaterThan" | "lessThan";
-  // Optional post-processing for extracted text before evaluation
-  transformType?: "none" | "stripCurrency" | "stripNonNumeric" | "regexReplace" | "removeChars";
-  transformPattern?: string; // regex pattern when using regexReplace
-  transformReplace?: string; // replacement string for regexReplace
-  transformChars?: string; // chars to remove when using removeChars
-  parseAsNumber?: boolean; // whether to parse both extracted and expected values as numbers
+
+  // Variable fields (used by setVariable, modifyVariable, and variableConditional nodes)
+  variableName?: string;
+  value?: string;
+  operation?: "set" | "increment" | "decrement" | "append";
+
+  // Visual feedback during execution
+  nodeRunning?: boolean;
+  nodeStatus?: "idle" | "running" | "success" | "error";
+  nodeError?: string;
 }
 
 export interface Node {
   id: string;
-  type: "automationStep" | "conditional";
+  type: "automationStep";
   data: NodeDataBase;
   position: NodePosition;
 }
@@ -58,7 +65,7 @@ export type EdgeData = { label?: string };
 export type NodeData = NodeDataBase & {
   onAddNode: (
     sourceId: string,
-    type: AutomationStep["type"] | "conditional" | "update" | "delete",
+    type: AutomationStep["type"] | "update" | "delete",
     updates?: Partial<NodeDataBase>
   ) => void;
   nodeRunning: boolean;

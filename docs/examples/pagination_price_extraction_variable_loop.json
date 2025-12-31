@@ -1,7 +1,8 @@
 {
-  "id": "1764249460025",
+  "id": "1767189511542",
   "name": "Pagination Price Extraction with Variable Loop",
   "description": "Pagination Price Extraction with Variable Loop Example",
+  "updatedAt": "12/31/2025, 8:22:31 PM",
   "nodes": [
     {
       "id": "1",
@@ -50,34 +51,6 @@
       "position": {
         "x": 575.7377019601511,
         "y": 159.34166168722362
-      }
-    },
-    {
-      "id": "1764244585233",
-      "type": "conditional",
-      "data": {
-        "conditionType": "elementExists",
-        "selector": "html > body > div:nth-of-type(4) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div > div:nth-of-type(4) > div > div > div > div:nth-of-type(5) > div > div > table > tbody > tr:nth-of-type({{indexVal}}) > td:nth-of-type(3)"
-      },
-      "position": {
-        "x": 395.81576900094876,
-        "y": 363.947436663504
-      }
-    },
-    {
-      "id": "1764244619493",
-      "type": "conditional",
-      "data": {
-        "conditionType": "valueMatches",
-        "selector": "html > body > div:nth-of-type(4) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div > div:nth-of-type(4) > div > div > div > div:nth-of-type(5) > div > div > table > tbody > tr:nth-of-type({{indexVal}}) > td:nth-of-type(3)",
-        "expectedValue": "10",
-        "condition": "greaterThan",
-        "transformType": "stripCurrency",
-        "parseAsNumber": true
-      },
-      "position": {
-        "x": 288,
-        "y": 445
       }
     },
     {
@@ -144,18 +117,6 @@
       "position": {
         "x": 477,
         "y": 440
-      }
-    },
-    {
-      "id": "1764245017245",
-      "type": "conditional",
-      "data": {
-        "conditionType": "elementExists",
-        "selector": "html > body > div:nth-of-type(4) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div > div:nth-of-type(4) > div > div > div > div:nth-of-type(5) > div > div > ul > li:nth-of-type({{pageVal}}) > a"
-      },
-      "position": {
-        "x": 477,
-        "y": 540
       }
     },
     {
@@ -292,6 +253,61 @@
         "x": 575.7377019601511,
         "y": 359.3416616872236
       }
+    },
+    {
+      "id": "1767180566875",
+      "type": "browserConditional",
+      "data": {
+        "step": {
+          "id": "1767180566875",
+          "type": "browserConditional",
+          "description": "Browser Conditional step",
+          "browserConditionType": "elementExists",
+          "selector": "html > body > div:nth-of-type(4) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div > div:nth-of-type(4) > div > div > div > div:nth-of-type(5) > div > div > ul > li:nth-of-type({{pageVal}}) > a"
+        }
+      },
+      "position": {
+        "x": 498,
+        "y": 527
+      }
+    },
+    {
+      "id": "1767180663071",
+      "type": "browserConditional",
+      "data": {
+        "step": {
+          "id": "1767180663071",
+          "type": "browserConditional",
+          "description": "Browser Conditional step",
+          "browserConditionType": "elementExists",
+          "selector": "html > body > div:nth-of-type(4) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div > div:nth-of-type(4) > div > div > div > div:nth-of-type(5) > div > div > table > tbody > tr:nth-of-type({{indexVal}}) > td:nth-of-type(3)"
+        }
+      },
+      "position": {
+        "x": 382.73770196015107,
+        "y": 293.3416616872236
+      }
+    },
+    {
+      "id": "1767180712080",
+      "type": "browserConditional",
+      "data": {
+        "step": {
+          "id": "1767180712080",
+          "type": "browserConditional",
+          "description": "Browser Conditional step",
+          "browserConditionType": "valueMatches",
+          "selector": "html > body > div:nth-of-type(4) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div > div:nth-of-type(4) > div > div > div > div:nth-of-type(5) > div > div > table > tbody > tr:nth-of-type({{indexVal}}) > td:nth-of-type(3)",
+          "condition": "greaterThan",
+          "expectedValue": "10",
+          "transformType": "stripCurrency",
+          "parseAsNumber": true
+        }
+      },
+      "position": {
+        "x": 269.73770196015107,
+        "y": 399.3416616872236
+      }
     }
   ],
   "edges": [
@@ -306,21 +322,9 @@
       "target": "1764244573117"
     },
     {
-      "id": "e1764244619493-1764244673397-if",
-      "source": "1764244619493",
-      "target": "1764244673397",
-      "sourceHandle": "if"
-    },
-    {
       "id": "e1764244673397-1764244756319",
       "source": "1764244673397",
       "target": "1764244756319"
-    },
-    {
-      "id": "e1764244619493-1764244756319-else",
-      "source": "1764244619493",
-      "target": "1764244756319",
-      "sourceHandle": "else"
     },
     {
       "id": "e1764244756319-1764244792448",
@@ -328,48 +332,14 @@
       "target": "1764244792448"
     },
     {
-      "id": "e1764244792448-1764244585233-default",
-      "source": "1764244792448",
-      "target": "1764244585233"
-    },
-    {
-      "id": "e1764244585233-1764244860702-else",
-      "source": "1764244585233",
-      "target": "1764244860702",
-      "sourceHandle": "else"
-    },
-    {
-      "id": "e1764244585233-1764244619493-if",
-      "source": "1764244585233",
-      "target": "1764244619493",
-      "sourceHandle": "if"
-    },
-    {
-      "id": "e1764244860702-1764245017245",
-      "source": "1764244860702",
-      "target": "1764245017245"
-    },
-    {
       "id": "e1764244573117-1764245092610",
       "source": "1764244573117",
       "target": "1764245092610"
     },
     {
-      "id": "e1764245017245-1764245205490-if",
-      "source": "1764245017245",
-      "target": "1764245205490",
-      "sourceHandle": "if"
-    },
-    {
       "id": "e1764245205490-1764245224129",
       "source": "1764245205490",
       "target": "1764245224129"
-    },
-    {
-      "id": "e1764245017245-1764245234403-else",
-      "source": "1764245017245",
-      "target": "1764245234403",
-      "sourceHandle": "else"
     },
     {
       "id": "e1764245234403-1764245238182",
@@ -387,19 +357,65 @@
       "target": "1764245460534"
     },
     {
-      "id": "e1764245460534-1764244585233-default",
-      "source": "1764245460534",
-      "target": "1764244585233"
-    },
-    {
       "id": "e1764245092610-1764303416336",
       "source": "1764245092610",
       "target": "1764303416336"
     },
     {
-      "id": "e1764303416336-1764244585233-default",
+      "id": "e1764244860702-1767180566875",
+      "source": "1764244860702",
+      "target": "1767180566875"
+    },
+    {
+      "id": "e1767180566875-1764245205490-if",
+      "source": "1767180566875",
+      "target": "1764245205490",
+      "sourceHandle": "if"
+    },
+    {
+      "id": "e1767180566875-1764245234403-else",
+      "source": "1767180566875",
+      "target": "1764245234403",
+      "sourceHandle": "else"
+    },
+    {
+      "id": "e1764303416336-1767180663071",
       "source": "1764303416336",
-      "target": "1764244585233"
+      "target": "1767180663071"
+    },
+    {
+      "id": "e1767180712080-1764244673397-if",
+      "source": "1767180712080",
+      "target": "1764244673397",
+      "sourceHandle": "if"
+    },
+    {
+      "id": "e1767180712080-1764244756319-else",
+      "source": "1767180712080",
+      "target": "1764244756319",
+      "sourceHandle": "else"
+    },
+    {
+      "id": "e1767180663071-1767180712080-if",
+      "source": "1767180663071",
+      "target": "1767180712080",
+      "sourceHandle": "if"
+    },
+    {
+      "id": "e1764244792448-1767180663071-default",
+      "source": "1764244792448",
+      "target": "1767180663071"
+    },
+    {
+      "id": "e1767180663071-1764244860702-else",
+      "source": "1767180663071",
+      "target": "1764244860702",
+      "sourceHandle": "else"
+    },
+    {
+      "id": "e1764245460534-1767180663071-default",
+      "source": "1764245460534",
+      "target": "1767180663071"
     }
   ],
   "steps": [
@@ -502,6 +518,31 @@
       "scrollType": "toElement",
       "selector": "html > body > div:nth-of-type(4) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div > div:nth-of-type(4) > div > div > div > div:nth-of-type(4) > div > div > p",
       "scrollAmount": 500
+    },
+    {
+      "id": "1767180566875",
+      "type": "browserConditional",
+      "description": "Browser Conditional step",
+      "browserConditionType": "elementExists",
+      "selector": "html > body > div:nth-of-type(4) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div > div:nth-of-type(4) > div > div > div > div:nth-of-type(5) > div > div > ul > li:nth-of-type({{pageVal}}) > a"
+    },
+    {
+      "id": "1767180663071",
+      "type": "browserConditional",
+      "description": "Browser Conditional step",
+      "browserConditionType": "elementExists",
+      "selector": "html > body > div:nth-of-type(4) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div > div:nth-of-type(4) > div > div > div > div:nth-of-type(5) > div > div > table > tbody > tr:nth-of-type({{indexVal}}) > td:nth-of-type(3)"
+    },
+    {
+      "id": "1767180712080",
+      "type": "browserConditional",
+      "description": "Browser Conditional step",
+      "browserConditionType": "valueMatches",
+      "selector": "html > body > div:nth-of-type(4) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div > div:nth-of-type(4) > div > div > div > div:nth-of-type(5) > div > div > table > tbody > tr:nth-of-type({{indexVal}}) > td:nth-of-type(3)",
+      "condition": "greaterThan",
+      "expectedValue": "10",
+      "transformType": "stripCurrency",
+      "parseAsNumber": true
     }
   ]
 }

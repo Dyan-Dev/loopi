@@ -4,7 +4,7 @@ import type { NodeDataBase } from "@app-types/flow";
 
 /**
  * Factory function to create a new node of a given type.
- * Handles both conditional and automation step nodes.
+ * Handles conditional nodes (browser and variable) and automation step nodes.
  */
 export function createNode({
   type,
@@ -13,23 +13,49 @@ export function createNode({
   handleNodeAction,
   currentNodes,
 }: {
-  type: AutomationStep["type"] | "conditional";
+  type: AutomationStep["type"];
   newId: string;
   sourceNode?: ReactFlowNode;
   handleNodeAction: (
     sourceId: string,
-    type: AutomationStep["type"] | "conditional" | "update" | "delete",
+    type: AutomationStep["type"] | "update" | "delete",
     updates?: Partial<NodeDataBase>
   ) => void;
   currentNodes: ReactFlowNode[];
 }): ReactFlowNode {
-  if (type === "conditional") {
+  if (type === "browserConditional") {
     return {
       id: newId,
-      type: "conditional",
+      type: "browserConditional",
       data: {
-        conditionType: "elementExists",
-        selector: "",
+        step: {
+          id: newId,
+          type: "browserConditional",
+          description: "Browser Conditional step",
+          browserConditionType: "elementExists",
+          selector: "",
+        },
+        onAddNode: handleNodeAction,
+        nodeRunning: false,
+      },
+      position: {
+        x: sourceNode ? sourceNode.position.x : 250,
+        y: sourceNode ? sourceNode.position.y + 100 : currentNodes.length * 150 + 50,
+      },
+    };
+  }
+  if (type === "variableConditional") {
+    return {
+      id: newId,
+      type: "variableConditional",
+      data: {
+        step: {
+          id: newId,
+          type: "variableConditional",
+          description: "Variable Conditional step",
+          variableConditionType: "variableEquals",
+          variableName: "",
+        },
         onAddNode: handleNodeAction,
         nodeRunning: false,
       },

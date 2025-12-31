@@ -74,7 +74,6 @@ export default function App() {
     );
 
     if (JSON.stringify(sorted) !== JSON.stringify(automations)) {
-      console.log("updating...");
       setAutomations(sorted);
     }
   }, [automations]);

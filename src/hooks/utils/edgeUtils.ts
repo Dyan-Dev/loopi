@@ -24,7 +24,9 @@ export function validateAndCreateEdge({
 
   let sourceHandle: "if" | "else" | undefined = params.sourceHandle as "if" | "else" | undefined;
 
-  if (sourceNode.type !== "conditional") {
+  const isConditionalNode =
+    sourceNode.type === "browserConditional" || sourceNode.type === "variableConditional";
+  if (!isConditionalNode) {
     const outgoing = edges.filter((e) => e.source === params.source && !e.sourceHandle).length;
     if (outgoing >= 1) {
       alert("Cannot add more than one outgoing edge to a non-conditional node");

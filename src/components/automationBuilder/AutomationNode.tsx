@@ -2,22 +2,51 @@ import { NodeData } from "@app-types";
 import { Handle, NodeProps, Position } from "reactflow";
 
 const AutomationNode = ({ id, data, selected = false }: NodeProps<NodeData>) => {
-  const isConditional = !data.step;
+  const isConditional =
+    !data.step ||
+    data.step.type === "browserConditional" ||
+    data.step.type === "variableConditional";
   const isDark = document.documentElement.classList.contains("dark");
 
+  const getNodeLabel = () => {
+    if (data.step) {
+      if (data.step.type === "browserConditional") return "Browser If";
+      if (data.step.type === "variableConditional") return "Variable If";
+      return data.step.type;
+    }
+    return "Conditional";
+  };
+
   const getNodeStyles = () => {
-    if (data.nodeRunning) {
+    // Error state - red
+    if (data.nodeStatus === "error") {
       return isDark
-        ? "border-green-500 bg-green-900 text-white animate-pulse"
-        : "border-green-500 bg-green-50 text-gray-900";
+        ? "border-red-500 bg-red-900 text-white"
+        : "border-red-500 bg-red-50 text-gray-900";
     }
 
+    // Success state - green
+    if (data.nodeStatus === "success") {
+      return isDark
+        ? "border-green-500 bg-green-800 text-white"
+        : "border-green-500 bg-green-100 text-gray-900";
+    }
+
+    // Running state - animated
+    if (data.nodeRunning || data.nodeStatus === "running") {
+      return isDark
+        ? "border-blue-500 bg-blue-900 text-white animate-pulse"
+        : "border-blue-500 bg-blue-50 text-gray-900 animate-pulse";
+    }
+
+    // Selected state
     if (selected) {
       return isDark
         ? "border-blue-500 bg-blue-900 text-white"
         : "border-blue-500 bg-blue-50 text-gray-900";
     }
 
+    // Default state
     return isDark
       ? "border-gray-600 bg-gray-800 text-gray-100"
       : "border-gray-200 bg-white text-gray-900";
@@ -29,7 +58,7 @@ const AutomationNode = ({ id, data, selected = false }: NodeProps<NodeData>) => 
       <div
         className={`w-24 h-12 rounded-full flex items-center justify-center border-2 shadow-sm text-xs font-medium capitalize text-center cursor-pointer ${getNodeStyles()}`}
       >
-        {data.step ? data.step.type : "Conditional"}
+        {getNodeLabel()}
       </div>
       {isConditional ? (
         <>

@@ -45,7 +45,7 @@ export default function useNodeActions({
   const handleNodeAction = useCallback(
     (
       sourceId: string,
-      type: AutomationStep["type"] | "conditional" | "update" | "delete",
+      type: AutomationStep["type"] | "update" | "delete",
       updates?: Partial<Node["data"]>
     ) => {
       // Handle update and delete
@@ -69,7 +69,9 @@ export default function useNodeActions({
 
         // Outgoing edge constraints
         if (sourceNode) {
-          if (sourceNode.type === "conditional") {
+          const isConditionalNode =
+            sourceNode.type === "browserConditional" || sourceNode.type === "variableConditional";
+          if (isConditionalNode) {
             let maxOutgoing = false;
             setEdges((edgesInner: ReactFlowEdge[]) => {
               const outgoingEdges = edgesInner.filter((e) => e.source === sourceId);
@@ -109,14 +111,17 @@ export default function useNodeActions({
       });
 
       // Add edge for new node
-      if (type === "conditional") {
+      const isConditionalType = type === "browserConditional" || type === "variableConditional";
+      if (isConditionalType) {
         setEdges((eds: ReactFlowEdge[]) =>
           addEdge({ id: `e${sourceId}-${newId}`, source: sourceId, target: newId }, eds)
         );
       } else {
         setNodes((currentNodes: ReactFlowNode[]) => {
           const sourceNode = currentNodes.find((n) => n.id === sourceId);
-          if (sourceNode?.type === "conditional") {
+          const isSourceConditional =
+            sourceNode?.type === "browserConditional" || sourceNode?.type === "variableConditional";
+          if (isSourceConditional) {
             setEdges((currentEdges: ReactFlowEdge[]) => {
               const outgoingEdges = currentEdges.filter((e) => e.source === sourceId);
               if (outgoingEdges.length >= 2) {

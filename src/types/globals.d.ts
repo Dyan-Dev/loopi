@@ -9,6 +9,7 @@ export interface WorkflowSchedule {
   workflowName: string;
   schedule: ScheduleType;
   enabled: boolean;
+  headless?: boolean; // Whether to run browser in background
   createdAt: string;
 }
 
@@ -32,9 +33,14 @@ export interface ElectronAPI {
   openBrowser: (url: string) => Promise<void>;
   closeBrowser: () => Promise<void>;
   navigate: (url: string) => Promise<void>;
-  runStep: (step: AutomationStep) => Promise<unknown>;
-  runConditional: (config: ConditionalConfig) => Promise<ConditionalResult>;
-  initVariables: (vars?: Record<string, unknown>) => Promise<void>;
+  executeAutomation: (automation: {
+    nodes: unknown[];
+    edges: unknown[];
+    headless?: boolean;
+  }) => Promise<{ success: boolean; error?: string; variables?: Record<string, unknown> }>;
+  onNodeStatus: (
+    callback: (data: { nodeId: string; status: string; error?: string }) => void
+  ) => void;
   getVariables: () => Promise<Record<string, unknown>>;
   onBrowserClosed: (callback: () => void) => void;
   removeBrowserClosed?: () => void;
