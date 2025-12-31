@@ -190,7 +190,7 @@ export function Settings() {
                   <span className="font-semibold">App Name:</span> Loopi
                 </p>
                 <p className="text-sm">
-                  <span className="font-semibold">Version:</span> 1.4.0
+                  <span className="font-semibold">Version:</span> 1.6.0
                 </p>
                 <p className="text-sm">
                   <span className="font-semibold">Platform:</span> Workflow Automation
