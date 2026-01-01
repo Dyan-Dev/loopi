@@ -6,10 +6,16 @@
  * - valueMatches: Compare element text content against expected value
  */
 import type { ReactFlowNode } from "@app-types";
-import { Input } from "../../ui/input";
-import { Label } from "../../ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../ui/select";
-import { Switch } from "../../ui/switch";
+import { Input } from "@components/ui/input";
+import { Label } from "@components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@components/ui/select";
+import { Switch } from "@components/ui/switch";
 import { SelectorButton } from "./customComponents";
 
 export default function BrowserConditionEditor({

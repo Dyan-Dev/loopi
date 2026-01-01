@@ -9,7 +9,6 @@ import type {
   Node,
   NodeData,
   ReactFlowEdge,
-  ReactFlowNode,
   StoredAutomation,
 } from "@app-types";
 import useExecution from "@hooks/useExecution";

@@ -113,7 +113,6 @@ export default function useExecution({ nodes, edges, setNodes }: UseExecutionArg
             ...node.data,
             nodeRunning: false,
             nodeStatus: "idle" as const,
-
           },
         }))
       );

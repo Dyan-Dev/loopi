@@ -1,14 +1,14 @@
+import { AutomationBuilder } from "@components/AutomationBuilder";
+import { Dashboard } from "@components/Dashboard";
+import { Settings } from "@components/Settings";
+import { Button } from "@components/ui/button";
+import { Tabs, TabsList, TabsTrigger } from "@components/ui/tabs";
+import { WorkflowScheduler } from "@components/WorkflowScheduler";
 import { Bot, Grid, Settings as SettingsIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import * as ReactDOM from "react-dom/client";
-import { AutomationBuilder } from "./components/AutomationBuilder";
-import { Dashboard } from "./components/Dashboard";
-import { Settings } from "./components/Settings";
-import { Button } from "./components/ui/button";
-import { Tabs, TabsList, TabsTrigger } from "./components/ui/tabs";
-import { WorkflowScheduler } from "./components/WorkflowScheduler";
 import "./index.css";
-import type { StoredAutomation } from "./types";
+import type { StoredAutomation } from "@app-types";
 
 /**
  * App - Root application component

@@ -1,7 +1,7 @@
 import type { StoredAutomation } from "@app-types";
+import { Button } from "@components/ui/button";
+import { Card, CardDescription, CardHeader, CardTitle } from "@components/ui/card";
 import { Plus } from "lucide-react";
-import { Button } from "../ui/button";
-import { Card, CardDescription, CardHeader, CardTitle } from "../ui/card";
 
 // Example automations metadata
 export const EXAMPLES: Array<{

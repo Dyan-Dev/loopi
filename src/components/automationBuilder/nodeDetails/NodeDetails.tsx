@@ -1,5 +1,5 @@
 import { Node, ReactFlowNode } from "@app-types";
-import { Card, CardContent, CardHeader } from "../../ui/card";
+import { Card, CardContent, CardHeader } from "@components/ui/card";
 import BrowserConditionEditor from "./ConditionEditor";
 import NodeHeader from "./NodeHeader";
 import StepEditor from "./StepEditor";

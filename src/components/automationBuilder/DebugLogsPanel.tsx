@@ -1,6 +1,6 @@
+import { Button } from "@components/ui/button";
 import { Download, Trash2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { Button } from "../ui/button";
 
 interface LogEntry {
   timestamp: string;

@@ -1,9 +1,9 @@
 import type { StoredAutomation } from "@app-types";
+import { Button } from "@components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@components/ui/card";
+import { formatDateTime } from "@components/ui/utils";
 import { exportAutomation } from "@utils/automationIO";
 import { Download, Edit, Plus, Trash2 } from "lucide-react";
-import { Button } from "../ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
-import { formatDateTime } from "../ui/utils";
 
 interface YourAutomationsProps {
   automations: StoredAutomation[];

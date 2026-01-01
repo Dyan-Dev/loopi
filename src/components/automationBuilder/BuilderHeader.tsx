@@ -1,4 +1,16 @@
 import { StoredAutomation } from "@app-types";
+import { Button } from "@components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@components/ui/dialog";
+import { Input } from "@components/ui/input";
+import { Label } from "@components/ui/label";
+import { Switch } from "@components/ui/switch";
+import { Textarea } from "@components/ui/textarea";
 import { exportAutomation } from "@utils/automationIO";
 import {
   ArrowLeft,
@@ -13,12 +25,6 @@ import {
   Square,
 } from "lucide-react";
 import React, { useState } from "react";
-import { Button } from "../ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../ui/dialog";
-import { Input } from "../ui/input";
-import { Label } from "../ui/label";
-import { Switch } from "../ui/switch";
-import { Textarea } from "../ui/textarea";
 
 interface BuilderHeaderProps {
   name: string;
