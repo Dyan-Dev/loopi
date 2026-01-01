@@ -1,8 +1,8 @@
+import type { Edge, Node } from "@app-types/flow";
+import { createLogger } from "@utils/logger";
 import { dialog, ipcMain } from "electron";
 import { mkdirSync, writeFileSync } from "fs";
 import { dirname } from "path";
-import type { Edge, Node } from "../types/flow";
-import { createLogger } from "../utils/logger";
 import { AutomationExecutor } from "./automationExecutor";
 import {
   addCredential,

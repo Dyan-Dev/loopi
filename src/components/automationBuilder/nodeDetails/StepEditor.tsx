@@ -5,8 +5,8 @@
  * Each step type has its own component with custom fields and validation.
  */
 import type { ReactFlowNode } from "@app-types";
-import { Input } from "../../ui/input";
-import { Label } from "../../ui/label";
+import { Input } from "@components/ui/input";
+import { Label } from "@components/ui/label";
 import {
   ApiCallStep,
   ClickStep,

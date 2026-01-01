@@ -1,9 +1,9 @@
 import { AutomationStep, stepCategories } from "@app-types";
-import { GitBranch, Plus, Variable } from "lucide-react";
+import { Button } from "@components/ui/button";
+import { Card, CardContent, CardHeader } from "@components/ui/card";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@components/ui/collapsible";
+import { GitBranch, Variable } from "lucide-react";
 import { useState } from "react";
-import { Button } from "../ui/button";
-import { Card, CardContent, CardHeader } from "../ui/card";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "../ui/collapsible";
 
 interface AddStepPopupProps {
   onAdd: (type: AutomationStep["type"]) => void;

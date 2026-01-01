@@ -4,13 +4,19 @@
  */
 
 import type { ScheduleType } from "@app-types/automation";
+import { Button } from "@components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@components/ui/card";
+import { Input } from "@components/ui/input";
+import { Label } from "@components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@components/ui/select";
 import { Clock, PlayCircle, StopCircle } from "lucide-react";
 import React, { useState } from "react";
-import { Button } from "../ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
-import { Input } from "../ui/input";
-import { Label } from "../ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 
 interface ScheduleConfigProps {
   schedule?: ScheduleType;

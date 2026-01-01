@@ -13,8 +13,9 @@
  *
  * See: https://www.electronjs.org/docs/latest/tutorial/process-model#preload-scripts
  */
+
+import { Automation } from "@app-types";
 import { contextBridge, ipcRenderer } from "electron";
-import { Automation } from "./types";
 
 contextBridge.exposeInMainWorld("electronAPI", {
   openBrowser: (url: string) => ipcRenderer.invoke("browser:open", url),
