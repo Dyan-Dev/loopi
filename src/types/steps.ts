@@ -4,7 +4,11 @@ import {
   Code,
   GitBranch,
   Globe,
+  Hash,
+  MessageCircle,
   Mouse,
+  Send,
+  Smile,
   Twitter,
   Type as TypeIcon,
   Variable,
@@ -225,6 +229,65 @@ export interface StepTwitterSearchUser extends StepBase {
   storeKey?: string;
 }
 
+// Discord Integration Steps
+export interface StepDiscordSendMessage extends StepBase {
+  type: "discordSendMessage";
+  channelId: string;
+  content: string;
+  tts?: boolean;
+  credentialId?: string;
+  botToken?: string;
+  storeKey?: string;
+}
+
+export interface StepDiscordSendWebhook extends StepBase {
+  type: "discordSendWebhook";
+  webhookUrl?: string;
+  credentialId?: string;
+  botToken?: string;
+  content: string;
+  username?: string;
+  avatarUrl?: string;
+  tts?: boolean;
+  embedsJson?: string;
+  storeKey?: string;
+}
+
+export interface StepDiscordReactMessage extends StepBase {
+  type: "discordReactMessage";
+  channelId: string;
+  messageId: string;
+  emoji: string;
+  credentialId?: string;
+  botToken?: string;
+}
+
+export interface StepDiscordGetMessage extends StepBase {
+  type: "discordGetMessage";
+  channelId: string;
+  messageId: string;
+  credentialId?: string;
+  botToken?: string;
+  storeKey?: string;
+}
+
+export interface StepDiscordListMessages extends StepBase {
+  type: "discordListMessages";
+  channelId: string;
+  limit?: number;
+  credentialId?: string;
+  botToken?: string;
+  storeKey?: string;
+}
+
+export interface StepDiscordDeleteMessage extends StepBase {
+  type: "discordDeleteMessage";
+  channelId: string;
+  messageId: string;
+  credentialId?: string;
+  botToken?: string;
+}
+
 // Union of all supported steps used throughout the app
 export type AutomationStep =
   | StepNavigate
@@ -248,7 +311,13 @@ export type AutomationStep =
   | StepTwitterRetweet
   | StepTwitterSearchTweets
   | StepTwitterSendDM
-  | StepTwitterSearchUser;
+  | StepTwitterSearchUser
+  | StepDiscordSendMessage
+  | StepDiscordSendWebhook
+  | StepDiscordReactMessage
+  | StepDiscordGetMessage
+  | StepDiscordListMessages
+  | StepDiscordDeleteMessage;
 
 // UI meta for step type picker - organized by category
 export interface StepTypeOption {
@@ -341,6 +410,45 @@ export const integrationSteps: StepTypeOption[] = [
   },
 ];
 
+export const discordSteps: StepTypeOption[] = [
+  {
+    value: "discordSendMessage",
+    label: "Discord Send Message",
+    icon: MessageCircle,
+    description: "Send a message to a channel",
+  },
+  {
+    value: "discordSendWebhook",
+    label: "Discord Webhook",
+    icon: Send,
+    description: "Post a message via webhook",
+  },
+  {
+    value: "discordReactMessage",
+    label: "Discord React",
+    icon: Smile,
+    description: "Add a reaction to a message",
+  },
+  {
+    value: "discordGetMessage",
+    label: "Discord Get Message",
+    icon: Hash,
+    description: "Fetch a specific message",
+  },
+  {
+    value: "discordListMessages",
+    label: "Discord List Messages",
+    icon: Hash,
+    description: "List recent channel messages",
+  },
+  {
+    value: "discordDeleteMessage",
+    label: "Discord Delete Message",
+    icon: MessageCircle,
+    description: "Delete a message",
+  },
+];
+
 export const twitterSteps: StepTypeOption[] = [
   {
     value: "twitterCreateTweet",
@@ -408,6 +516,11 @@ export const stepCategories: StepCategory[] = [
     steps: integrationSteps,
   },
   {
+    category: "Discord",
+    icon: MessageCircle,
+    steps: discordSteps,
+  },
+  {
     category: "Twitter/X",
     icon: Twitter,
     steps: twitterSteps,
@@ -419,5 +532,6 @@ export const stepTypes = [
   ...dataSteps,
   ...logicSteps,
   ...integrationSteps,
+  ...discordSteps,
   ...twitterSteps,
 ] as const;

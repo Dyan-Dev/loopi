@@ -104,6 +104,12 @@ export function CredentialsManager() {
           { key: "accessToken", label: "Access Token", type: "password" },
           { key: "accessSecret", label: "Access Token Secret", type: "password" },
         ];
+      case "discord":
+        return [
+          { key: "botToken", label: "Bot Token", type: "password" },
+          { key: "clientId", label: "Client ID (optional)", type: "text" },
+          { key: "clientSecret", label: "Client Secret (optional)", type: "password" },
+        ];
       case "oauth":
         return [
           { key: "clientId", label: "Client ID", type: "text" },
@@ -159,6 +165,7 @@ export function CredentialsManager() {
               <SelectContent>
                 <SelectItem value="twitter">Twitter/X</SelectItem>
                 <SelectItem value="oauth">OAuth 2.0</SelectItem>
+                <SelectItem value="discord">Discord</SelectItem>
                 <SelectItem value="apiKey">API Key</SelectItem>
                 <SelectItem value="basic">Basic Auth</SelectItem>
                 <SelectItem value="custom">Custom</SelectItem>

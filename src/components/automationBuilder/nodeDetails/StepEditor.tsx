@@ -10,6 +10,12 @@ import { Label } from "@components/ui/label";
 import {
   ApiCallStep,
   ClickStep,
+  DiscordDeleteMessageStep,
+  DiscordGetMessageStep,
+  DiscordListMessagesStep,
+  DiscordReactStep,
+  DiscordSendMessageStep,
+  DiscordSendWebhookStep,
   ExtractStep,
   ModifyVariableStep,
   NavigateStep,
@@ -87,6 +93,18 @@ export default function StepEditor({
         );
       case "apiCall":
         return <ApiCallStep step={step} id={id} onUpdate={onUpdate} />;
+      case "discordSendMessage":
+        return <DiscordSendMessageStep step={step} id={id} onUpdate={onUpdate} />;
+      case "discordSendWebhook":
+        return <DiscordSendWebhookStep step={step} id={id} onUpdate={onUpdate} />;
+      case "discordReactMessage":
+        return <DiscordReactStep step={step} id={id} onUpdate={onUpdate} />;
+      case "discordGetMessage":
+        return <DiscordGetMessageStep step={step} id={id} onUpdate={onUpdate} />;
+      case "discordListMessages":
+        return <DiscordListMessagesStep step={step} id={id} onUpdate={onUpdate} />;
+      case "discordDeleteMessage":
+        return <DiscordDeleteMessageStep step={step} id={id} onUpdate={onUpdate} />;
       case "modifyVariable":
         return <ModifyVariableStep step={step} id={id} onUpdate={onUpdate} />;
       case "setVariable":

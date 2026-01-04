@@ -6,6 +6,12 @@ import { ScrollStep } from "./browser/ScrollStep";
 import { SelectOptionStep } from "./browser/SelectOptionStep";
 import { TypeStep } from "./browser/TypeStep";
 import { WaitStep } from "./browser/WaitStep";
+import { DiscordDeleteMessageStep } from "./discord/DiscordDeleteMessageStep";
+import { DiscordGetMessageStep } from "./discord/DiscordGetMessageStep";
+import { DiscordListMessagesStep } from "./discord/DiscordListMessagesStep";
+import { DiscordReactStep } from "./discord/DiscordReactStep";
+import { DiscordSendMessageStep } from "./discord/DiscordSendMessageStep";
+import { DiscordSendWebhookStep } from "./discord/DiscordSendWebhookStep";
 import { ApiCallStep } from "./integration/ApiCallStep";
 import { TwitterCreateTweetStep } from "./twitter/TwitterCreateTweetStep";
 import { TwitterDeleteTweetStep } from "./twitter/TwitterDeleteTweetStep";
@@ -29,6 +35,12 @@ export {
   ScrollStep,
   ModifyVariableStep,
   SetVariableStep,
+  DiscordSendMessageStep,
+  DiscordSendWebhookStep,
+  DiscordReactStep,
+  DiscordGetMessageStep,
+  DiscordListMessagesStep,
+  DiscordDeleteMessageStep,
   TwitterCreateTweetStep,
   TwitterDeleteTweetStep,
   TwitterLikeTweetStep,

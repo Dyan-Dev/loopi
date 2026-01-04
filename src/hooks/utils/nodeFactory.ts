@@ -112,6 +112,63 @@ export function createNode({
         body: "",
       };
       break;
+    case "discordSendMessage":
+      step = {
+        id: newId,
+        type: "discordSendMessage",
+        description: `${label} step`,
+        channelId: "",
+        content: "",
+        tts: false,
+      } as AutomationStep;
+      break;
+    case "discordSendWebhook":
+      step = {
+        id: newId,
+        type: "discordSendWebhook",
+        description: `${label} step`,
+        webhookUrl: "",
+        content: "",
+        tts: false,
+      } as AutomationStep;
+      break;
+    case "discordReactMessage":
+      step = {
+        id: newId,
+        type: "discordReactMessage",
+        description: `${label} step`,
+        channelId: "",
+        messageId: "",
+        emoji: "👍",
+      } as AutomationStep;
+      break;
+    case "discordGetMessage":
+      step = {
+        id: newId,
+        type: "discordGetMessage",
+        description: `${label} step`,
+        channelId: "",
+        messageId: "",
+      } as AutomationStep;
+      break;
+    case "discordListMessages":
+      step = {
+        id: newId,
+        type: "discordListMessages",
+        description: `${label} step`,
+        channelId: "",
+        limit: 10,
+      } as AutomationStep;
+      break;
+    case "discordDeleteMessage":
+      step = {
+        id: newId,
+        type: "discordDeleteMessage",
+        description: `${label} step`,
+        channelId: "",
+        messageId: "",
+      } as AutomationStep;
+      break;
     case "scroll":
       step = {
         id: newId,

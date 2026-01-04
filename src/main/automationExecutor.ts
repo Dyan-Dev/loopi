@@ -303,6 +303,157 @@ export class AutomationExecutor {
           break;
         }
 
+        case "discordSendMessage": {
+          const channelId = this.substituteVariables(step.channelId);
+          const content = this.substituteVariables(step.content);
+          const { botToken } = await this.resolveDiscordCredentials(step);
+
+          if (!botToken) {
+            throw new Error("Discord bot token is required to send messages");
+          }
+
+          const payload: Record<string, unknown> = { content, tts: !!step.tts };
+
+          const response = await this.discordRequest(
+            "POST",
+            `/channels/${channelId}/messages`,
+            payload,
+            botToken
+          );
+
+          if (step.storeKey) {
+            this.variables[step.storeKey] = response.data;
+          }
+
+          result = response.data;
+          break;
+        }
+
+        case "discordSendWebhook": {
+          const content = this.substituteVariables(step.content);
+          const resolvedWebhook = this.substituteVariables(step.webhookUrl || "");
+
+          if (!resolvedWebhook) {
+            throw new Error("Webhook URL is required for Discord webhook step");
+          }
+
+          const payload: Record<string, unknown> = {
+            content,
+            username: step.username ? this.substituteVariables(step.username) : undefined,
+            avatar_url: step.avatarUrl ? this.substituteVariables(step.avatarUrl) : undefined,
+            tts: !!step.tts,
+          };
+
+          if (step.embedsJson) {
+            try {
+              payload.embeds = JSON.parse(this.substituteVariables(step.embedsJson));
+            } catch (error) {
+              debugLogger.error("Discord Send Webhook", "Invalid embeds JSON", error);
+              throw new Error("Invalid embeds JSON for Discord webhook");
+            }
+          }
+
+          const response = await axios.post(resolvedWebhook, payload, {
+            headers: { "Content-Type": "application/json" },
+          });
+
+          if (step.storeKey) {
+            this.variables[step.storeKey] = response.data;
+          }
+
+          result = response.data;
+          break;
+        }
+
+        case "discordReactMessage": {
+          const channelId = this.substituteVariables(step.channelId);
+          const messageId = this.substituteVariables(step.messageId);
+          const emoji = encodeURIComponent(this.substituteVariables(step.emoji));
+          const { botToken } = await this.resolveDiscordCredentials(step);
+
+          if (!botToken) {
+            throw new Error("Discord bot token is required to react to messages");
+          }
+
+          await this.discordRequest(
+            "PUT",
+            `/channels/${channelId}/messages/${messageId}/reactions/${emoji}/@me`,
+            undefined,
+            botToken
+          );
+
+          result = { success: true };
+          break;
+        }
+
+        case "discordGetMessage": {
+          const channelId = this.substituteVariables(step.channelId);
+          const messageId = this.substituteVariables(step.messageId);
+          const { botToken } = await this.resolveDiscordCredentials(step);
+
+          if (!botToken) {
+            throw new Error("Discord bot token is required to fetch messages");
+          }
+
+          const response = await this.discordRequest(
+            "GET",
+            `/channels/${channelId}/messages/${messageId}`,
+            undefined,
+            botToken
+          );
+
+          if (step.storeKey) {
+            this.variables[step.storeKey] = response.data;
+          }
+
+          result = response.data;
+          break;
+        }
+
+        case "discordListMessages": {
+          const channelId = this.substituteVariables(step.channelId);
+          const limit = step.limit && step.limit > 0 ? Math.min(step.limit, 100) : 10;
+          const { botToken } = await this.resolveDiscordCredentials(step);
+
+          if (!botToken) {
+            throw new Error("Discord bot token is required to list messages");
+          }
+
+          const response = await this.discordRequest(
+            "GET",
+            `/channels/${channelId}/messages?limit=${limit}`,
+            undefined,
+            botToken
+          );
+
+          if (step.storeKey) {
+            this.variables[step.storeKey] = response.data;
+          }
+
+          result = response.data;
+          break;
+        }
+
+        case "discordDeleteMessage": {
+          const channelId = this.substituteVariables(step.channelId);
+          const messageId = this.substituteVariables(step.messageId);
+          const { botToken } = await this.resolveDiscordCredentials(step);
+
+          if (!botToken) {
+            throw new Error("Discord bot token is required to delete messages");
+          }
+
+          await this.discordRequest(
+            "DELETE",
+            `/channels/${channelId}/messages/${messageId}`,
+            undefined,
+            botToken
+          );
+
+          result = { success: true };
+          break;
+        }
+
         case "scroll": {
           if (!wc) throw new Error("Browser window required for scroll step");
           if (step.scrollType === "toElement") {
@@ -1221,5 +1372,50 @@ export class AutomationExecutor {
       accessToken: this.substituteVariables(step.accessToken || ""),
       accessSecret: this.substituteVariables(step.accessSecret || ""),
     };
+  }
+
+  /**
+   * Resolve Discord credentials from store or direct fields
+   */
+  private async resolveDiscordCredentials(step: {
+    credentialId?: string;
+    botToken?: string;
+  }): Promise<{ botToken: string }> {
+    if (step.credentialId) {
+      const credential = await getCredential(step.credentialId);
+      if (!credential || credential.type !== "discord") {
+        throw new Error("Invalid or missing Discord credential");
+      }
+      return {
+        botToken: credential.data.botToken || ""
+      };
+    }
+
+    return {
+      botToken: this.substituteVariables(step.botToken || "")
+    };
+  }
+
+  /**
+   * Lightweight Discord API client helper
+   */
+  private async discordRequest(
+    method: "GET" | "POST" | "DELETE" | "PUT",
+    path: string,
+    data: unknown,
+    botToken: string
+  ) {
+    const baseUrl = "https://discord.com/api/v10";
+    const url = `${baseUrl}${path}`;
+
+    return axios({
+      method,
+      url,
+      data,
+      headers: {
+        Authorization: `Bot ${botToken}`,
+        "Content-Type": "application/json",
+      },
+    });
   }
 }
