@@ -12,28 +12,13 @@ import { HeadlessExecutor } from "./headlessExecutor";
 
 const logger = createLogger("GraphExecutor");
 
-interface ConditionalNodeData {
-  // Browser conditional
-  browserConditionType?: string;
-  selector?: string;
-  expectedValue?: string;
-  condition?: string;
-  transformType?: string;
-  transformPattern?: string;
-  transformReplace?: string;
-  transformChars?: string;
-  parseAsNumber?: boolean;
-  // Variable conditional
-  variableConditionType?: string;
-  variableName?: string;
-}
-
 interface ExecutionContext {
   nodes: Node[];
   edges: Edge[];
   browserWindow?: BrowserWindow | null;
   executor: AutomationExecutor;
   headless?: boolean;
+  headlessExecutor?: HeadlessExecutor | null;
   onNodeStatus?: (nodeId: string, status: "running" | "success" | "error", error?: string) => void;
 }
 
@@ -67,109 +52,29 @@ export async function executeAutomationGraph(
     (node: Node) => node.data.step && browserSteps.includes(node.data.step.type)
   );
 
-  if (headless && hasBrowserSteps) {
-    return await executeHeadlessGraph({ nodes, edges, onNodeStatus });
-  }
-
-  // Non-headless execution with Electron
-  return await executeBrowserGraph({ nodes, edges, browserWindow, executor, onNodeStatus });
-}
-
-/**
- * Execute workflow using Puppeteer (true headless mode)
- */
-async function executeHeadlessGraph({
-  nodes,
-  edges,
-  onNodeStatus,
-}: {
-  nodes: Node[];
-  edges: Edge[];
-  onNodeStatus?: (nodeId: string, status: "running" | "success" | "error", error?: string) => void;
-}): Promise<{ success: boolean }> {
-  const headlessExecutor = new HeadlessExecutor();
-
+  // Only initialize headless executor if needed
+  let headlessExecutor: HeadlessExecutor | null = null;
   try {
-    await headlessExecutor.launch();
-
-    const executeGraph = async (
-      nodeId: string,
-      visited: Set<string>,
-      iterations: { count: number }
-    ): Promise<void> => {
-      if (iterations.count++ > 10000) throw new Error("Maximum iteration limit reached");
-      visited.add(nodeId);
-      const node = nodes.find((n: Node) => n.id === nodeId);
-      if (!node) return;
-
-      onNodeStatus?.(nodeId, "running");
-
-      try {
-        let conditionResult: boolean | undefined;
-
-        if (node.data.step?.type === "browserConditional") {
-          if (node.data.step.browserConditionType && node.data.step.selector) {
-            const result = await headlessExecutor.evaluateBrowserConditional({
-              browserConditionType: node.data.step.browserConditionType,
-              selector: node.data.step.selector,
-              expectedValue: node.data.step.expectedValue,
-              condition: node.data.step.condition,
-              transformType: node.data.step.transformType,
-              transformPattern: node.data.step.transformPattern,
-              transformReplace: node.data.step.transformReplace,
-              transformChars: node.data.step.transformChars,
-              parseAsNumber: node.data.step.parseAsNumber,
-            });
-            conditionResult = result.conditionResult;
-          } else {
-            throw new Error("Browser conditional requires browserConditionType and selector");
-          }
-        } else if (node.data.step?.type === "variableConditional") {
-          const result = headlessExecutor.evaluateVariableConditional(
-            node.data as ConditionalNodeData
-          );
-          conditionResult = result.conditionResult;
-        } else if (node.data.step) {
-          await headlessExecutor.executeStep(node.data.step);
-        }
-
-        onNodeStatus?.(nodeId, "success");
-
-        // Follow edges
-        const isConditionalNode =
-          node.data.step?.type === "browserConditional" ||
-          node.data.step?.type === "variableConditional";
-        const nextNodes =
-          isConditionalNode && conditionResult !== undefined
-            ? edges
-                .filter(
-                  (e: Edge) =>
-                    e.source === nodeId && e.sourceHandle === (conditionResult ? "if" : "else")
-                )
-                .map((e: Edge) => e.target)
-            : edges.filter((e: Edge) => e.source === nodeId).map((e: Edge) => e.target);
-
-        for (const nextNodeId of nextNodes) {
-          await executeGraph(nextNodeId, visited, iterations);
-        }
-      } catch (error) {
-        onNodeStatus?.(nodeId, "error", error instanceof Error ? error.message : String(error));
-        throw error;
-      }
-    };
-
-    const { startNodes } = findStartNodes(nodes, edges);
-    const visited = new Set<string>();
-    const iterations = { count: 0 };
-
-    for (const startNode of startNodes) {
-      await executeGraph(startNode.id, visited, iterations);
+    if (headless && hasBrowserSteps) {
+      logger.info("Initializing Puppeteer headless browser for browser automation");
+      headlessExecutor = new HeadlessExecutor();
+      await headlessExecutor.launch();
     }
 
-    await headlessExecutor.close();
-    return { success: true };
+    return await executeBrowserGraph({
+      nodes,
+      edges,
+      browserWindow,
+      executor,
+      onNodeStatus,
+      headless,
+      headlessExecutor,
+    });
   } catch (error) {
-    await headlessExecutor.close();
+    // Clean up headless executor on error
+    if (headlessExecutor) {
+      await headlessExecutor.close();
+    }
     throw error;
   }
 }
@@ -183,25 +88,17 @@ async function executeBrowserGraph({
   browserWindow,
   executor,
   onNodeStatus,
+  headless,
+  headlessExecutor,
 }: {
   nodes: Node[];
   edges: Edge[];
   browserWindow?: BrowserWindow | null;
   executor: AutomationExecutor;
   onNodeStatus?: (nodeId: string, status: "running" | "success" | "error", error?: string) => void;
+  headless: boolean;
+  headlessExecutor?: HeadlessExecutor | null;
 }): Promise<{ success: boolean }> {
-  const browserSteps = [
-    "navigate",
-    "click",
-    "type",
-    "screenshot",
-    "extract",
-    "scroll",
-    "selectOption",
-    "fileUpload",
-    "hover",
-  ];
-
   const executeGraph = async (
     nodeId: string,
     visited: Set<string>,
@@ -218,18 +115,23 @@ async function executeBrowserGraph({
       let conditionResult: boolean | undefined;
 
       if (node.data.step?.type === "browserConditional") {
-        if (browserWindow && node.data.step.browserConditionType && node.data.step.selector) {
-          const result = await executor.evaluateBrowserConditional(browserWindow, {
-            browserConditionType: node.data.step.browserConditionType,
-            selector: node.data.step.selector,
-            expectedValue: node.data.step.expectedValue,
-            condition: node.data.step.condition,
-            transformType: node.data.step.transformType,
-            transformPattern: node.data.step.transformPattern,
-            transformReplace: node.data.step.transformReplace,
-            transformChars: node.data.step.transformChars,
-            parseAsNumber: node.data.step.parseAsNumber,
-          });
+        if (node.data.step.browserConditionType && node.data.step.selector) {
+          const result = await executor.evaluateBrowserConditional(
+            browserWindow,
+            headless,
+            headlessExecutor,
+            {
+              browserConditionType: node.data.step.browserConditionType,
+              selector: node.data.step.selector,
+              expectedValue: node.data.step.expectedValue,
+              condition: node.data.step.condition,
+              transformType: node.data.step.transformType,
+              transformPattern: node.data.step.transformPattern,
+              transformReplace: node.data.step.transformReplace,
+              transformChars: node.data.step.transformChars,
+              parseAsNumber: node.data.step.parseAsNumber,
+            }
+          );
           conditionResult = result.conditionResult;
         } else {
           throw new Error("Browser window required for browser conditional evaluation");
@@ -249,8 +151,7 @@ async function executeBrowserGraph({
           );
         }
       } else if (node.data.step) {
-        const requiresBrowser = browserSteps.includes(node.data.step.type);
-        await executor.executeStep(requiresBrowser ? browserWindow : null, node.data.step);
+        await executor.executeStep(browserWindow, headless, headlessExecutor, node.data.step);
       }
 
       onNodeStatus?.(nodeId, "success");
@@ -279,15 +180,23 @@ async function executeBrowserGraph({
     }
   };
 
-  const { startNodes } = findStartNodes(nodes, edges);
-  const visited = new Set<string>();
-  const iterations = { count: 0 };
+  try {
+    const { startNodes } = findStartNodes(nodes, edges);
+    const visited = new Set<string>();
+    const iterations = { count: 0 };
 
-  for (const startNode of startNodes) {
-    await executeGraph(startNode.id, visited, iterations);
+    for (const startNode of startNodes) {
+      await executeGraph(startNode.id, visited, iterations);
+    }
+
+    return { success: true };
+  } finally {
+    // Clean up headless executor
+    if (headlessExecutor) {
+      await headlessExecutor.close();
+      logger.info("Closed Puppeteer headless browser");
+    }
   }
-
-  return { success: true };
 }
 
 /**

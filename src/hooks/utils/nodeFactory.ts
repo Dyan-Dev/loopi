@@ -112,6 +112,22 @@ export function createNode({
         body: "",
       };
       break;
+    case "aiGenerateText":
+      step = {
+        id: newId,
+        type: "aiGenerateText",
+        description: `${label} step`,
+        provider: "openai",
+        model: "gpt-4o-mini",
+        prompt: "",
+        systemPrompt: "You are a concise assistant.",
+        temperature: 0,
+        maxTokens: 256,
+        topP: 1,
+        baseUrl: "https://api.openai.com/v1",
+        storeKey: "aiResponse",
+      } as AutomationStep;
+      break;
     case "discordSendMessage":
       step = {
         id: newId,

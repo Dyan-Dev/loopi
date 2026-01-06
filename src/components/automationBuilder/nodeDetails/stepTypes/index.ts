@@ -12,6 +12,7 @@ import { DiscordListMessagesStep } from "./discord/DiscordListMessagesStep";
 import { DiscordReactStep } from "./discord/DiscordReactStep";
 import { DiscordSendMessageStep } from "./discord/DiscordSendMessageStep";
 import { DiscordSendWebhookStep } from "./discord/DiscordSendWebhookStep";
+import { AiGenerateTextStep } from "./integration/AiGenerateTextStep";
 import { ApiCallStep } from "./integration/ApiCallStep";
 import { TwitterCreateTweetStep } from "./twitter/TwitterCreateTweetStep";
 import { TwitterDeleteTweetStep } from "./twitter/TwitterDeleteTweetStep";
@@ -25,6 +26,7 @@ import { SetVariableStep } from "./variable/SetVariableStep";
 
 export {
   ApiCallStep,
+  AiGenerateTextStep,
   NavigateStep,
   ClickStep,
   TypeStep,

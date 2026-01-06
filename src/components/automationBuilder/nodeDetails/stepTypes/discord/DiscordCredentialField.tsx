@@ -15,9 +15,7 @@ export function DiscordCredentialField({
   botToken,
   onUpdate,
 }: DiscordCredentialFieldProps) {
-  const [useManualCredentials, setUseManualCredentials] = useState(
-    !credentialId && !!botToken
-  );
+  const [useManualCredentials, setUseManualCredentials] = useState(!credentialId && !!botToken);
 
   const handleToggle = () => {
     setUseManualCredentials(!useManualCredentials);
