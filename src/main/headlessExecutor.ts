@@ -13,22 +13,7 @@ const logger = createLogger("HeadlessExecutor");
 export class HeadlessExecutor {
   private browser: Browser | null = null;
   private page: Page | null = null;
-  private variables: Record<string, unknown> = {};
   private puppeteer: typeof import("puppeteer") | null = null;
-
-  /**
-   * Initialize variables
-   */
-  initVariables(vars?: Record<string, unknown>): void {
-    this.variables = vars ? { ...vars } : {};
-  }
-
-  /**
-   * Get current variables
-   */
-  getVariables(): Record<string, unknown> {
-    return { ...this.variables };
-  }
 
   /**
    * Lazy load Puppeteer
@@ -75,164 +60,13 @@ export class HeadlessExecutor {
   }
 
   /**
-   * Substitute variable placeholders in string
-   */
-  private substituteVariables(input?: string): string {
-    if (!input) return "";
-
-    return input.replace(/\{\{(\w+(?:\.\w+|\[\d+\])*)\}\}/g, (match, path) => {
-      const value = this.getVariableValue(path);
-      return value !== undefined ? String(value) : match;
-    });
-  }
-
-  /**
-   * Get variable value with dot notation support
-   */
-  private getVariableValue(path: string): unknown {
-    const parts = path.split(/\.|\[|\]/).filter(Boolean);
-    let current: unknown = this.variables;
-
-    for (const part of parts) {
-      if (current === null || current === undefined) return undefined;
-      if (typeof current === "object" && current !== null && part in current) {
-        current = (current as Record<string, unknown>)[part];
-      } else {
-        return undefined;
-      }
-    }
-
-    return current;
-  }
-
-  /**
-   * Parse value to appropriate type
-   */
-  private parseValue(input: string): unknown {
-    const trimmed = input.trim();
-
-    if (trimmed === "true") return true;
-    if (trimmed === "false") return false;
-    if (trimmed === "null") return null;
-    if (trimmed === "undefined") return undefined;
-
-    if (trimmed.startsWith("{") || trimmed.startsWith("[")) {
-      try {
-        return JSON.parse(trimmed);
-      } catch {
-        return input;
-      }
-    }
-
-    const num = Number(trimmed);
-    if (!isNaN(num) && trimmed !== "") {
-      return num;
-    }
-
-    return input;
-  }
-
-  /**
-   * Evaluates a variable conditional node (variable-based conditions)
-   * These conditions work with stored variables
-   */
-  evaluateVariableConditional(config: {
-    variableConditionType?: string;
-    variableName?: string;
-    expectedValue?: string;
-    parseAsNumber?: boolean;
-  }): {
-    conditionResult: boolean;
-  } {
-    const { variableConditionType, variableName, expectedValue } = config;
-    if (!variableConditionType || !variableName) {
-      throw new Error("variableConditionType and variableName are required");
-    }
-    const startTime = performance.now();
-
-    debugLogger.debug("VariableConditional", `Evaluating ${variableConditionType} condition`, {
-      variableName,
-      expectedValue,
-    });
-
-    const resolvedVarName = this.substituteVariables(variableName);
-    const variableValue = this.getVariableValue(resolvedVarName);
-    let conditionResult = false;
-
-    if (variableConditionType === "variableExists") {
-      conditionResult =
-        variableValue !== undefined && variableValue !== null && variableValue !== "";
-      debugLogger.debug(
-        "VariableConditional",
-        `Variable ${conditionResult ? "exists" : "does not exist"}`,
-        {
-          variableName: resolvedVarName,
-          value: variableValue,
-        }
-      );
-    } else {
-      const expected = this.substituteVariables(expectedValue || "");
-      const actualStr =
-        variableValue === null || variableValue === undefined ? "" : String(variableValue);
-
-      if (config.parseAsNumber) {
-        const a = parseFloat(actualStr);
-        const b = parseFloat(expected);
-
-        if (isNaN(a) || isNaN(b)) {
-          conditionResult = false;
-          debugLogger.warn("VariableConditional", "Cannot parse as number", {
-            variableValue: actualStr,
-            expectedValue: expected,
-          });
-        } else {
-          if (variableConditionType === "variableEquals") {
-            conditionResult = a === b;
-          } else if (variableConditionType === "variableGreaterThan") {
-            conditionResult = a > b;
-          } else if (variableConditionType === "variableLessThan") {
-            conditionResult = a < b;
-          } else if (variableConditionType === "variableContains") {
-            // Contains doesn't make sense for numbers, fall back to string
-            conditionResult = actualStr.includes(expected);
-          }
-          debugLogger.debug(
-            "VariableConditional",
-            `Numeric comparison: ${a} ${variableConditionType} ${b} = ${conditionResult}`
-          );
-        }
-      } else {
-        // String comparison
-        if (variableConditionType === "variableEquals") {
-          conditionResult = actualStr === expected;
-        } else if (variableConditionType === "variableContains") {
-          conditionResult = actualStr.includes(expected);
-        } else if (variableConditionType === "variableGreaterThan") {
-          conditionResult = actualStr > expected;
-        } else if (variableConditionType === "variableLessThan") {
-          conditionResult = actualStr < expected;
-        }
-        debugLogger.debug(
-          "VariableConditional",
-          `String comparison: "${actualStr}" ${variableConditionType} "${expected}" = ${conditionResult}`
-        );
-      }
-    }
-
-    const duration = performance.now() - startTime;
-    debugLogger.logOperation(
-      "VariableConditional",
-      `Condition evaluated to: ${conditionResult}`,
-      duration
-    );
-
-    return { conditionResult };
-  }
-
-  /**
    * Execute automation step using Puppeteer
    */
-  async executeStep(step: AutomationStep): Promise<unknown> {
+  async executeStep(
+    step: AutomationStep,
+    substituteVariables: (input?: string) => string,
+    variables?: Record<string, unknown>
+  ): Promise<unknown> {
     if (!this.page) {
       throw new Error("Headless browser not launched. Call launch() first.");
     }
@@ -243,7 +77,7 @@ export class HeadlessExecutor {
     try {
       switch (step.type) {
         case "navigate": {
-          const url = this.substituteVariables(step.value);
+          const url = substituteVariables(step.value);
           debugLogger.debug("Navigate", `Loading URL: ${url}`);
           await this.page.goto(url, { waitUntil: "networkidle2" });
           result = undefined;
@@ -251,7 +85,7 @@ export class HeadlessExecutor {
         }
 
         case "click": {
-          const selector = this.substituteVariables(step.selector);
+          const selector = substituteVariables(step.selector);
           debugLogger.debug("Click", `Clicking element: ${selector}`);
           await this.page.waitForSelector(selector, { timeout: 10000 });
           await this.page.click(selector);
@@ -260,8 +94,8 @@ export class HeadlessExecutor {
         }
 
         case "type": {
-          const selector = this.substituteVariables(step.selector);
-          const value = this.substituteVariables(step.value);
+          const selector = substituteVariables(step.selector);
+          const value = substituteVariables(step.value);
           debugLogger.debug("Type", `Typing into ${selector}`);
           await this.page.waitForSelector(selector, { timeout: 10000 });
           await this.page.type(selector, value);
@@ -270,7 +104,7 @@ export class HeadlessExecutor {
         }
 
         case "extract": {
-          const selector = this.substituteVariables(step.selector);
+          const selector = substituteVariables(step.selector);
           debugLogger.debug("Extract", `Extracting text from: ${selector}`);
 
           const extracted = await this.page.evaluate((sel) => {
@@ -279,7 +113,7 @@ export class HeadlessExecutor {
           }, selector);
 
           if (step.storeKey) {
-            this.variables[step.storeKey] = extracted;
+            variables![step.storeKey] = extracted;
             debugLogger.debug("Variable", `Set ${step.storeKey} = ${extracted}`);
           }
 
@@ -288,7 +122,7 @@ export class HeadlessExecutor {
         }
 
         case "wait": {
-          const seconds = parseInt(this.substituteVariables(step.value)) || 0;
+          const seconds = parseInt(substituteVariables(step.value)) || 0;
           debugLogger.debug("Wait", `Waiting for ${seconds} seconds`);
           await new Promise((resolve) => setTimeout(resolve, seconds * 1000));
           result = undefined;
@@ -297,7 +131,7 @@ export class HeadlessExecutor {
 
         case "scroll": {
           if (step.scrollType === "toElement") {
-            const selector = this.substituteVariables(step.selector || "");
+            const selector = substituteVariables(step.selector || "");
             debugLogger.debug("Scroll", `Scrolling to element: ${selector}`);
             await this.page.evaluate((sel) => {
               const element = document.querySelector(sel);
@@ -324,48 +158,9 @@ export class HeadlessExecutor {
           break;
         }
 
-        case "setVariable": {
-          const varName = step.variableName;
-          const varValue = this.parseValue(this.substituteVariables(step.value));
-          if (varName) {
-            this.variables[varName] = varValue;
-            debugLogger.debug("Variable", `Set ${varName} = ${varValue}`);
-          }
-          result = varValue;
-          break;
-        }
-
-        case "modifyVariable": {
-          const varName = step.variableName;
-          if (!varName) break;
-
-          const currentValue = this.variables[varName];
-          let newValue: unknown = currentValue;
-
-          switch (step.operation) {
-            case "increment":
-              newValue = typeof currentValue === "number" ? currentValue + 1 : 1;
-              break;
-            case "decrement":
-              newValue = typeof currentValue === "number" ? currentValue - 1 : -1;
-              break;
-            case "append":
-              newValue = String(currentValue || "") + this.substituteVariables(step.value || "");
-              break;
-            case "set":
-              newValue = this.parseValue(this.substituteVariables(step.value || ""));
-              break;
-          }
-
-          this.variables[varName] = newValue;
-          debugLogger.debug("Variable", `Modified ${varName} = ${newValue}`);
-          result = newValue;
-          break;
-        }
-
         case "selectOption": {
-          const selector = this.substituteVariables(step.selector);
-          const value = this.substituteVariables(step.optionValue);
+          const selector = substituteVariables(step.selector);
+          const value = substituteVariables(step.optionValue);
           debugLogger.debug("Select Option", `Selecting option in: ${selector}`);
           await this.page.select(selector, value);
           result = undefined;
@@ -373,34 +168,11 @@ export class HeadlessExecutor {
         }
 
         case "hover": {
-          const selector = this.substituteVariables(step.selector);
+          const selector = substituteVariables(step.selector);
           debugLogger.debug("Hover", `Hovering over element: ${selector}`);
           await this.page.waitForSelector(selector, { timeout: 10000 });
           await this.page.hover(selector);
           result = undefined;
-          break;
-        }
-
-        case "apiCall": {
-          const axios = await import("axios");
-          const url = this.substituteVariables(step.url);
-          const method = step.method || "GET";
-
-          debugLogger.debug("API Call", `${method} ${url}`);
-
-          const response = await axios.default({
-            method,
-            url,
-            headers: step.headers,
-            data: step.body,
-          });
-
-          if (step.storeKey) {
-            this.variables[step.storeKey] = response.data;
-            debugLogger.debug("Variable", `Set ${step.storeKey} from API response`);
-          }
-
-          result = response.data;
           break;
         }
 
@@ -461,7 +233,7 @@ export class HeadlessExecutor {
       expectedValue,
     });
 
-    const runtimeSelector = this.substituteVariables(selector);
+    const runtimeSelector = selector;
 
     const applyTransform = (raw: string) => {
       if (!raw) return raw;
@@ -547,7 +319,7 @@ export class HeadlessExecutor {
       }, runtimeSelector);
 
       const transformed = applyTransform(rawValue);
-      const expected = this.substituteVariables(expectedValue || "");
+      const expected = expectedValue;
       const op = config.condition || "equals";
 
       debugLogger.debug("BrowserConditional", "Value matching", {

@@ -5,7 +5,6 @@
  */
 
 import type { ScheduleType, StoredAutomation } from "@app-types/automation";
-import type { AutomationStep } from "@app-types/steps";
 import { createLogger } from "@utils/logger";
 import { app, BrowserWindow } from "electron";
 import fs from "fs";
@@ -291,38 +290,6 @@ export class DesktopScheduler {
       "hover",
     ];
     return automation.steps.some((step) => browserSteps.includes(step.type));
-  }
-
-  /**
-   * Execute a single automation step
-   */
-  private async executeStep(step: AutomationStep): Promise<unknown> {
-    // Browser steps that require a browser window
-    const browserSteps = [
-      "navigate",
-      "click",
-      "type",
-      "extract",
-      "scroll",
-      "screenshot",
-      "selectOption",
-      "fileUpload",
-      "hover",
-    ];
-
-    if (browserSteps.includes(step.type)) {
-      // Browser steps require a browser window
-      const browserWindow = this.windowManager?.getBrowserWindow();
-
-      if (!browserWindow || browserWindow.isDestroyed()) {
-        throw new Error(`Cannot execute step type: ${step.type} - browser window not available`);
-      }
-
-      return await this.executor.executeStep(browserWindow, step);
-    }
-
-    // All other steps (API, variables, Twitter, etc.) can run without a browser window
-    return await this.executor.executeStep(null, step);
   }
 
   /**

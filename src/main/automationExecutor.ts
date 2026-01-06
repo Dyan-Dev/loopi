@@ -1,10 +1,11 @@
-import { AutomationStep } from "@app-types/steps";
+import { AutomationStep, StepAIGenerateText } from "@app-types/steps";
 import axios from "axios";
 import crypto from "crypto";
 import { BrowserWindow } from "electron";
 import fs from "fs";
 import { getCredential } from "./credentialsStore";
 import { debugLogger } from "./debugLogger";
+import { HeadlessExecutor } from "./headlessExecutor";
 
 /**
  * Handles execution of automation steps in the browser window
@@ -147,7 +148,12 @@ export class AutomationExecutor {
    * @param browserWindow - The browser window to execute the step in (optional for non-browser steps)
    * @param step - The step configuration object
    */
-  async executeStep(browserWindow: BrowserWindow | null, step: AutomationStep): Promise<unknown> {
+  async executeStep(
+    browserWindow: BrowserWindow | null,
+    headless: boolean,
+    headlessExecutor: HeadlessExecutor | null | undefined,
+    step: AutomationStep
+  ): Promise<unknown> {
     const wc = browserWindow?.webContents;
     const startTime = performance.now();
 
@@ -161,19 +167,28 @@ export class AutomationExecutor {
 
       switch (step.type) {
         case "navigate": {
-          if (!wc) throw new Error("Browser window required for navigate step");
-          const url = this.substituteVariables(step.value);
-          debugLogger.debug("Navigate", `Loading URL: ${url}`);
-          await wc.loadURL(url);
-          result = undefined;
+          if (headless) {
+            if (!headlessExecutor) throw new Error("Headless executor not initialized");
+            await headlessExecutor.executeStep(step, this.substituteVariables.bind(this));
+          } else {
+            const url = this.substituteVariables(step.value);
+            if (!wc) throw new Error("Browser window required for navigate step");
+            debugLogger.debug("Navigate", `Loading URL: ${url}`);
+            await wc.loadURL(url);
+            result = undefined;
+          }
           break;
         }
 
         case "click": {
-          if (!wc) throw new Error("Browser window required for click step");
           const clickSelector = this.substituteVariables(step.selector);
-          debugLogger.debug("Click", `Clicking element with selector: ${clickSelector}`);
-          await wc.executeJavaScript(`
+          if (headless) {
+            if (!headlessExecutor) throw new Error("Headless executor not initialized");
+            await headlessExecutor.executeStep(step, this.substituteVariables.bind(this));
+          } else {
+            if (!wc) throw new Error("Browser window required for click step");
+            debugLogger.debug("Click", `Clicking element with selector: ${clickSelector}`);
+            await wc.executeJavaScript(`
             (() => {
               const sel = ${JSON.stringify(clickSelector)};
               let el = null;
@@ -184,16 +199,23 @@ export class AutomationExecutor {
               if (el) el.click();
             })();
           `);
-          result = undefined;
+            result = undefined;
+          }
           break;
         }
 
         case "type": {
-          if (!wc) throw new Error("Browser window required for type step");
-          const typeSelector = this.substituteVariables(step.selector);
-          const typeValue = this.substituteVariables(step.value);
-          debugLogger.debug("Type", `Typing into selector: ${typeSelector}`, { value: typeValue });
-          await wc.executeJavaScript(`
+          if (headless) {
+            if (!headlessExecutor) throw new Error("Headless executor not initialized");
+            await headlessExecutor.executeStep(step, this.substituteVariables.bind(this));
+          } else {
+            if (!wc) throw new Error("Browser window required for type step");
+            const typeSelector = this.substituteVariables(step.selector);
+            const typeValue = this.substituteVariables(step.value);
+            debugLogger.debug("Type", `Typing into selector: ${typeSelector}`, {
+              value: typeValue,
+            });
+            await wc.executeJavaScript(`
             (() => {
               const sel = ${JSON.stringify(typeSelector)};
               let el = null;
@@ -208,38 +230,57 @@ export class AutomationExecutor {
               }
             })();
           `);
-          result = undefined;
+            result = undefined;
+          }
           break;
         }
 
         case "wait": {
-          const waitStr = this.substituteVariables(step.value);
-          const ms = parseInt(waitStr) * 1000;
-          debugLogger.debug("Wait", `Waiting for ${waitStr} seconds`);
-          await new Promise((resolve) => {
-            setTimeout(resolve, isNaN(ms) ? 0 : ms);
-          });
-          result = undefined;
+          if (headless) {
+            if (!headlessExecutor) throw new Error("Headless executor not initialized");
+            await headlessExecutor.executeStep(step, this.substituteVariables.bind(this));
+          } else {
+            const waitStr = this.substituteVariables(step.value);
+            const ms = parseInt(waitStr) * 1000;
+            debugLogger.debug("Wait", `Waiting for ${waitStr} seconds`);
+            await new Promise((resolve) => {
+              setTimeout(resolve, isNaN(ms) ? 0 : ms);
+            });
+            result = undefined;
+          }
           break;
         }
 
         case "screenshot": {
-          if (!wc) throw new Error("Browser window required for screenshot step");
-          debugLogger.debug("Screenshot", "Capturing page screenshot");
-          const img = await wc.capturePage();
-          const timestamp = new Date().toISOString().replace(/[-:.]/g, "").slice(0, 15);
-          const savePath = step.savePath || `screenshot_${timestamp}.png`;
-          await fs.promises.writeFile(savePath, img.toPNG());
-          debugLogger.info("Screenshot", `Screenshot saved to: ${savePath}`);
-          result = img.toPNG().toString("base64");
+          if (headless) {
+            if (!headlessExecutor) throw new Error("Headless executor not initialized");
+            await headlessExecutor.executeStep(step, this.substituteVariables.bind(this));
+          } else {
+            if (!wc) throw new Error("Browser window required for screenshot step");
+            debugLogger.debug("Screenshot", "Capturing page screenshot");
+            const img = await wc.capturePage();
+            const timestamp = new Date().toISOString().replace(/[-:.]/g, "").slice(0, 15);
+            const savePath = step.savePath || `screenshot_${timestamp}.png`;
+            await fs.promises.writeFile(savePath, img.toPNG());
+            debugLogger.info("Screenshot", `Screenshot saved to: ${savePath}`);
+            result = img.toPNG().toString("base64");
+          }
           break;
         }
 
         case "extract": {
-          if (!wc) throw new Error("Browser window required for extract step");
-          const extractSelector = this.substituteVariables(step.selector);
-          debugLogger.debug("Extract", `Extracting text from selector: ${extractSelector}`);
-          const extracted = await wc.executeJavaScript(`
+          if (headless) {
+            if (!headlessExecutor) throw new Error("Headless executor not initialized");
+            await headlessExecutor.executeStep(
+              step,
+              this.substituteVariables.bind(this),
+              this.variables
+            );
+          } else {
+            if (!wc) throw new Error("Browser window required for extract step");
+            const extractSelector = this.substituteVariables(step.selector);
+            debugLogger.debug("Extract", `Extracting text from selector: ${extractSelector}`);
+            const extracted = await wc.executeJavaScript(`
             (() => {
               const sel = ${JSON.stringify(extractSelector)};
               let el = null;
@@ -250,13 +291,14 @@ export class AutomationExecutor {
               return el?.innerText || "";
             })();
           `);
-          if (step.storeKey) {
-            this.variables[step.storeKey] = extracted;
-            debugLogger.debug("Extract", `Stored extracted value in variable: ${step.storeKey}`, {
-              value: extracted,
-            });
+            if (step.storeKey) {
+              this.variables[step.storeKey] = extracted;
+              debugLogger.debug("Extract", `Stored extracted value in variable: ${step.storeKey}`, {
+                value: extracted,
+              });
+            }
+            result = extracted;
           }
-          result = extracted;
           break;
         }
 
@@ -300,6 +342,16 @@ export class AutomationExecutor {
             debugLogger.error("API Call", "API call failed", error);
             throw error;
           }
+          break;
+        }
+
+        case "aiGenerateText": {
+          const aiResult = await this.executeAiGenerateText(step);
+          if (step.storeKey) {
+            this.variables[step.storeKey] = aiResult;
+            debugLogger.debug("AI Generate Text", `Stored response in variable: ${step.storeKey}`);
+          }
+          result = aiResult;
           break;
         }
 
@@ -455,11 +507,15 @@ export class AutomationExecutor {
         }
 
         case "scroll": {
-          if (!wc) throw new Error("Browser window required for scroll step");
-          if (step.scrollType === "toElement") {
-            const scrollSelector = this.substituteVariables(step.selector || "");
-            debugLogger.debug("Scroll", `Scrolling to element: ${scrollSelector}`);
-            await wc.executeJavaScript(`
+          if (headless) {
+            if (!headlessExecutor) throw new Error("Headless executor not initialized");
+            await headlessExecutor.executeStep(step, this.substituteVariables.bind(this));
+          } else {
+            if (!wc) throw new Error("Browser window required for scroll step");
+            if (step.scrollType === "toElement") {
+              const scrollSelector = this.substituteVariables(step.selector || "");
+              debugLogger.debug("Scroll", `Scrolling to element: ${scrollSelector}`);
+              await wc.executeJavaScript(`
               (() => {
                 const sel = ${JSON.stringify(scrollSelector)};
                 let el = null;
@@ -470,22 +526,27 @@ export class AutomationExecutor {
                 if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
               })();
             `);
-          } else if (step.scrollType === "byAmount") {
-            debugLogger.debug("Scroll", `Scrolling by ${step.scrollAmount} pixels`);
-            await wc.executeJavaScript(`window.scrollBy(0, ${step.scrollAmount || 0});`);
+            } else if (step.scrollType === "byAmount") {
+              debugLogger.debug("Scroll", `Scrolling by ${step.scrollAmount} pixels`);
+              await wc.executeJavaScript(`window.scrollBy(0, ${step.scrollAmount || 0});`);
+            }
+            result = undefined;
           }
-          result = undefined;
           break;
         }
 
         case "selectOption": {
-          if (!wc) throw new Error("Browser window required for selectOption step");
-          const selectSelector = this.substituteVariables(step.selector);
-          const optionValue = this.substituteVariables(step.optionValue);
-          debugLogger.debug("Select Option", `Selecting option in: ${selectSelector}`, {
-            optionValue,
-          });
-          await wc.executeJavaScript(`
+          if (headless) {
+            if (!headlessExecutor) throw new Error("Headless executor not initialized");
+            await headlessExecutor.executeStep(step, this.substituteVariables.bind(this));
+          } else {
+            if (!wc) throw new Error("Browser window required for selectOption step");
+            const selectSelector = this.substituteVariables(step.selector);
+            const optionValue = this.substituteVariables(step.optionValue);
+            debugLogger.debug("Select Option", `Selecting option in: ${selectSelector}`, {
+              optionValue,
+            });
+            await wc.executeJavaScript(`
             (() => {
               const sel = ${JSON.stringify(selectSelector)};
               let select = null;
@@ -499,18 +560,23 @@ export class AutomationExecutor {
               }
             })();
           `);
-          result = undefined;
+            result = undefined;
+          }
           break;
         }
 
         case "fileUpload": {
-          if (!wc) throw new Error("Browser window required for fileUpload step");
-          const fuSelector = this.substituteVariables(step.selector);
-          const fuFilePath = this.substituteVariables(step.filePath);
-          debugLogger.debug("File Upload", `Uploading file to: ${fuSelector}`, {
-            filePath: fuFilePath,
-          });
-          await wc.executeJavaScript(`
+          if (headless) {
+            if (!headlessExecutor) throw new Error("Headless executor not initialized");
+            await headlessExecutor.executeStep(step, this.substituteVariables.bind(this));
+          } else {
+            if (!wc) throw new Error("Browser window required for fileUpload step");
+            const fuSelector = this.substituteVariables(step.selector);
+            const fuFilePath = this.substituteVariables(step.filePath);
+            debugLogger.debug("File Upload", `Uploading file to: ${fuSelector}`, {
+              filePath: fuFilePath,
+            });
+            await wc.executeJavaScript(`
             (() => {
               const sel = ${JSON.stringify(fuSelector)};
               let input = null;
@@ -527,15 +593,20 @@ export class AutomationExecutor {
               }
             })();
           `);
-          result = undefined;
+            result = undefined;
+          }
           break;
         }
 
         case "hover": {
-          if (!wc) throw new Error("Browser window required for hover step");
-          const hoverSelector = this.substituteVariables(step.selector);
-          debugLogger.debug("Hover", `Hovering over element: ${hoverSelector}`);
-          await wc.executeJavaScript(`
+          if (headless) {
+            if (!headlessExecutor) throw new Error("Headless executor not initialized");
+            await headlessExecutor.executeStep(step, this.substituteVariables.bind(this));
+          } else {
+            if (!wc) throw new Error("Browser window required for hover step");
+            const hoverSelector = this.substituteVariables(step.selector);
+            debugLogger.debug("Hover", `Hovering over element: ${hoverSelector}`);
+            await wc.executeJavaScript(`
             (() => {
               const sel = ${JSON.stringify(hoverSelector)};
               let el = null;
@@ -549,7 +620,8 @@ export class AutomationExecutor {
               }
             })();
           `);
-          result = undefined;
+            result = undefined;
+          }
           break;
         }
 
@@ -1101,7 +1173,9 @@ export class AutomationExecutor {
    * These conditions require a browser window and interact with the DOM
    */
   async evaluateBrowserConditional(
-    browserWindow: BrowserWindow,
+    browserWindow: BrowserWindow | undefined,
+    headless: boolean,
+    headlessExecutor: HeadlessExecutor | null | undefined,
     config: {
       browserConditionType?: string;
       selector?: string;
@@ -1118,48 +1192,62 @@ export class AutomationExecutor {
     conditionResult: boolean;
     effectiveSelector?: string | null;
   }> {
-    const wc = browserWindow.webContents;
-    const { browserConditionType, selector, expectedValue } = config;
-    if (!browserConditionType || !selector) {
-      throw new Error("browserConditionType and selector are required");
-    }
-    const startTime = performance.now();
-
-    debugLogger.debug("BrowserConditional", `Evaluating ${browserConditionType} condition`, {
-      selector,
-      expectedValue,
-    });
-
-    const runtimeSelector = this.substituteVariables(selector);
-
-    const applyTransform = (raw: string) => {
-      if (!raw) return raw;
-      const t = config.transformType || "none";
-      let s = raw;
-      if (t === "stripCurrency") {
-        s = s.replace(/[$€£,\s]/g, "");
-      } else if (t === "stripNonNumeric") {
-        s = s.replace(/[^0-9.-]/g, "");
-      } else if (t === "removeChars" && config.transformChars) {
-        const chars = config.transformChars.split("");
-        for (const c of chars) s = s.split(c).join("");
-      } else if (t === "regexReplace" && config.transformPattern) {
-        try {
-          const re = new RegExp(config.transformPattern, "g");
-          s = s.replace(re, config.transformReplace ?? "");
-        } catch (_e) {
-          debugLogger.warn("BrowserConditional", "Invalid regex pattern", {
-            pattern: config.transformPattern,
-          });
-        }
+    if (headless) {
+      if (!headlessExecutor) throw new Error("Headless executor not initialized");
+      return headlessExecutor.evaluateBrowserConditional({
+        browserConditionType: config.browserConditionType,
+        selector: this.substituteVariables(config.selector),
+        expectedValue: this.substituteVariables(config.expectedValue),
+        condition: config.condition,
+        transformType: config.transformType,
+        transformPattern: config.transformPattern,
+        transformReplace: config.transformReplace,
+        transformChars: config.transformChars,
+        parseAsNumber: config.parseAsNumber,
+      });
+    } else {
+      const wc = browserWindow.webContents;
+      const { browserConditionType, selector, expectedValue } = config;
+      if (!browserConditionType || !selector) {
+        throw new Error("browserConditionType and selector are required");
       }
-      return s;
-    };
+      const startTime = performance.now();
 
-    let conditionResult = false;
+      debugLogger.debug("BrowserConditional", `Evaluating ${browserConditionType} condition`, {
+        selector,
+        expectedValue,
+      });
 
-    if (browserConditionType === "elementExists") {
-      conditionResult = await wc.executeJavaScript(`
+      const runtimeSelector = this.substituteVariables(selector);
+
+      const applyTransform = (raw: string) => {
+        if (!raw) return raw;
+        const t = config.transformType || "none";
+        let s = raw;
+        if (t === "stripCurrency") {
+          s = s.replace(/[$€£,\s]/g, "");
+        } else if (t === "stripNonNumeric") {
+          s = s.replace(/[^0-9.-]/g, "");
+        } else if (t === "removeChars" && config.transformChars) {
+          const chars = config.transformChars.split("");
+          for (const c of chars) s = s.split(c).join("");
+        } else if (t === "regexReplace" && config.transformPattern) {
+          try {
+            const re = new RegExp(config.transformPattern, "g");
+            s = s.replace(re, config.transformReplace ?? "");
+          } catch (_e) {
+            debugLogger.warn("BrowserConditional", "Invalid regex pattern", {
+              pattern: config.transformPattern,
+            });
+          }
+        }
+        return s;
+      };
+
+      let conditionResult = false;
+
+      if (browserConditionType === "elementExists") {
+        conditionResult = await wc.executeJavaScript(`
         (() => {
           const sel = ${JSON.stringify(runtimeSelector)};
           let el = null;
@@ -1170,15 +1258,15 @@ export class AutomationExecutor {
           return !!el;
         })();
       `);
-      debugLogger.debug(
-        "BrowserConditional",
-        `Element ${conditionResult ? "found" : "not found"}`,
-        {
-          selector: runtimeSelector,
-        }
-      );
-    } else if (browserConditionType === "valueMatches") {
-      const rawValue: string = await wc.executeJavaScript(`
+        debugLogger.debug(
+          "BrowserConditional",
+          `Element ${conditionResult ? "found" : "not found"}`,
+          {
+            selector: runtimeSelector,
+          }
+        );
+      } else if (browserConditionType === "valueMatches") {
+        const rawValue: string = await wc.executeJavaScript(`
         (() => {
           const sel = ${JSON.stringify(runtimeSelector)};
           let el = null;
@@ -1189,54 +1277,55 @@ export class AutomationExecutor {
           return el?.innerText || "";
         })();
       `);
-      const transformed = applyTransform(rawValue);
-      const expected = this.substituteVariables(expectedValue || "");
-      const op = config.condition || "equals";
+        const transformed = applyTransform(rawValue);
+        const expected = this.substituteVariables(expectedValue || "");
+        const op = config.condition || "equals";
 
-      debugLogger.debug("BrowserConditional", "Value matching", {
-        rawValue,
-        transformed,
-        expected,
-        operator: op,
-      });
+        debugLogger.debug("BrowserConditional", "Value matching", {
+          rawValue,
+          transformed,
+          expected,
+          operator: op,
+        });
 
-      if (config.parseAsNumber) {
-        const a = parseFloat(transformed.replace(/[^0-9.-]/g, ""));
-        const b = parseFloat(expected.replace(/[^0-9.-]/g, ""));
-        conditionResult =
-          !isNaN(a) &&
-          !isNaN(b) &&
-          (op === "greaterThan"
-            ? a > b
-            : op === "lessThan"
-              ? a < b
-              : op === "contains"
-                ? transformed.includes(expected)
-                : a === b);
-        debugLogger.debug(
-          "BrowserConditional",
-          `Numeric comparison: ${a} ${op} ${b} = ${conditionResult}`
-        );
-      } else {
-        conditionResult =
-          op === "contains"
-            ? transformed.includes(expected)
-            : op === "greaterThan"
-              ? parseFloat(transformed) > parseFloat(expected)
+        if (config.parseAsNumber) {
+          const a = parseFloat(transformed.replace(/[^0-9.-]/g, ""));
+          const b = parseFloat(expected.replace(/[^0-9.-]/g, ""));
+          conditionResult =
+            !isNaN(a) &&
+            !isNaN(b) &&
+            (op === "greaterThan"
+              ? a > b
               : op === "lessThan"
-                ? parseFloat(transformed) < parseFloat(expected)
-                : transformed === expected;
+                ? a < b
+                : op === "contains"
+                  ? transformed.includes(expected)
+                  : a === b);
+          debugLogger.debug(
+            "BrowserConditional",
+            `Numeric comparison: ${a} ${op} ${b} = ${conditionResult}`
+          );
+        } else {
+          conditionResult =
+            op === "contains"
+              ? transformed.includes(expected)
+              : op === "greaterThan"
+                ? parseFloat(transformed) > parseFloat(expected)
+                : op === "lessThan"
+                  ? parseFloat(transformed) < parseFloat(expected)
+                  : transformed === expected;
+        }
       }
+
+      const duration = performance.now() - startTime;
+      debugLogger.logOperation(
+        "BrowserConditional",
+        `Condition evaluated to: ${conditionResult}`,
+        duration
+      );
+
+      return { conditionResult, effectiveSelector: runtimeSelector };
     }
-
-    const duration = performance.now() - startTime;
-    debugLogger.logOperation(
-      "BrowserConditional",
-      `Condition evaluated to: ${conditionResult}`,
-      duration
-    );
-
-    return { conditionResult, effectiveSelector: runtimeSelector };
   }
 
   /**
@@ -1334,6 +1423,172 @@ export class AutomationExecutor {
     );
 
     return { conditionResult };
+  }
+
+  /**
+   * Execute a basic AI text generation step against supported providers.
+   * Deterministic defaults: temperature 0, maxTokens 256, no streaming or tools.
+   */
+  private async executeAiGenerateText(step: StepAIGenerateText): Promise<string> {
+    const provider = step.provider || "openai";
+    const prompt = this.substituteVariables(step.prompt || "").trim();
+    const systemPrompt = this.substituteVariables(step.systemPrompt || "").trim();
+    const model = this.substituteVariables(step.model || "").trim();
+    const temperature = Math.max(0, Math.min(1, Number(step.temperature ?? 0)));
+    const maxTokens = Math.min(Math.max(1, Math.floor(Number(step.maxTokens ?? 256))), 4096);
+    const topPValue =
+      step.topP === undefined ? undefined : Math.max(0, Math.min(1, Number(step.topP)));
+    const timeoutMs = Math.min(Math.max(1000, Number(step.timeoutMs ?? 20000)), 120000);
+
+    if (!prompt) throw new Error("AI step requires a prompt");
+    if (!model) throw new Error("AI step requires a model");
+
+    const fallbackBase =
+      provider === "anthropic"
+        ? "https://api.anthropic.com"
+        : provider === "ollama"
+          ? "http://localhost:11434"
+          : "https://api.openai.com/v1";
+    const baseUrl = this.normalizeBaseUrl(
+      this.substituteVariables(step.baseUrl || ""),
+      fallbackBase
+    );
+    const apiKey = await this.resolveAiApiKey(step, provider);
+
+    debugLogger.debug("AI Generate Text", "Preparing request", {
+      provider,
+      model,
+      baseUrl,
+      promptLength: prompt.length,
+      hasSystemPrompt: !!systemPrompt,
+      temperature,
+      maxTokens,
+      topP: topPValue,
+    });
+
+    const systemMessage = systemPrompt ? [{ role: "system", content: systemPrompt }] : [];
+    const userMessage = { role: "user", content: prompt };
+
+    if ((provider === "openai" || provider === "openaiCompatible") && !apiKey) {
+      throw new Error("API key is required for OpenAI-compatible providers");
+    }
+    if (provider === "anthropic" && !apiKey) {
+      throw new Error("API key is required for Anthropic");
+    }
+
+    if (provider === "openai" || provider === "openaiCompatible") {
+      const url = `${baseUrl}/chat/completions`;
+      const payload: Record<string, unknown> = {
+        model,
+        messages: [...systemMessage, userMessage],
+        temperature,
+        max_tokens: maxTokens,
+        n: 1,
+        stream: false,
+      };
+      if (topPValue !== undefined) payload.top_p = topPValue;
+
+      const response = await axios.post(url, payload, {
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        },
+        timeout: timeoutMs,
+      });
+
+      const content = response.data?.choices?.[0]?.message?.content;
+      if (!content) {
+        throw new Error("AI provider returned an empty response");
+      }
+      return typeof content === "string" ? content.trim() : JSON.stringify(content);
+    }
+
+    if (provider === "anthropic") {
+      const url = `${baseUrl}/v1/messages`;
+      const payload: Record<string, unknown> = {
+        model,
+        max_tokens: maxTokens,
+        temperature,
+        messages: [userMessage],
+        stream: false,
+      };
+      if (systemPrompt) payload.system = systemPrompt;
+      if (topPValue !== undefined) payload.top_p = topPValue;
+
+      const response = await axios.post(url, payload, {
+        headers: {
+          "x-api-key": apiKey,
+          "anthropic-version": "2023-06-01",
+          "Content-Type": "application/json",
+        },
+        timeout: timeoutMs,
+      });
+
+      const content = response.data?.content?.[0]?.text || response.data?.content?.[0]?.content;
+      if (!content) {
+        throw new Error("Anthropic returned an empty response");
+      }
+      return String(content).trim();
+    }
+
+    // Ollama and other local OpenAI-compatible runtimes
+    const url = `${baseUrl}/api/chat`;
+    const payload: Record<string, unknown> = {
+      model,
+      messages: [...systemMessage, userMessage],
+      stream: false,
+      options: {
+        temperature,
+        top_p: topPValue,
+        num_predict: maxTokens,
+      },
+    };
+
+    const response = await axios.post(url, payload, {
+      timeout: timeoutMs,
+      headers: apiKey
+        ? {
+            Authorization: `Bearer ${apiKey}`,
+            "Content-Type": "application/json",
+          }
+        : { "Content-Type": "application/json" },
+    });
+
+    const content = response.data?.message?.content || response.data?.response;
+    if (!content) {
+      throw new Error("LLM runtime returned an empty response");
+    }
+    return String(content).trim();
+  }
+
+  private normalizeBaseUrl(baseUrl: string, fallback: string): string {
+    const value = baseUrl?.trim() || fallback;
+    return value.replace(/\/+$/, "");
+  }
+
+  private async resolveAiApiKey(
+    step: StepAIGenerateText,
+    provider: StepAIGenerateText["provider"]
+  ): Promise<string | null> {
+    if (provider === "ollama") return null;
+
+    if (step.credentialId) {
+      const credential = await getCredential(step.credentialId);
+      if (!credential) throw new Error("AI credential not found");
+      const fromStore =
+        credential.data.apiKey ||
+        credential.data.key ||
+        credential.data.token ||
+        credential.data.accessToken;
+      if (fromStore) return this.substituteVariables(fromStore);
+      throw new Error("AI credential is missing an API key value");
+    }
+
+    if (step.apiKey) {
+      return this.substituteVariables(step.apiKey);
+    }
+
+    return null;
   }
 
   /**

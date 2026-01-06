@@ -9,6 +9,7 @@ import {
   Mouse,
   Send,
   Smile,
+  Sparkles,
   Twitter,
   Type as TypeIcon,
   Variable,
@@ -70,6 +71,24 @@ export interface StepApiCall extends StepBase {
   url: string;
   body?: string;
   headers?: Record<string, string>;
+  storeKey?: string;
+}
+
+export type AiProvider = "openai" | "anthropic" | "ollama" | "openaiCompatible";
+
+export interface StepAIGenerateText extends StepBase {
+  type: "aiGenerateText";
+  provider: AiProvider;
+  model: string;
+  prompt: string;
+  systemPrompt?: string;
+  temperature?: number;
+  maxTokens?: number;
+  topP?: number;
+  baseUrl?: string;
+  credentialId?: string;
+  apiKey?: string;
+  timeoutMs?: number;
   storeKey?: string;
 }
 
@@ -297,6 +316,7 @@ export type AutomationStep =
   | StepScreenshot
   | StepExtract
   | StepApiCall
+  | StepAIGenerateText
   | StepScroll
   | StepSelectOption
   | StepFileUpload
@@ -410,6 +430,15 @@ export const integrationSteps: StepTypeOption[] = [
   },
 ];
 
+export const aiSteps: StepTypeOption[] = [
+  {
+    value: "aiGenerateText",
+    label: "AI: Generate Text",
+    icon: Sparkles,
+    description: "Send prompt to an LLM and store the reply",
+  },
+];
+
 export const discordSteps: StepTypeOption[] = [
   {
     value: "discordSendMessage",
@@ -511,6 +540,11 @@ export const stepCategories: StepCategory[] = [
     steps: logicSteps,
   },
   {
+    category: "AI",
+    icon: Sparkles,
+    steps: aiSteps,
+  },
+  {
     category: "Integration",
     icon: Code,
     steps: integrationSteps,
@@ -531,6 +565,7 @@ export const stepTypes = [
   ...browserSteps,
   ...dataSteps,
   ...logicSteps,
+  ...aiSteps,
   ...integrationSteps,
   ...discordSteps,
   ...twitterSteps,
