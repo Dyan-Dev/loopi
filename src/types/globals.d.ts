@@ -16,7 +16,7 @@ export interface WorkflowSchedule {
 export interface Credential {
   id: string;
   name: string;
-  type: "twitter" | "discord" | "oauth" | "apiKey" | "basic" | "custom";
+  type: "twitter" | "discord" | "oauth" | "apiKey" | "basic" | "openai" | "anthropic" | "custom";
   createdAt: string;
   updatedAt: string;
   data: Record<string, string>;

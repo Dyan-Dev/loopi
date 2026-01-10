@@ -2,19 +2,12 @@ import { Button } from "@components/ui/button";
 import { CredentialSelector } from "@components/ui/credential-selector";
 import { Input } from "@components/ui/input";
 import { Label } from "@components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@components/ui/select";
 import { Textarea } from "@components/ui/textarea";
 import { useState } from "react";
 import { StepProps } from "../types";
 
-export function AiGenerateTextStep({ step, id, onUpdate }: StepProps) {
-  if (step.type !== "aiGenerateText") return null;
+export function AiOpenAIStep({ step, id, onUpdate }: StepProps) {
+  if (step.type !== "aiOpenAI") return null;
 
   const [useManualKey, setUseManualKey] = useState(!step.credentialId && !!step.apiKey);
 
@@ -35,28 +28,10 @@ export function AiGenerateTextStep({ step, id, onUpdate }: StepProps) {
   return (
     <div className="space-y-4">
       <div className="space-y-2">
-        <Label className="text-xs">Provider</Label>
-        <Select
-          value={step.provider}
-          onValueChange={(value) => updateField("provider", value as typeof step.provider)}
-        >
-          <SelectTrigger className="text-xs">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="openai">OpenAI</SelectItem>
-            <SelectItem value="anthropic">Anthropic</SelectItem>
-            <SelectItem value="ollama">Ollama</SelectItem>
-            <SelectItem value="openaiCompatible">OpenAI-Compatible</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div className="space-y-2">
         <Label className="text-xs">Model</Label>
         <Input
           value={step.model || ""}
-          placeholder="e.g., gpt-4o-mini, claude-3-5-sonnet"
+          placeholder="e.g., gpt-4o-mini, gpt-4-turbo"
           onChange={(e) => updateField("model", e.target.value)}
           className="text-xs"
         />
@@ -122,7 +97,7 @@ export function AiGenerateTextStep({ step, id, onUpdate }: StepProps) {
       </div>
 
       <div className="space-y-2">
-        <Label className="text-xs">Base URL</Label>
+        <Label className="text-xs">Base URL (optional)</Label>
         <Input
           value={step.baseUrl || ""}
           placeholder="https://api.openai.com/v1"
@@ -130,7 +105,7 @@ export function AiGenerateTextStep({ step, id, onUpdate }: StepProps) {
           className="text-xs"
         />
         <p className="text-[11px] text-muted-foreground">
-          Set custom gateway URLs for self-hosted or proxy deployments (e.g., Ollama, VLLM).
+          Set custom gateway URLs for proxy deployments.
         </p>
       </div>
 
@@ -151,7 +126,7 @@ export function AiGenerateTextStep({ step, id, onUpdate }: StepProps) {
           <Input
             type="password"
             value={step.apiKey || ""}
-            placeholder="API key"
+            placeholder="sk-..."
             onChange={(e) => updateField("apiKey", e.target.value)}
             className="text-xs"
           />
@@ -159,7 +134,7 @@ export function AiGenerateTextStep({ step, id, onUpdate }: StepProps) {
           <CredentialSelector
             value={step.credentialId}
             onChange={(credId) => updateField("credentialId", credId)}
-            type="apiKey"
+            type="openai"
             label=""
           />
         )}
@@ -184,9 +159,7 @@ export function AiGenerateTextStep({ step, id, onUpdate }: StepProps) {
           className="text-xs min-h-24"
         />
         <p className="text-[11px] text-muted-foreground">
-          {
-            "Supports variables like {{myVar}}. Avoid loops or tool-calls; this node returns a single text reply."
-          }
+          Supports variables like {`{{myVar}}`}. Returns a single text response.
         </p>
       </div>
 

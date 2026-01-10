@@ -112,19 +112,45 @@ export function createNode({
         body: "",
       };
       break;
-    case "aiGenerateText":
+    case "aiOpenAI":
       step = {
         id: newId,
-        type: "aiGenerateText",
+        type: "aiOpenAI",
         description: `${label} step`,
-        provider: "openai",
         model: "gpt-4o-mini",
         prompt: "",
         systemPrompt: "You are a concise assistant.",
         temperature: 0,
         maxTokens: 256,
-        topP: 1,
         baseUrl: "https://api.openai.com/v1",
+        storeKey: "aiResponse",
+      } as AutomationStep;
+      break;
+    case "aiAnthropic":
+      step = {
+        id: newId,
+        type: "aiAnthropic",
+        description: `${label} step`,
+        model: "claude-3-5-sonnet-20241022",
+        prompt: "",
+        systemPrompt: "You are a helpful assistant.",
+        temperature: 0,
+        maxTokens: 256,
+        baseUrl: "https://api.anthropic.com",
+        storeKey: "aiResponse",
+      } as AutomationStep;
+      break;
+    case "aiOllama":
+      step = {
+        id: newId,
+        type: "aiOllama",
+        description: `${label} step`,
+        model: "mistral",
+        prompt: "",
+        systemPrompt: "You are a helpful assistant.",
+        temperature: 0,
+        maxTokens: 256,
+        baseUrl: "http://localhost:11434",
         storeKey: "aiResponse",
       } as AutomationStep;
       break;
