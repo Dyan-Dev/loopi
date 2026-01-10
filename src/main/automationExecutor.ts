@@ -1,4 +1,4 @@
-import { AutomationStep, StepAIGenerateText } from "@app-types/steps";
+import { AutomationStep, StepAIAnthropic, StepAIOllama, StepAIOpenAI } from "@app-types/steps";
 import axios from "axios";
 import crypto from "crypto";
 import { BrowserWindow } from "electron";
@@ -345,11 +345,31 @@ export class AutomationExecutor {
           break;
         }
 
-        case "aiGenerateText": {
-          const aiResult = await this.executeAiGenerateText(step);
+        case "aiOpenAI": {
+          const aiResult = await this.executeAiOpenAI(step);
           if (step.storeKey) {
             this.variables[step.storeKey] = aiResult;
-            debugLogger.debug("AI Generate Text", `Stored response in variable: ${step.storeKey}`);
+            debugLogger.debug("AI OpenAI", `Stored response in variable: ${step.storeKey}`);
+          }
+          result = aiResult;
+          break;
+        }
+
+        case "aiAnthropic": {
+          const aiResult = await this.executeAiAnthropic(step);
+          if (step.storeKey) {
+            this.variables[step.storeKey] = aiResult;
+            debugLogger.debug("AI Anthropic", `Stored response in variable: ${step.storeKey}`);
+          }
+          result = aiResult;
+          break;
+        }
+
+        case "aiOllama": {
+          const aiResult = await this.executeAiOllama(step);
+          if (step.storeKey) {
+            this.variables[step.storeKey] = aiResult;
+            debugLogger.debug("AI Ollama", `Stored response in variable: ${step.storeKey}`);
           }
           result = aiResult;
           break;
@@ -1426,11 +1446,10 @@ export class AutomationExecutor {
   }
 
   /**
-   * Execute a basic AI text generation step against supported providers.
+   * Execute OpenAI API call (GPT-4, GPT-3.5, etc.)
    * Deterministic defaults: temperature 0, maxTokens 256, no streaming or tools.
    */
-  private async executeAiGenerateText(step: StepAIGenerateText): Promise<string> {
-    const provider = step.provider || "openai";
+  private async executeAiOpenAI(step: StepAIOpenAI): Promise<string> {
     const prompt = this.substituteVariables(step.prompt || "").trim();
     const systemPrompt = this.substituteVariables(step.systemPrompt || "").trim();
     const model = this.substituteVariables(step.model || "").trim();
@@ -1440,23 +1459,19 @@ export class AutomationExecutor {
       step.topP === undefined ? undefined : Math.max(0, Math.min(1, Number(step.topP)));
     const timeoutMs = Math.min(Math.max(1000, Number(step.timeoutMs ?? 20000)), 120000);
 
-    if (!prompt) throw new Error("AI step requires a prompt");
-    if (!model) throw new Error("AI step requires a model");
+    if (!prompt) throw new Error("OpenAI step requires a prompt");
+    if (!model) throw new Error("OpenAI step requires a model");
 
-    const fallbackBase =
-      provider === "anthropic"
-        ? "https://api.anthropic.com"
-        : provider === "ollama"
-          ? "http://localhost:11434"
-          : "https://api.openai.com/v1";
     const baseUrl = this.normalizeBaseUrl(
       this.substituteVariables(step.baseUrl || ""),
-      fallbackBase
+      "https://api.openai.com/v1"
     );
-    const apiKey = await this.resolveAiApiKey(step, provider);
+    const apiKey = await this.resolveOpenAIApiKey(step);
+    if (!apiKey) {
+      throw new Error("API key is required for OpenAI");
+    }
 
-    debugLogger.debug("AI Generate Text", "Preparing request", {
-      provider,
+    debugLogger.debug("AI OpenAI", "Preparing request", {
       model,
       baseUrl,
       promptLength: prompt.length,
@@ -1469,69 +1484,132 @@ export class AutomationExecutor {
     const systemMessage = systemPrompt ? [{ role: "system", content: systemPrompt }] : [];
     const userMessage = { role: "user", content: prompt };
 
-    if ((provider === "openai" || provider === "openaiCompatible") && !apiKey) {
-      throw new Error("API key is required for OpenAI-compatible providers");
+    const url = `${baseUrl}/chat/completions`;
+    const payload: Record<string, unknown> = {
+      model,
+      messages: [...systemMessage, userMessage],
+      temperature,
+      max_tokens: maxTokens,
+      n: 1,
+      stream: false,
+    };
+    if (topPValue !== undefined) payload.top_p = topPValue;
+
+    const response = await axios.post(url, payload, {
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      timeout: timeoutMs,
+    });
+
+    const content = response.data?.choices?.[0]?.message?.content;
+    if (!content) {
+      throw new Error("OpenAI returned an empty response");
     }
-    if (provider === "anthropic" && !apiKey) {
+    return typeof content === "string" ? content.trim() : JSON.stringify(content);
+  }
+
+  /**
+   * Execute Anthropic (Claude) API call
+   * Deterministic defaults: temperature 0, maxTokens 256, no streaming or tools.
+   */
+  private async executeAiAnthropic(step: StepAIAnthropic): Promise<string> {
+    const prompt = this.substituteVariables(step.prompt || "").trim();
+    const systemPrompt = this.substituteVariables(step.systemPrompt || "").trim();
+    const model = this.substituteVariables(step.model || "").trim();
+    const temperature = Math.max(0, Math.min(1, Number(step.temperature ?? 0)));
+    const maxTokens = Math.min(Math.max(1, Math.floor(Number(step.maxTokens ?? 256))), 4096);
+    const topPValue =
+      step.topP === undefined ? undefined : Math.max(0, Math.min(1, Number(step.topP)));
+    const timeoutMs = Math.min(Math.max(1000, Number(step.timeoutMs ?? 20000)), 120000);
+
+    if (!prompt) throw new Error("Anthropic step requires a prompt");
+    if (!model) throw new Error("Anthropic step requires a model");
+
+    const baseUrl = this.normalizeBaseUrl(
+      this.substituteVariables(step.baseUrl || ""),
+      "https://api.anthropic.com"
+    );
+    const apiKey = await this.resolveAnthropicApiKey(step);
+    if (!apiKey) {
       throw new Error("API key is required for Anthropic");
     }
 
-    if (provider === "openai" || provider === "openaiCompatible") {
-      const url = `${baseUrl}/chat/completions`;
-      const payload: Record<string, unknown> = {
-        model,
-        messages: [...systemMessage, userMessage],
-        temperature,
-        max_tokens: maxTokens,
-        n: 1,
-        stream: false,
-      };
-      if (topPValue !== undefined) payload.top_p = topPValue;
+    debugLogger.debug("AI Anthropic", "Preparing request", {
+      model,
+      baseUrl,
+      promptLength: prompt.length,
+      hasSystemPrompt: !!systemPrompt,
+      temperature,
+      maxTokens,
+      topP: topPValue,
+    });
 
-      const response = await axios.post(url, payload, {
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          "Content-Type": "application/json",
-        },
-        timeout: timeoutMs,
-      });
+    const userMessage = { role: "user", content: prompt };
 
-      const content = response.data?.choices?.[0]?.message?.content;
-      if (!content) {
-        throw new Error("AI provider returned an empty response");
-      }
-      return typeof content === "string" ? content.trim() : JSON.stringify(content);
+    const url = `${baseUrl}/v1/messages`;
+    const payload: Record<string, unknown> = {
+      model,
+      max_tokens: maxTokens,
+      temperature,
+      messages: [userMessage],
+      stream: false,
+    };
+    if (systemPrompt) payload.system = systemPrompt;
+    if (topPValue !== undefined) payload.top_p = topPValue;
+
+    const response = await axios.post(url, payload, {
+      headers: {
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01",
+        "Content-Type": "application/json",
+      },
+      timeout: timeoutMs,
+    });
+
+    const content = response.data?.content?.[0]?.text || response.data?.content?.[0]?.content;
+    if (!content) {
+      throw new Error("Anthropic returned an empty response");
     }
+    return String(content).trim();
+  }
 
-    if (provider === "anthropic") {
-      const url = `${baseUrl}/v1/messages`;
-      const payload: Record<string, unknown> = {
-        model,
-        max_tokens: maxTokens,
-        temperature,
-        messages: [userMessage],
-        stream: false,
-      };
-      if (systemPrompt) payload.system = systemPrompt;
-      if (topPValue !== undefined) payload.top_p = topPValue;
+  /**
+   * Execute Ollama (local LLM) API call
+   * Deterministic defaults: temperature 0, maxTokens 256, no streaming or tools.
+   */
+  private async executeAiOllama(step: StepAIOllama): Promise<string> {
+    const prompt = this.substituteVariables(step.prompt || "").trim();
+    const systemPrompt = this.substituteVariables(step.systemPrompt || "").trim();
+    const model = this.substituteVariables(step.model || "").trim();
+    const temperature = Math.max(0, Math.min(1, Number(step.temperature ?? 0)));
+    const maxTokens = Math.min(Math.max(1, Math.floor(Number(step.maxTokens ?? 256))), 4096);
+    const topPValue =
+      step.topP === undefined ? undefined : Math.max(0, Math.min(1, Number(step.topP)));
+    const timeoutMs = Math.min(Math.max(1000, Number(step.timeoutMs ?? 20000)), 120000);
 
-      const response = await axios.post(url, payload, {
-        headers: {
-          "x-api-key": apiKey,
-          "anthropic-version": "2023-06-01",
-          "Content-Type": "application/json",
-        },
-        timeout: timeoutMs,
-      });
+    if (!prompt) throw new Error("Ollama step requires a prompt");
+    if (!model) throw new Error("Ollama step requires a model");
 
-      const content = response.data?.content?.[0]?.text || response.data?.content?.[0]?.content;
-      if (!content) {
-        throw new Error("Anthropic returned an empty response");
-      }
-      return String(content).trim();
-    }
+    const baseUrl = this.normalizeBaseUrl(
+      this.substituteVariables(step.baseUrl || ""),
+      "http://localhost:11434"
+    );
 
-    // Ollama and other local OpenAI-compatible runtimes
+    debugLogger.debug("AI Ollama", "Preparing request", {
+      model,
+      baseUrl,
+      promptLength: prompt.length,
+      hasSystemPrompt: !!systemPrompt,
+      temperature,
+      maxTokens,
+      topP: topPValue,
+    });
+
+    const systemMessage = systemPrompt ? [{ role: "system", content: systemPrompt }] : [];
+    const userMessage = { role: "user", content: prompt };
+
     const url = `${baseUrl}/api/chat`;
     const payload: Record<string, unknown> = {
       model,
@@ -1546,17 +1624,12 @@ export class AutomationExecutor {
 
     const response = await axios.post(url, payload, {
       timeout: timeoutMs,
-      headers: apiKey
-        ? {
-            Authorization: `Bearer ${apiKey}`,
-            "Content-Type": "application/json",
-          }
-        : { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json" },
     });
 
     const content = response.data?.message?.content || response.data?.response;
     if (!content) {
-      throw new Error("LLM runtime returned an empty response");
+      throw new Error("Ollama returned an empty response");
     }
     return String(content).trim();
   }
@@ -1566,22 +1639,37 @@ export class AutomationExecutor {
     return value.replace(/\/+$/, "");
   }
 
-  private async resolveAiApiKey(
-    step: StepAIGenerateText,
-    provider: StepAIGenerateText["provider"]
-  ): Promise<string | null> {
-    if (provider === "ollama") return null;
-
+  private async resolveOpenAIApiKey(step: StepAIOpenAI): Promise<string | null> {
     if (step.credentialId) {
       const credential = await getCredential(step.credentialId);
-      if (!credential) throw new Error("AI credential not found");
+      if (!credential) throw new Error("OpenAI credential not found");
       const fromStore =
         credential.data.apiKey ||
         credential.data.key ||
         credential.data.token ||
         credential.data.accessToken;
       if (fromStore) return this.substituteVariables(fromStore);
-      throw new Error("AI credential is missing an API key value");
+      throw new Error("OpenAI credential is missing an API key value");
+    }
+
+    if (step.apiKey) {
+      return this.substituteVariables(step.apiKey);
+    }
+
+    return null;
+  }
+
+  private async resolveAnthropicApiKey(step: StepAIAnthropic): Promise<string | null> {
+    if (step.credentialId) {
+      const credential = await getCredential(step.credentialId);
+      if (!credential) throw new Error("Anthropic credential not found");
+      const fromStore =
+        credential.data.apiKey ||
+        credential.data.key ||
+        credential.data.token ||
+        credential.data.accessToken;
+      if (fromStore) return this.substituteVariables(fromStore);
+      throw new Error("Anthropic credential is missing an API key value");
     }
 
     if (step.apiKey) {
@@ -1642,12 +1730,12 @@ export class AutomationExecutor {
         throw new Error("Invalid or missing Discord credential");
       }
       return {
-        botToken: credential.data.botToken || ""
+        botToken: credential.data.botToken || "",
       };
     }
 
     return {
-      botToken: this.substituteVariables(step.botToken || "")
+      botToken: this.substituteVariables(step.botToken || ""),
     };
   }
 

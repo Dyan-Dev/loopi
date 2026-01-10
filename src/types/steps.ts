@@ -74,11 +74,9 @@ export interface StepApiCall extends StepBase {
   storeKey?: string;
 }
 
-export type AiProvider = "openai" | "anthropic" | "ollama" | "openaiCompatible";
-
-export interface StepAIGenerateText extends StepBase {
-  type: "aiGenerateText";
-  provider: AiProvider;
+/** OpenAI (including GPT-4, GPT-3.5, etc.) */
+export interface StepAIOpenAI extends StepBase {
+  type: "aiOpenAI";
   model: string;
   prompt: string;
   systemPrompt?: string;
@@ -88,6 +86,36 @@ export interface StepAIGenerateText extends StepBase {
   baseUrl?: string;
   credentialId?: string;
   apiKey?: string;
+  timeoutMs?: number;
+  storeKey?: string;
+}
+
+/** Anthropic (Claude models) */
+export interface StepAIAnthropic extends StepBase {
+  type: "aiAnthropic";
+  model: string;
+  prompt: string;
+  systemPrompt?: string;
+  temperature?: number;
+  maxTokens?: number;
+  topP?: number;
+  baseUrl?: string;
+  credentialId?: string;
+  apiKey?: string;
+  timeoutMs?: number;
+  storeKey?: string;
+}
+
+/** Ollama (local models) */
+export interface StepAIOllama extends StepBase {
+  type: "aiOllama";
+  model: string;
+  prompt: string;
+  systemPrompt?: string;
+  temperature?: number;
+  maxTokens?: number;
+  topP?: number;
+  baseUrl?: string;
   timeoutMs?: number;
   storeKey?: string;
 }
@@ -316,7 +344,9 @@ export type AutomationStep =
   | StepScreenshot
   | StepExtract
   | StepApiCall
-  | StepAIGenerateText
+  | StepAIOpenAI
+  | StepAIAnthropic
+  | StepAIOllama
   | StepScroll
   | StepSelectOption
   | StepFileUpload
@@ -432,10 +462,22 @@ export const integrationSteps: StepTypeOption[] = [
 
 export const aiSteps: StepTypeOption[] = [
   {
-    value: "aiGenerateText",
-    label: "AI: Generate Text",
+    value: "aiOpenAI",
+    label: "AI: OpenAI",
     icon: Sparkles,
-    description: "Send prompt to an LLM and store the reply",
+    description: "Send prompt to OpenAI (GPT-4, etc.)",
+  },
+  {
+    value: "aiAnthropic",
+    label: "AI: Anthropic",
+    icon: Sparkles,
+    description: "Send prompt to Anthropic (Claude)",
+  },
+  {
+    value: "aiOllama",
+    label: "AI: Ollama",
+    icon: Sparkles,
+    description: "Send prompt to local Ollama model",
   },
 ];
 

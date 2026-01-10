@@ -8,7 +8,9 @@ import type { ReactFlowNode } from "@app-types";
 import { Input } from "@components/ui/input";
 import { Label } from "@components/ui/label";
 import {
-  AiGenerateTextStep,
+  AiAnthropicStep,
+  AiOllamaStep,
+  AiOpenAIStep,
   ApiCallStep,
   ClickStep,
   DiscordDeleteMessageStep,
@@ -94,8 +96,12 @@ export default function StepEditor({
         );
       case "apiCall":
         return <ApiCallStep step={step} id={id} onUpdate={onUpdate} />;
-      case "aiGenerateText":
-        return <AiGenerateTextStep step={step} id={id} onUpdate={onUpdate} />;
+      case "aiOpenAI":
+        return <AiOpenAIStep step={step} id={id} onUpdate={onUpdate} />;
+      case "aiAnthropic":
+        return <AiAnthropicStep step={step} id={id} onUpdate={onUpdate} />;
+      case "aiOllama":
+        return <AiOllamaStep step={step} id={id} onUpdate={onUpdate} />;
       case "discordSendMessage":
         return <DiscordSendMessageStep step={step} id={id} onUpdate={onUpdate} />;
       case "discordSendWebhook":

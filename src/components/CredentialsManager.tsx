@@ -110,6 +110,10 @@ export function CredentialsManager() {
           { key: "clientId", label: "Client ID (optional)", type: "text" },
           { key: "clientSecret", label: "Client Secret (optional)", type: "password" },
         ];
+      case "openai":
+        return [{ key: "apiKey", label: "OpenAI API Key", type: "password" }];
+      case "anthropic":
+        return [{ key: "apiKey", label: "Anthropic API Key", type: "password" }];
       case "oauth":
         return [
           { key: "clientId", label: "Client ID", type: "text" },
@@ -164,8 +168,10 @@ export function CredentialsManager() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="twitter">Twitter/X</SelectItem>
-                <SelectItem value="oauth">OAuth 2.0</SelectItem>
                 <SelectItem value="discord">Discord</SelectItem>
+                <SelectItem value="openai">OpenAI</SelectItem>
+                <SelectItem value="anthropic">Anthropic</SelectItem>
+                <SelectItem value="oauth">OAuth 2.0</SelectItem>
                 <SelectItem value="apiKey">API Key</SelectItem>
                 <SelectItem value="basic">Basic Auth</SelectItem>
                 <SelectItem value="custom">Custom</SelectItem>
