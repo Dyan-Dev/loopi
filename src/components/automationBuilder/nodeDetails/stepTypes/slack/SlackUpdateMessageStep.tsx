@@ -48,7 +48,7 @@ export function SlackUpdateMessageStep({ step, id, onUpdate }: StepProps) {
           onChange={(e) =>
             onUpdate(id, "update", { step: { ...step, blocksJson: e.target.value } })
           }
-          className="text-xs font-mono text-xs"
+          className="text-xs font-mono"
           rows={3}
         />
       </div>
