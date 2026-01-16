@@ -6,6 +6,7 @@ import {
   BrowserStepHandler,
   ConditionalEvaluator,
   DiscordStepHandler,
+  SlackStepHandler,
   TwitterStepHandler,
   VariableManager,
   VariableOperationHandler,
@@ -24,6 +25,7 @@ export class AutomationExecutor {
   private aiHandler: AiStepHandler;
   private twitterHandler: TwitterStepHandler;
   private discordHandler: DiscordStepHandler;
+  private slackHandler: SlackStepHandler;
   private variableOperationHandler: VariableOperationHandler;
   private conditionalEvaluator: ConditionalEvaluator;
 
@@ -34,6 +36,7 @@ export class AutomationExecutor {
     this.aiHandler = new AiStepHandler();
     this.twitterHandler = new TwitterStepHandler();
     this.discordHandler = new DiscordStepHandler();
+    this.slackHandler = new SlackStepHandler();
     this.variableOperationHandler = new VariableOperationHandler();
     this.conditionalEvaluator = new ConditionalEvaluator();
   }
@@ -376,6 +379,151 @@ export class AutomationExecutor {
             step,
             this.substituteVariables.bind(this),
             this.resolveTwitterCredentials.bind(this),
+            variables
+          );
+          break;
+
+        // Slack steps
+        case "slackSendMessage":
+          result = await this.slackHandler.executeSendMessage(
+            step,
+            this.substituteVariables.bind(this),
+            SlackStepHandler.resolveSlackCredentials,
+            variables
+          );
+          break;
+
+        case "slackUpdateMessage":
+          result = await this.slackHandler.executeUpdateMessage(
+            step,
+            this.substituteVariables.bind(this),
+            SlackStepHandler.resolveSlackCredentials,
+            variables
+          );
+          break;
+
+        case "slackDeleteMessage":
+          result = await this.slackHandler.executeDeleteMessage(
+            step,
+            this.substituteVariables.bind(this),
+            SlackStepHandler.resolveSlackCredentials,
+            variables
+          );
+          break;
+
+        case "slackCreateChannel":
+          result = await this.slackHandler.executeCreateChannel(
+            step,
+            this.substituteVariables.bind(this),
+            SlackStepHandler.resolveSlackCredentials,
+            variables
+          );
+          break;
+
+        case "slackGetChannel":
+          result = await this.slackHandler.executeGetChannel(
+            step,
+            this.substituteVariables.bind(this),
+            SlackStepHandler.resolveSlackCredentials,
+            variables
+          );
+          break;
+
+        case "slackListChannels":
+          result = await this.slackHandler.executeListChannels(
+            step,
+            this.substituteVariables.bind(this),
+            SlackStepHandler.resolveSlackCredentials,
+            variables
+          );
+          break;
+
+        case "slackInviteUsers":
+          result = await this.slackHandler.executeInviteUsers(
+            step,
+            this.substituteVariables.bind(this),
+            SlackStepHandler.resolveSlackCredentials,
+            variables
+          );
+          break;
+
+        case "slackListMembers":
+          result = await this.slackHandler.executeListMembers(
+            step,
+            this.substituteVariables.bind(this),
+            SlackStepHandler.resolveSlackCredentials,
+            variables
+          );
+          break;
+
+        case "slackAddReaction":
+          result = await this.slackHandler.executeAddReaction(
+            step,
+            this.substituteVariables.bind(this),
+            SlackStepHandler.resolveSlackCredentials,
+            variables
+          );
+          break;
+
+        case "slackGetUser":
+          result = await this.slackHandler.executeGetUser(
+            step,
+            this.substituteVariables.bind(this),
+            SlackStepHandler.resolveSlackCredentials,
+            variables
+          );
+          break;
+
+        case "slackListUsers":
+          result = await this.slackHandler.executeListUsers(
+            step,
+            this.substituteVariables.bind(this),
+            SlackStepHandler.resolveSlackCredentials,
+            variables
+          );
+          break;
+
+        case "slackUploadFile":
+          result = await this.slackHandler.executeUploadFile(
+            step,
+            this.substituteVariables.bind(this),
+            SlackStepHandler.resolveSlackCredentials,
+            variables
+          );
+          break;
+
+        case "slackGetHistory":
+          result = await this.slackHandler.executeGetHistory(
+            step,
+            this.substituteVariables.bind(this),
+            SlackStepHandler.resolveSlackCredentials,
+            variables
+          );
+          break;
+
+        case "slackSetTopic":
+          result = await this.slackHandler.executeSetTopic(
+            step,
+            this.substituteVariables.bind(this),
+            SlackStepHandler.resolveSlackCredentials,
+            variables
+          );
+          break;
+
+        case "slackArchiveChannel":
+          result = await this.slackHandler.executeArchiveChannel(
+            step,
+            this.substituteVariables.bind(this),
+            SlackStepHandler.resolveSlackCredentials,
+            variables
+          );
+          break;
+
+        case "slackUnarchiveChannel":
+          result = await this.slackHandler.executeUnarchiveChannel(
+            step,
+            this.substituteVariables.bind(this),
+            SlackStepHandler.resolveSlackCredentials,
             variables
           );
           break;

@@ -110,6 +110,11 @@ export function CredentialsManager() {
           { key: "clientId", label: "Client ID (optional)", type: "text" },
           { key: "clientSecret", label: "Client Secret (optional)", type: "password" },
         ];
+      case "slack":
+        return [
+          { key: "apiToken", label: "API Token (Bot or User)", type: "password" },
+          { key: "botToken", label: "Bot Token (optional)", type: "password" },
+        ];
       case "openai":
         return [{ key: "apiKey", label: "OpenAI API Key", type: "password" }];
       case "anthropic":
@@ -169,6 +174,7 @@ export function CredentialsManager() {
               <SelectContent>
                 <SelectItem value="twitter">Twitter/X</SelectItem>
                 <SelectItem value="discord">Discord</SelectItem>
+                <SelectItem value="slack">Slack</SelectItem>
                 <SelectItem value="openai">OpenAI</SelectItem>
                 <SelectItem value="anthropic">Anthropic</SelectItem>
                 <SelectItem value="oauth">OAuth 2.0</SelectItem>

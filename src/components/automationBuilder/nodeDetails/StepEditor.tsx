@@ -1,9 +1,3 @@
-/**
- * StepEditor - Dynamic editor for automation step configuration
- *
- * Routes to appropriate step-specific editor based on step type.
- * Each step type has its own component with custom fields and validation.
- */
 import type { ReactFlowNode } from "@app-types";
 import { Input } from "@components/ui/input";
 import { Label } from "@components/ui/label";
@@ -26,6 +20,22 @@ import {
   ScrollStep,
   SelectOptionStep,
   SetVariableStep,
+  SlackAddReactionStep,
+  SlackArchiveChannelStep,
+  SlackCreateChannelStep,
+  SlackDeleteMessageStep,
+  SlackGetChannelStep,
+  SlackGetHistoryStep,
+  SlackGetUserStep,
+  SlackInviteUsersStep,
+  SlackListChannelsStep,
+  SlackListMembersStep,
+  SlackListUsersStep,
+  SlackSendMessageStep,
+  SlackSetTopicStep,
+  SlackUnarchiveChannelStep,
+  SlackUpdateMessageStep,
+  SlackUploadFileStep,
   TwitterCreateTweetStep,
   TwitterDeleteTweetStep,
   TwitterLikeTweetStep,
@@ -132,6 +142,38 @@ export default function StepEditor({
         return <TwitterSendDMStep step={step} id={id} onUpdate={onUpdate} />;
       case "twitterSearchUser":
         return <TwitterSearchUserStep step={step} id={id} onUpdate={onUpdate} />;
+      case "slackSendMessage":
+        return <SlackSendMessageStep step={step} id={id} onUpdate={onUpdate} />;
+      case "slackUpdateMessage":
+        return <SlackUpdateMessageStep step={step} id={id} onUpdate={onUpdate} />;
+      case "slackDeleteMessage":
+        return <SlackDeleteMessageStep step={step} id={id} onUpdate={onUpdate} />;
+      case "slackCreateChannel":
+        return <SlackCreateChannelStep step={step} id={id} onUpdate={onUpdate} />;
+      case "slackGetChannel":
+        return <SlackGetChannelStep step={step} id={id} onUpdate={onUpdate} />;
+      case "slackListChannels":
+        return <SlackListChannelsStep step={step} id={id} onUpdate={onUpdate} />;
+      case "slackInviteUsers":
+        return <SlackInviteUsersStep step={step} id={id} onUpdate={onUpdate} />;
+      case "slackListMembers":
+        return <SlackListMembersStep step={step} id={id} onUpdate={onUpdate} />;
+      case "slackSetTopic":
+        return <SlackSetTopicStep step={step} id={id} onUpdate={onUpdate} />;
+      case "slackArchiveChannel":
+        return <SlackArchiveChannelStep step={step} id={id} onUpdate={onUpdate} />;
+      case "slackUnarchiveChannel":
+        return <SlackUnarchiveChannelStep step={step} id={id} onUpdate={onUpdate} />;
+      case "slackGetHistory":
+        return <SlackGetHistoryStep step={step} id={id} onUpdate={onUpdate} />;
+      case "slackGetUser":
+        return <SlackGetUserStep step={step} id={id} onUpdate={onUpdate} />;
+      case "slackListUsers":
+        return <SlackListUsersStep step={step} id={id} onUpdate={onUpdate} />;
+      case "slackAddReaction":
+        return <SlackAddReactionStep step={step} id={id} onUpdate={onUpdate} />;
+      case "slackUploadFile":
+        return <SlackUploadFileStep step={step} id={id} onUpdate={onUpdate} />;
       default:
         return null;
     }

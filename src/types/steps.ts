@@ -15,6 +15,24 @@ import {
   Variable,
   Zap,
 } from "lucide-react";
+import type {
+  SlackAddReactionStep,
+  SlackArchiveChannelStep,
+  SlackCreateChannelStep,
+  SlackDeleteMessageStep,
+  SlackGetChannelStep,
+  SlackGetHistoryStep,
+  SlackGetUserStep,
+  SlackInviteUsersStep,
+  SlackListChannelsStep,
+  SlackListMembersStep,
+  SlackListUsersStep,
+  SlackSendMessageStep,
+  SlackSetTopicStep,
+  SlackUnarchiveChannelStep,
+  SlackUpdateMessageStep,
+  SlackUploadFileStep,
+} from "./slack";
 
 /**
  * Automation Step Type System
@@ -367,7 +385,23 @@ export type AutomationStep =
   | StepDiscordReactMessage
   | StepDiscordGetMessage
   | StepDiscordListMessages
-  | StepDiscordDeleteMessage;
+  | StepDiscordDeleteMessage
+  | SlackSendMessageStep
+  | SlackUpdateMessageStep
+  | SlackDeleteMessageStep
+  | SlackCreateChannelStep
+  | SlackGetChannelStep
+  | SlackListChannelsStep
+  | SlackInviteUsersStep
+  | SlackListMembersStep
+  | SlackSetTopicStep
+  | SlackArchiveChannelStep
+  | SlackUnarchiveChannelStep
+  | SlackGetHistoryStep
+  | SlackGetUserStep
+  | SlackListUsersStep
+  | SlackAddReactionStep
+  | SlackUploadFileStep;
 
 // UI meta for step type picker - organized by category
 export interface StepTypeOption {
@@ -565,6 +599,105 @@ export const twitterSteps: StepTypeOption[] = [
   },
 ];
 
+export const slackSteps: StepTypeOption[] = [
+  {
+    value: "slackSendMessage",
+    label: "Send Message",
+    icon: Send,
+    description: "Send a message to a Slack channel",
+  },
+  {
+    value: "slackUpdateMessage",
+    label: "Update Message",
+    icon: MessageCircle,
+    description: "Update an existing Slack message",
+  },
+  {
+    value: "slackDeleteMessage",
+    label: "Delete Message",
+    icon: MessageCircle,
+    description: "Delete a message from Slack",
+  },
+  {
+    value: "slackCreateChannel",
+    label: "Create Channel",
+    icon: Hash,
+    description: "Create a new Slack channel",
+  },
+  {
+    value: "slackGetChannel",
+    label: "Get Channel",
+    icon: Hash,
+    description: "Get information about a Slack channel",
+  },
+  {
+    value: "slackListChannels",
+    label: "List Channels",
+    icon: Hash,
+    description: "List all Slack channels",
+  },
+  {
+    value: "slackInviteUsers",
+    label: "Invite Users",
+    icon: Variable,
+    description: "Invite users to a Slack channel",
+  },
+  {
+    value: "slackListMembers",
+    label: "List Members",
+    icon: Variable,
+    description: "List members of a Slack channel",
+  },
+  {
+    value: "slackSetTopic",
+    label: "Set Topic",
+    icon: MessageCircle,
+    description: "Set the topic of a Slack channel",
+  },
+  {
+    value: "slackArchiveChannel",
+    label: "Archive Channel",
+    icon: Hash,
+    description: "Archive a Slack channel",
+  },
+  {
+    value: "slackUnarchiveChannel",
+    label: "Unarchive Channel",
+    icon: Hash,
+    description: "Unarchive a Slack channel",
+  },
+  {
+    value: "slackGetHistory",
+    label: "Get History",
+    icon: Clock,
+    description: "Get message history from a Slack channel",
+  },
+  {
+    value: "slackGetUser",
+    label: "Get User",
+    icon: Variable,
+    description: "Get information about a Slack user",
+  },
+  {
+    value: "slackListUsers",
+    label: "List Users",
+    icon: Variable,
+    description: "List all Slack workspace users",
+  },
+  {
+    value: "slackAddReaction",
+    label: "Add Reaction",
+    icon: Smile,
+    description: "Add an emoji reaction to a message",
+  },
+  {
+    value: "slackUploadFile",
+    label: "Upload File",
+    icon: Code,
+    description: "Upload a file to a Slack channel",
+  },
+];
+
 export const stepCategories: StepCategory[] = [
   {
     category: "Browser",
@@ -601,6 +734,11 @@ export const stepCategories: StepCategory[] = [
     icon: Twitter,
     steps: twitterSteps,
   },
+  {
+    category: "Slack",
+    icon: MessageCircle,
+    steps: slackSteps,
+  },
 ];
 
 export const stepTypes = [
@@ -611,4 +749,5 @@ export const stepTypes = [
   ...integrationSteps,
   ...discordSteps,
   ...twitterSteps,
+  ...slackSteps,
 ] as const;

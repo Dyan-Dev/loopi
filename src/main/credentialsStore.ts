@@ -6,7 +6,16 @@ import path from "path";
 export interface Credential {
   id: string;
   name: string;
-  type: "twitter" | "discord" | "oauth" | "apiKey" | "basic" | "openai" | "anthropic" | "custom";
+  type:
+    | "twitter"
+    | "discord"
+    | "slack"
+    | "oauth"
+    | "apiKey"
+    | "basic"
+    | "openai"
+    | "anthropic"
+    | "custom";
   createdAt: string;
   updatedAt: string;
   data: Record<string, string>;

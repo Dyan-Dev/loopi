@@ -336,6 +336,144 @@ export function createNode({
         accessSecret: "",
       };
       break;
+    case "slackSendMessage":
+      step = {
+        id: newId,
+        type: "slackSendMessage",
+        description: `${label} step`,
+        channelId: "",
+        text: "",
+        mrkdwn: false,
+      } as AutomationStep;
+      break;
+    case "slackUpdateMessage":
+      step = {
+        id: newId,
+        type: "slackUpdateMessage",
+        description: `${label} step`,
+        channelId: "",
+        timestamp: "",
+        text: "",
+      } as AutomationStep;
+      break;
+    case "slackDeleteMessage":
+      step = {
+        id: newId,
+        type: "slackDeleteMessage",
+        description: `${label} step`,
+        channelId: "",
+        timestamp: "",
+      } as AutomationStep;
+      break;
+    case "slackCreateChannel":
+      step = {
+        id: newId,
+        type: "slackCreateChannel",
+        description: `${label} step`,
+        channelName: "",
+        isPrivate: false,
+      } as AutomationStep;
+      break;
+    case "slackGetChannel":
+      step = {
+        id: newId,
+        type: "slackGetChannel",
+        description: `${label} step`,
+        channelId: "",
+      } as AutomationStep;
+      break;
+    case "slackListChannels":
+      step = {
+        id: newId,
+        type: "slackListChannels",
+        description: `${label} step`,
+        excludeArchived: true,
+      } as AutomationStep;
+      break;
+    case "slackInviteUsers":
+      step = {
+        id: newId,
+        type: "slackInviteUsers",
+        description: `${label} step`,
+        channelId: "",
+        userIds: [],
+      } as AutomationStep;
+      break;
+    case "slackListMembers":
+      step = {
+        id: newId,
+        type: "slackListMembers",
+        description: `${label} step`,
+        channelId: "",
+      } as AutomationStep;
+      break;
+    case "slackSetTopic":
+      step = {
+        id: newId,
+        type: "slackSetTopic",
+        description: `${label} step`,
+        channelId: "",
+        topic: "",
+      } as AutomationStep;
+      break;
+    case "slackArchiveChannel":
+      step = {
+        id: newId,
+        type: "slackArchiveChannel",
+        description: `${label} step`,
+        channelId: "",
+      } as AutomationStep;
+      break;
+    case "slackUnarchiveChannel":
+      step = {
+        id: newId,
+        type: "slackUnarchiveChannel",
+        description: `${label} step`,
+        channelId: "",
+      } as AutomationStep;
+      break;
+    case "slackGetHistory":
+      step = {
+        id: newId,
+        type: "slackGetHistory",
+        description: `${label} step`,
+        channelId: "",
+      } as AutomationStep;
+      break;
+    case "slackGetUser":
+      step = {
+        id: newId,
+        type: "slackGetUser",
+        description: `${label} step`,
+        userId: "",
+      } as AutomationStep;
+      break;
+    case "slackListUsers":
+      step = {
+        id: newId,
+        type: "slackListUsers",
+        description: `${label} step`,
+      } as AutomationStep;
+      break;
+    case "slackAddReaction":
+      step = {
+        id: newId,
+        type: "slackAddReaction",
+        description: `${label} step`,
+        channelId: "",
+        timestamp: "",
+        reactionEmoji: "",
+      } as AutomationStep;
+      break;
+    case "slackUploadFile":
+      step = {
+        id: newId,
+        type: "slackUploadFile",
+        description: `${label} step`,
+        channelId: "",
+        filePath: "",
+      } as AutomationStep;
+      break;
     default:
       step = { id: newId, type: "click", description: `${label} step`, selector: "body" };
   }
