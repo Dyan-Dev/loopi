@@ -21,6 +21,7 @@ import {
   Pause,
   Play,
   Save,
+  Search,
   Settings,
   Square,
 } from "lucide-react";
@@ -45,6 +46,7 @@ interface BuilderHeaderProps {
   currentAutomation?: StoredAutomation;
   isDebugEnabled: boolean;
   setIsDebugEnabled: (v: boolean) => void;
+  onSearchOpen?: () => void;
 }
 
 /**
@@ -76,6 +78,7 @@ export const BuilderHeader: React.FC<BuilderHeaderProps> = ({
   currentAutomation,
   isDebugEnabled,
   setIsDebugEnabled,
+  onSearchOpen,
 }) => {
   const [headlessMode, setHeadlessMode] = useState(false);
 
@@ -98,6 +101,15 @@ export const BuilderHeader: React.FC<BuilderHeaderProps> = ({
           </div>
         </div>
         <div className="flex items-center gap-2">
+          {nodesLength > 0 && onSearchOpen && (
+            <Button variant="outline" onClick={onSearchOpen} title="Search nodes (Ctrl+K)">
+              <Search className="h-4 w-4 mr-2" />
+              Search
+              <kbd className="ml-2 pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
+                <span className="text-xs">Ctrl</span>K
+              </kbd>
+            </Button>
+          )}
           <Button
             variant={isDebugEnabled ? "default" : "outline"}
             onClick={() => setIsDebugEnabled(!isDebugEnabled)}

@@ -50,6 +50,10 @@ export function AutomationBuilder({ automation, onSave, onCancel }: AutomationBu
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   // State for tracking selected edges for deletion
   const [selectedEdgeIds, setSelectedEdgeIds] = useState<string[]>([]);
+  // State for node search dialog
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  // State for highlighted node (from search)
+  const [highlightedNodeId, setHighlightedNodeId] = useState<string | null>(null);
   const { onConnect, handleNodeAction } = useNodeActions({
     nodes,
     edges,
@@ -91,7 +95,7 @@ export function AutomationBuilder({ automation, onSave, onCancel }: AutomationBu
     });
   }, [isDebugEnabled]);
 
-  // Keyboard shortcut: Delete/Backspace removes selected edges
+  // Keyboard shortcuts
   useEffect(() => {
     const keyHandler = (e: KeyboardEvent) => {
       // Delete selected edges
@@ -104,10 +108,23 @@ export function AutomationBuilder({ automation, onSave, onCancel }: AutomationBu
         e.preventDefault();
         setIsDebugEnabled(!isDebugEnabled);
       }
+      // Open node search with Ctrl+K
+      if (e.ctrlKey && e.key === "k") {
+        e.preventDefault();
+        setIsSearchOpen(true);
+      }
     };
     window.addEventListener("keydown", keyHandler);
     return () => window.removeEventListener("keydown", keyHandler);
   }, [selectedEdgeIds, handleDeleteSelectedEdges, isDebugEnabled]);
+
+  // Clear highlighted node after 2 seconds
+  useEffect(() => {
+    if (highlightedNodeId) {
+      const timeout = setTimeout(() => setHighlightedNodeId(null), 2000);
+      return () => clearTimeout(timeout);
+    }
+  }, [highlightedNodeId]);
 
   useEffect(() => {
     if (automation) {
@@ -205,6 +222,7 @@ export function AutomationBuilder({ automation, onSave, onCancel }: AutomationBu
         currentAutomation={currentAutomationForExport}
         isDebugEnabled={isDebugEnabled}
         setIsDebugEnabled={setIsDebugEnabled}
+        onSearchOpen={() => setIsSearchOpen(true)}
       />
 
       <BuilderCanvas
@@ -221,6 +239,11 @@ export function AutomationBuilder({ automation, onSave, onCancel }: AutomationBu
         selectedEdgeIds={selectedEdgeIds}
         onDeleteSelectedEdges={handleDeleteSelectedEdges}
         isDebugEnabled={isDebugEnabled}
+        isSearchOpen={isSearchOpen}
+        setIsSearchOpen={setIsSearchOpen}
+        highlightedNodeId={highlightedNodeId}
+        setHighlightedNodeId={setHighlightedNodeId}
+        setSelectedNodeId={setSelectedNodeId}
         setBrowserOpen={(arg?: boolean | string) => {
           if (typeof arg === "string") {
             openBrowser(arg);
