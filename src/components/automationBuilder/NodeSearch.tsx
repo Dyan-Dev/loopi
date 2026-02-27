@@ -1,12 +1,13 @@
 import type { ReactFlowNode } from "@app-types";
 import {
-  CommandDialog,
+  Command,
   CommandEmpty,
   CommandGroup,
   CommandInput,
   CommandItem,
   CommandList,
 } from "@components/ui/command";
+import { Dialog, DialogContent } from "@components/ui/dialog";
 import { SearchIcon } from "lucide-react";
 import React, { useCallback, useEffect, useState } from "react";
 import { useReactFlow } from "reactflow";
@@ -150,39 +151,41 @@ export const NodeSearch: React.FC<NodeSearchProps> = ({
   }, [nodes, search]);
 
   return (
-    <CommandDialog
-      open={open}
-      onOpenChange={onOpenChange}
-      title="Search Nodes"
-      description="Find and navigate to automation nodes"
-    >
-      <CommandInput
-        placeholder="Search nodes by type, selector, or value..."
-        value={search}
-        onValueChange={setSearch}
-      />
-      <CommandList>
-        <CommandEmpty>No nodes found.</CommandEmpty>
-        <CommandGroup heading="Nodes">
-          {filteredNodes.map((node) => (
-            <CommandItem
-              key={node.id}
-              value={node.id}
-              onSelect={() => handleSelect(node.id)}
-              className="cursor-pointer"
-            >
-              <SearchIcon className="mr-2 h-4 w-4" />
-              <div className="flex flex-col flex-1 min-w-0">
-                <span className="font-medium truncate">{getNodeDisplayName(node)}</span>
-                <span className="text-xs text-muted-foreground truncate">
-                  {node.data.step?.type || "unknown"} • ID: {node.id}
-                </span>
-              </div>
-            </CommandItem>
-          ))}
-        </CommandGroup>
-      </CommandList>
-    </CommandDialog>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="overflow-hidden p-0">
+        <Command
+          shouldFilter={false}
+          className="[&_[cmdk-group-heading]]:text-muted-foreground [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group]]:px-2 [&_[cmdk-group]:not([hidden])_~[cmdk-group]]:pt-0 [&_[cmdk-input-wrapper]_svg]:h-5 [&_[cmdk-input-wrapper]_svg]:w-5 [&_[cmdk-input]]:h-12 [&_[cmdk-item]]:px-2 [&_[cmdk-item]]:py-3 [&_[cmdk-item]_svg]:h-5 [&_[cmdk-item]_svg]:w-5"
+        >
+          <CommandInput
+            placeholder="Search nodes by type, selector, or value..."
+            value={search}
+            onValueChange={setSearch}
+          />
+          <CommandList>
+            <CommandEmpty>No nodes found.</CommandEmpty>
+            <CommandGroup heading="Nodes">
+              {filteredNodes.map((node) => (
+                <CommandItem
+                  key={node.id}
+                  value={getNodeDisplayName(node)}
+                  onSelect={() => handleSelect(node.id)}
+                  className="cursor-pointer"
+                >
+                  <SearchIcon className="mr-2 h-4 w-4" />
+                  <div className="flex flex-col flex-1 min-w-0">
+                    <span className="font-medium truncate">{getNodeDisplayName(node)}</span>
+                    <span className="text-xs text-muted-foreground truncate">
+                      {node.data.step?.type || "unknown"} • ID: {node.id}
+                    </span>
+                  </div>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </DialogContent>
+    </Dialog>
   );
 };
 
