@@ -104,6 +104,7 @@ async function executeBrowserGraph({
     visited: Set<string>,
     iterations: { count: number }
   ): Promise<void> => {
+    if (visited.has(nodeId)) return;
     if (iterations.count++ > 10000) throw new Error("Maximum iteration limit reached");
     visited.add(nodeId);
     const node = nodes.find((n: Node) => n.id === nodeId);
