@@ -49,7 +49,7 @@ export class VariableOperationHandler {
       debugLogger.debug("Modify Variable", `Variable '${name}' modified (set)`, { value });
       result = value;
     } else if (op === "increment") {
-      const num = typeof current === "number" ? current : parseFloat(String(current) || "0");
+      const num = typeof current === "number" ? current : parseFloat(String(current ?? 0));
       const by = parseFloat(raw || "1");
       const res = num + by;
       variables[name] = res;
@@ -60,7 +60,7 @@ export class VariableOperationHandler {
       });
       result = res;
     } else if (op === "decrement") {
-      const num = typeof current === "number" ? current : parseFloat(String(current) || "0");
+      const num = typeof current === "number" ? current : parseFloat(String(current ?? 0));
       const by = parseFloat(raw || "1");
       const res = num - by;
       variables[name] = res;

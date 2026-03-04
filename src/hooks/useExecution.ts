@@ -1,11 +1,20 @@
-import type { ConditionalResult, ReactFlowEdge, ReactFlowNode } from "@app-types";
+import type { ReactFlowEdge, ReactFlowNode } from "@app-types";
 import type { Dispatch, SetStateAction } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
+
+export interface ExecutionResult {
+  success: boolean;
+  error?: string;
+  cancelled?: boolean;
+  variables?: Record<string, unknown>;
+}
 
 interface UseExecutionArgs {
   nodes: ReactFlowNode[];
   edges: ReactFlowEdge[];
   setNodes: Dispatch<SetStateAction<ReactFlowNode[]>>;
+  automationId?: string;
+  automationName?: string;
 }
 
 /**
@@ -16,16 +25,13 @@ interface UseExecutionArgs {
  * - Automation execution state (running/paused/stopped)
  * - Graph-based flow execution with conditional branching
  * - Node-by-node step execution with visual feedback
- *
- * @param nodes - ReactFlow nodes representing automation steps
- * @param edges - ReactFlow edges defining execution order
- * @param setNodes - Function to update node state (for visual feedback)
+ * - Proper cancellation via IPC signal to backend
  */
-export default function useExecution({ nodes, edges, setNodes }: UseExecutionArgs) {
+export default function useExecution({ nodes, edges, setNodes, automationId, automationName }: UseExecutionArgs) {
   const [isBrowserOpen, setIsBrowserOpen] = useState(false);
   const [isAutomationRunning, setIsAutomationRunning] = useState(false);
   const [currentNodeId, setCurrentNodeId] = useState<string | null>(null);
-  const stopGraphExecutionRef = useRef(false);
+  const [lastResult, setLastResult] = useState<ExecutionResult | null>(null);
 
   useEffect(() => {
     const handleBrowserClosed = () => {
@@ -62,7 +68,6 @@ export default function useExecution({ nodes, edges, setNodes }: UseExecutionArg
       );
     };
 
-    // register callbacks if available
     window.electronAPI?.onBrowserClosed(handleBrowserClosed);
     window.electronAPI?.onNodeStatus(handleNodeStatus);
 
@@ -96,14 +101,15 @@ export default function useExecution({ nodes, edges, setNodes }: UseExecutionArg
   }, []);
 
   const runAutomation = useCallback(
-    async (headless: boolean = false) => {
+    async (headless: boolean = false): Promise<ExecutionResult | null> => {
       if (nodes.length === 0) {
-        alert("No nodes to execute");
-        return;
+        const result: ExecutionResult = { success: false, error: "No nodes to execute" };
+        setLastResult(result);
+        return result;
       }
 
       setIsAutomationRunning(true);
-      stopGraphExecutionRef.current = false;
+      setLastResult(null);
 
       // Reset all node statuses before execution
       setNodes((nds) =>
@@ -118,14 +124,12 @@ export default function useExecution({ nodes, edges, setNodes }: UseExecutionArg
       );
 
       try {
-        // Serialize nodes and edges to remove non-cloneable properties (like functions)
         const serializedNodes = nodes.map((node) => ({
           id: node.id,
           type: node.type,
           position: node.position,
           data: {
             step: node.data.step,
-            // Variable fields
             variableName: node.data.variableName,
             value: node.data.value,
             operation: node.data.operation,
@@ -141,20 +145,30 @@ export default function useExecution({ nodes, edges, setNodes }: UseExecutionArg
           data: edge.data,
         }));
 
-        const result = await window.electronAPI?.executeAutomation({
+        const apiResult = await window.electronAPI?.executeAutomation({
           nodes: serializedNodes,
           edges: serializedEdges,
           headless,
-        });
+          automationId,
+          automationName,
+        } as Parameters<NonNullable<typeof window.electronAPI>["executeAutomation"]>[0]);
 
-        if (result?.success) {
-          alert("Automation completed successfully!");
-        } else {
-          alert(`Automation failed: ${result?.error || "Unknown error"}`);
-        }
+        const result: ExecutionResult = {
+          success: apiResult?.success ?? false,
+          error: apiResult?.error,
+          cancelled: apiResult?.cancelled,
+          variables: apiResult?.variables,
+        };
+
+        setLastResult(result);
+        return result;
       } catch (error) {
-        console.error("Automation failed:", error);
-        alert("Automation failed. Check console for details.");
+        const result: ExecutionResult = {
+          success: false,
+          error: error instanceof Error ? error.message : "Execution failed",
+        };
+        setLastResult(result);
+        return result;
       } finally {
         setIsAutomationRunning(false);
         setCurrentNodeId(null);
@@ -163,12 +177,12 @@ export default function useExecution({ nodes, edges, setNodes }: UseExecutionArg
     [nodes, edges]
   );
 
-  const pauseAutomation = useCallback(() => {
-    setIsAutomationRunning(false);
-  }, []);
-
-  const stopAutomation = useCallback(() => {
-    stopGraphExecutionRef.current = true;
+  const stopAutomation = useCallback(async () => {
+    try {
+      await window.electronAPI?.cancelAutomation();
+    } catch (err) {
+      console.error("Failed to cancel automation", err);
+    }
     setIsAutomationRunning(false);
     setCurrentNodeId(null);
   }, []);
@@ -177,10 +191,10 @@ export default function useExecution({ nodes, edges, setNodes }: UseExecutionArg
     isBrowserOpen,
     isAutomationRunning,
     currentNodeId,
+    lastResult,
     openBrowser,
     closeBrowser,
     runAutomation,
-    pauseAutomation,
     stopAutomation,
   };
 }

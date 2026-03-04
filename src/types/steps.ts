@@ -7,6 +7,7 @@ import {
   Hash,
   MessageCircle,
   Mouse,
+  Repeat,
   Send,
   Smile,
   Sparkles,
@@ -194,6 +195,14 @@ export interface StepBrowserConditional extends StepBase {
   parseAsNumber?: boolean;
 }
 
+// ForEach Loop
+export interface StepForEach extends StepBase {
+  type: "forEach";
+  arrayVariable: string; // variable name holding the array
+  itemVariable: string; // variable name for current item (default: "currentItem")
+  indexVariable: string; // variable name for current index (default: "loopIndex")
+}
+
 // Variable Conditional (variable-based)
 export interface StepVariableConditional extends StepBase {
   type: "variableConditional";
@@ -373,6 +382,7 @@ export type AutomationStep =
   | StepModifyVariable
   | StepBrowserConditional
   | StepVariableConditional
+  | StepForEach
   | StepTwitterCreateTweet
   | StepTwitterDeleteTweet
   | StepTwitterLikeTweet
@@ -482,6 +492,12 @@ export const logicSteps: StepTypeOption[] = [
     label: "Variable Conditional",
     icon: Variable,
     description: "Branch based on variable condition",
+  },
+  {
+    value: "forEach",
+    label: "ForEach Loop",
+    icon: Repeat,
+    description: "Iterate over an array variable",
   },
 ];
 

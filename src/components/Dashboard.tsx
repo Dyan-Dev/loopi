@@ -1,7 +1,10 @@
 import type { StoredAutomation } from "@app-types";
 import { importAutomation } from "@utils/automationIO";
-import { BookOpen, Plus, Upload } from "lucide-react";
+import { BookOpen, History, Plus, Sparkles, Upload } from "lucide-react";
+import { toast } from "sonner";
 import { useState } from "react";
+import { AiGeneratorDialog } from "./dashboard/AiGeneratorDialog";
+import { ExecutionHistory } from "./dashboard/ExecutionHistory";
 import { EXAMPLES, ExamplesComponent } from "./dashboard/ExamplesComponent";
 import { YourAutomations } from "./dashboard/YourAutomations";
 import { Button } from "./ui/button";
@@ -21,6 +24,7 @@ export function Dashboard({
   onUpdateAutomations,
 }: DashboardProps) {
   const [activeTab, setActiveTab] = useState("your-automations");
+  const [aiDialogOpen, setAiDialogOpen] = useState(false);
 
   const handleImportAutomation = async () => {
     try {
@@ -31,7 +35,7 @@ export function Dashboard({
       }
     } catch (error) {
       console.error("Failed to import automation:", error);
-      alert("Failed to import automation. Please check the file format.");
+      toast.error("Failed to import automation. Please check the file format.");
     }
   };
 
@@ -53,7 +57,7 @@ export function Dashboard({
       }
     } catch (error) {
       console.error("Failed to load example:", error);
-      alert(`Failed to load example: ${example.name}`);
+      toast.error(`Failed to load example: ${example.name}`);
     }
   };
 
@@ -67,7 +71,35 @@ export function Dashboard({
       onUpdateAutomations(updatedAutomations);
     } catch (error) {
       console.error("Failed to delete automation:", error);
-      alert("Failed to delete automation. Please try again.");
+      toast.error("Failed to delete automation. Please try again.");
+    }
+  };
+
+  const handleAiWorkflowGenerated = async (data: {
+    nodes: unknown[];
+    edges: unknown[];
+    name: string;
+    description: string;
+  }) => {
+    try {
+      const newAutomation: StoredAutomation = {
+        id: Date.now().toString(),
+        name: data.name || "AI Generated Workflow",
+        description: data.description || "",
+        updatedAt: new Date().toLocaleString(),
+        nodes: data.nodes as StoredAutomation["nodes"],
+        edges: data.edges as StoredAutomation["edges"],
+        steps: [],
+      };
+
+      const id = await window.electronAPI.tree.save(newAutomation);
+      if (id) {
+        onUpdateAutomations([...automations, newAutomation]);
+        onEditAutomation(newAutomation);
+      }
+    } catch (error) {
+      console.error("Failed to save AI-generated workflow:", error);
+      toast.error("Failed to save generated workflow.");
     }
   };
 
@@ -85,12 +117,20 @@ export function Dashboard({
           <Upload className="h-5 w-5 mr-2" />
           Import
         </Button>
+        <Button onClick={() => setAiDialogOpen(true)} variant="outline" size="lg">
+          <Sparkles className="h-5 w-5 mr-2" />
+          AI Generate
+        </Button>
       </div>
 
       {/* Tabs Section */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full max-w-md grid-cols-2">
+        <TabsList className="grid w-full max-w-lg grid-cols-3">
           <TabsTrigger value="your-automations">Your Automations</TabsTrigger>
+          <TabsTrigger value="history" className="flex items-center gap-2">
+            <History className="h-4 w-4" />
+            History
+          </TabsTrigger>
           <TabsTrigger value="examples" className="flex items-center gap-2">
             <BookOpen className="h-4 w-4" />
             Examples
@@ -107,11 +147,23 @@ export function Dashboard({
           />
         </TabsContent>
 
+        {/* History Tab */}
+        <TabsContent value="history" className="space-y-4">
+          <ExecutionHistory />
+        </TabsContent>
+
         {/* Examples Tab */}
         <TabsContent value="examples" className="space-y-4">
           <ExamplesComponent automations={automations} onLoadExample={handleLoadExample} />
         </TabsContent>
       </Tabs>
+
+      {/* AI Generator Dialog */}
+      <AiGeneratorDialog
+        open={aiDialogOpen}
+        onOpenChange={setAiDialogOpen}
+        onWorkflowGenerated={handleAiWorkflowGenerated}
+      />
     </div>
   );
 }

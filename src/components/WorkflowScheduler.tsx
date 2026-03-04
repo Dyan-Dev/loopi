@@ -7,6 +7,7 @@
 import type { ScheduleType, StoredAutomation } from "@app-types/automation";
 import type { WorkflowSchedule } from "@app-types/globals";
 import { Calendar, Clock, PauseCircle, PlayCircle, Plus, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 import React, { useEffect, useState } from "react";
 import { ScheduleConfig } from "./automationBuilder/ScheduleConfig";
 import { Badge } from "./ui/badge";
@@ -80,7 +81,7 @@ export const WorkflowScheduler: React.FC<WorkflowSchedulerProps> = ({ automation
       setNewHeadless(true);
     } catch (error) {
       console.error("Failed to save schedule:", error);
-      alert("Failed to save schedule");
+      toast.error("Failed to save schedule");
     }
   };
 
@@ -90,7 +91,7 @@ export const WorkflowScheduler: React.FC<WorkflowSchedulerProps> = ({ automation
       setSchedules(schedules.filter((s) => s.id !== scheduleId));
     } catch (error) {
       console.error("Failed to delete schedule:", error);
-      alert("Failed to delete schedule");
+      toast.error("Failed to delete schedule");
     }
   };
 
@@ -105,7 +106,7 @@ export const WorkflowScheduler: React.FC<WorkflowSchedulerProps> = ({ automation
       setSchedules(schedules.map((s) => (s.id === scheduleId ? { ...s, enabled: newEnabled } : s)));
     } catch (error) {
       console.error("Failed to update schedule:", error);
-      alert("Failed to update schedule");
+      toast.error("Failed to update schedule");
     }
   };
 

@@ -1,0 +1,123 @@
+{
+  "id": "conditional-login-check",
+  "name": "Conditional Login Check",
+  "description": "Demonstrates variableConditional branching: checks if user is logged in and takes appropriate action",
+  "nodes": [
+    {
+      "id": "1",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "1",
+          "type": "navigate",
+          "description": "Go to the website",
+          "value": "https://example.com"
+        }
+      },
+      "position": { "x": 250, "y": 50 }
+    },
+    {
+      "id": "2",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "2",
+          "type": "extract",
+          "description": "Extract username element text",
+          "selector": ".username",
+          "storeKey": "username"
+        }
+      },
+      "position": { "x": 250, "y": 170 }
+    },
+    {
+      "id": "3",
+      "type": "variableConditional",
+      "data": {
+        "step": {
+          "id": "3",
+          "type": "variableConditional",
+          "description": "Check if username exists",
+          "variableConditionType": "variableExists",
+          "variableName": "username"
+        }
+      },
+      "position": { "x": 250, "y": 290 }
+    },
+    {
+      "id": "4",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "4",
+          "type": "screenshot",
+          "description": "User is logged in — take screenshot"
+        }
+      },
+      "position": { "x": 50, "y": 410 }
+    },
+    {
+      "id": "5",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "5",
+          "type": "navigate",
+          "description": "Go to login page",
+          "value": "https://example.com/login"
+        }
+      },
+      "position": { "x": 450, "y": 410 }
+    },
+    {
+      "id": "6",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "6",
+          "type": "type",
+          "description": "Enter username",
+          "selector": "#username",
+          "value": "testuser"
+        }
+      },
+      "position": { "x": 450, "y": 530 }
+    },
+    {
+      "id": "7",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "7",
+          "type": "type",
+          "description": "Enter password",
+          "selector": "#password",
+          "value": "testpass"
+        }
+      },
+      "position": { "x": 450, "y": 650 }
+    },
+    {
+      "id": "8",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "8",
+          "type": "click",
+          "description": "Click submit button",
+          "selector": "button[type='submit']"
+        }
+      },
+      "position": { "x": 450, "y": 770 }
+    }
+  ],
+  "edges": [
+    { "id": "e1-2", "source": "1", "target": "2" },
+    { "id": "e2-3", "source": "2", "target": "3" },
+    { "id": "e3-4", "source": "3", "target": "4", "sourceHandle": "if" },
+    { "id": "e3-5", "source": "3", "target": "5", "sourceHandle": "else" },
+    { "id": "e5-6", "source": "5", "target": "6" },
+    { "id": "e6-7", "source": "6", "target": "7" },
+    { "id": "e7-8", "source": "7", "target": "8" }
+  ]
+}

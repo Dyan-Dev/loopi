@@ -1,30 +1,48 @@
 import type { AppSettings } from "@app-types/globals";
-import { app } from "electron";
 import fs from "fs";
 import path from "path";
 
-const defaultSettings: AppSettings = {
-  theme: "light",
-  enableNotifications: true,
-  downloadPath: app.getPath("downloads"),
-};
+let _settingsPath: string | null = null;
+function getSettingsPath(): string {
+  if (!_settingsPath) {
+    const { app } = require("electron");
+    _settingsPath = path.join(app.getPath("userData"), "settings.json");
+  }
+  return _settingsPath;
+}
 
-const settingsPath = path.join(app.getPath("userData"), "settings.json");
+function getDefaultSettings(): AppSettings {
+  try {
+    const { app } = require("electron");
+    return {
+      theme: "light",
+      enableNotifications: true,
+      downloadPath: app.getPath("downloads"),
+    };
+  } catch {
+    return {
+      theme: "light",
+      enableNotifications: true,
+    };
+  }
+}
 
 /**
  * Load app settings from Electron storage
  */
 export const loadSettings = (): AppSettings => {
+  const defaults = getDefaultSettings();
   try {
-    if (fs.existsSync(settingsPath)) {
-      const data = fs.readFileSync(settingsPath, "utf-8");
+    const sp = getSettingsPath();
+    if (fs.existsSync(sp)) {
+      const data = fs.readFileSync(sp, "utf-8");
       const settings = JSON.parse(data) as AppSettings;
-      return { ...defaultSettings, ...settings };
+      return { ...defaults, ...settings };
     }
   } catch (error) {
     console.error("Failed to load settings:", error);
   }
-  return defaultSettings;
+  return defaults;
 };
 
 /**
@@ -32,7 +50,7 @@ export const loadSettings = (): AppSettings => {
  */
 export const saveSettings = (settings: AppSettings): boolean => {
   try {
-    fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2), "utf-8");
+    fs.writeFileSync(getSettingsPath(), JSON.stringify(settings, null, 2), "utf-8");
     return true;
   } catch (error) {
     console.error("Failed to save settings:", error);

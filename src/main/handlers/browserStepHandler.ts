@@ -1,7 +1,7 @@
 import type { AutomationStep } from "@app-types/steps";
 import { debugLogger } from "@main/debugLogger";
 import { HeadlessExecutor } from "@main/headlessExecutor";
-import { BrowserWindow } from "electron";
+import type { BrowserWindow } from "electron";
 import fs from "fs";
 
 /**

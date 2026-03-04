@@ -65,6 +65,28 @@ export function createNode({
       },
     };
   }
+  if (type === "forEach") {
+    return {
+      id: newId,
+      type: "forEach",
+      data: {
+        step: {
+          id: newId,
+          type: "forEach",
+          description: "ForEach Loop step",
+          arrayVariable: "",
+          itemVariable: "currentItem",
+          indexVariable: "loopIndex",
+        },
+        onAddNode: handleNodeAction,
+        nodeRunning: false,
+      },
+      position: {
+        x: sourceNode ? sourceNode.position.x : 250,
+        y: sourceNode ? sourceNode.position.y + 100 : currentNodes.length * 150 + 50,
+      },
+    };
+  }
   const label = stepTypes.find((s) => s.value === (type as string))?.label || "Step";
   let step: AutomationStep;
   switch (type) {

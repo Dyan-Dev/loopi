@@ -59,6 +59,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
   selectFolder: () => ipcRenderer.invoke("dialog:selectFolder"),
   executeAutomation: (automation: Automation & { headless?: boolean }) =>
     ipcRenderer.invoke("automation:execute", automation),
+  cancelAutomation: () => ipcRenderer.invoke("automation:cancel"),
   onNodeStatus: (callback: (data: { nodeId: string; status: string; error?: string }) => void) =>
     ipcRenderer.on("node:status", (_event, data) => callback(data)),
   getVariables: () => ipcRenderer.invoke("executor:getVariables"),
@@ -69,4 +70,40 @@ contextBridge.exposeInMainWorld("electronAPI", {
   ) => ipcRenderer.invoke("pick-selector", url, options),
   sendSelector: (selector: string) => ipcRenderer.send("selector-picked", selector),
   cancelSelector: () => ipcRenderer.send("selector-cancel"),
+  ai: {
+    generateWorkflow: (params: {
+      prompt: string;
+      provider: "openai" | "anthropic" | "ollama";
+      credentialId?: string;
+      apiKey?: string;
+      model?: string;
+      baseUrl?: string;
+    }) => ipcRenderer.invoke("ai:generateWorkflow", params),
+    copilot: (params: {
+      action: "explain" | "suggest" | "fix";
+      context: {
+        nodes: unknown[];
+        edges: unknown[];
+        selectedNodeId?: string;
+        error?: string;
+      };
+      provider: "openai" | "anthropic" | "ollama";
+      credentialId?: string;
+      apiKey?: string;
+      model?: string;
+      baseUrl?: string;
+    }) => ipcRenderer.invoke("ai:copilot", params),
+  },
+  validateWorkflow: (data: { nodes: unknown[]; edges: unknown[] }) =>
+    ipcRenderer.invoke("workflow:validate", data),
+  history: {
+    getAll: () => ipcRenderer.invoke("history:getAll"),
+    getByAutomation: (automationId: string) =>
+      ipcRenderer.invoke("history:getByAutomation", automationId),
+    deleteRecord: (automationId: string, recordId: string) =>
+      ipcRenderer.invoke("history:deleteRecord", automationId, recordId),
+    deleteByAutomation: (automationId: string) =>
+      ipcRenderer.invoke("history:deleteByAutomation", automationId),
+    clearAll: () => ipcRenderer.invoke("history:clearAll"),
+  },
 });

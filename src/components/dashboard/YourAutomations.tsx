@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@comp
 import { formatDateTime } from "@components/ui/utils";
 import { exportAutomation } from "@utils/automationIO";
 import { Download, Edit, Plus, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 
 interface YourAutomationsProps {
   automations: StoredAutomation[];
@@ -19,12 +20,8 @@ export function YourAutomations({
   onDeleteAutomation,
 }: YourAutomationsProps) {
   const handleDelete = async (automation: StoredAutomation) => {
-    const confirmDelete = window.confirm(
-      `Are you sure you want to delete "${automation.name}"? This action cannot be undone.`
-    );
-    if (confirmDelete) {
-      await onDeleteAutomation(automation.id);
-    }
+    await onDeleteAutomation(automation.id);
+    toast.success(`Deleted "${automation.name}"`);
   };
   return (
     <div className="space-y-4">

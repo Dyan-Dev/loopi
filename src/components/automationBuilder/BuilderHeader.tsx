@@ -18,7 +18,6 @@ import {
   Download,
   EyeOff,
   Globe,
-  Pause,
   Play,
   Save,
   Search,
@@ -37,8 +36,7 @@ interface BuilderHeaderProps {
   openBrowser: (url?: string) => Promise<void>;
   closeBrowser: () => Promise<void>;
   isAutomationRunning: boolean;
-  runAutomation: (headless?: boolean) => Promise<void>;
-  pauseAutomation: () => void;
+  runAutomation: (headless?: boolean) => Promise<unknown>;
   stopAutomation: () => void;
   handleSave: (e: React.MouseEvent<HTMLButtonElement>) => void;
   onCancel: () => void;
@@ -56,7 +54,7 @@ interface BuilderHeaderProps {
  * - Navigation (back to dashboard)
  * - Automation metadata (name, description, schedule)
  * - Browser controls (open/close)
- * - Execution controls (run/pause/stop)
+ * - Execution controls (run/stop)
  * - Save and export functionality
  */
 export const BuilderHeader: React.FC<BuilderHeaderProps> = ({
@@ -70,7 +68,6 @@ export const BuilderHeader: React.FC<BuilderHeaderProps> = ({
   closeBrowser,
   isAutomationRunning,
   runAutomation,
-  pauseAutomation,
   stopAutomation,
   handleSave,
   onCancel,
@@ -189,16 +186,10 @@ export const BuilderHeader: React.FC<BuilderHeaderProps> = ({
               </Button>
             </div>
           ) : (
-            <>
-              <Button variant="outline" onClick={pauseAutomation}>
-                <Pause className="h-4 w-4 mr-2" />
-                Pause
-              </Button>
-              <Button variant="destructive" onClick={stopAutomation}>
-                <Square className="h-4 w-4 mr-2" />
-                Stop
-              </Button>
-            </>
+            <Button variant="destructive" onClick={stopAutomation}>
+              <Square className="h-4 w-4 mr-2" />
+              Stop
+            </Button>
           )}
           {currentAutomation && (
             <Button variant="outline" onClick={handleExport}>

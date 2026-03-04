@@ -4,9 +4,11 @@ import { Settings } from "@components/Settings";
 import { Button } from "@components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@components/ui/tabs";
 import { WorkflowScheduler } from "@components/WorkflowScheduler";
+import { Toaster } from "@components/ui/sonner";
 import { Bot, Grid, Settings as SettingsIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import * as ReactDOM from "react-dom/client";
+import { toast } from "sonner";
 import "./index.css";
 import type { StoredAutomation } from "@app-types";
 
@@ -62,7 +64,7 @@ export default function App() {
       loadSavedTrees();
     } catch (err) {
       console.error(err);
-      alert("Failed to load saved automations");
+      toast.error("Failed to load saved automations");
     }
   }, []);
 
@@ -102,7 +104,7 @@ export default function App() {
       setCurrentView("dashboard");
     } catch (err) {
       console.error(err);
-      alert(`Failed to save: ${automation.name}`);
+      toast.error(`Failed to save: ${automation.name}`);
     }
   };
 
@@ -182,6 +184,7 @@ export default function App() {
 
         {currentView === "settings" && <Settings />}
       </main>
+      <Toaster position="bottom-right" richColors closeButton />
     </div>
   );
 }

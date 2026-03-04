@@ -1,3 +1,4 @@
+import type { ExecutionRecord, ExecutionStepRecord } from "@app-types/automation";
 import type { Edge, Node } from "@app-types/flow";
 import { createLogger } from "@utils/logger";
 import { dialog, ipcMain } from "electron";
@@ -14,6 +15,7 @@ import {
 import { debugLogger } from "./debugLogger";
 import { DesktopScheduler } from "./desktopScheduler";
 import { setupDownloadHandler } from "./downloadManager";
+import { ExecutionHistoryStore } from "./executionHistoryStore";
 import { executeAutomationGraph } from "./graphExecutor";
 import { SelectorPicker } from "./selectorPicker";
 import { loadSettings, saveSettings } from "./settingsStore";
@@ -27,8 +29,46 @@ import {
   saveAutomation,
 } from "./treeStore";
 import { WindowManager } from "./windowManager";
+import { validateWorkflow } from "./workflowValidator";
+import { WorkflowGenerator } from "./workflowGenerator";
+import axios from "axios";
 
 const logger = createLogger("IPCHandlers");
+
+function buildCopilotPrompt(
+  action: "explain" | "suggest" | "fix",
+  context: { nodes: unknown[]; edges: unknown[]; selectedNodeId?: string; error?: string }
+): string {
+  const workflowJson = JSON.stringify({ nodes: context.nodes, edges: context.edges }, null, 2);
+
+  if (action === "explain") {
+    return `You are an expert at explaining automation workflows. The user has a visual workflow with these nodes and edges:
+
+${workflowJson}
+
+${context.selectedNodeId ? `The user is asking about node "${context.selectedNodeId}".` : ""}
+
+Provide a clear, concise explanation in plain language. Mention what each step does and how data flows between them. Keep it under 200 words.`;
+  }
+
+  if (action === "suggest") {
+    return `You are an automation workflow advisor. The user has built this workflow:
+
+${workflowJson}
+
+Suggest 2-3 practical improvements or next steps. For each suggestion, specify the exact step type and configuration. Be specific about selectors, variables, and values. Keep suggestions actionable and concise.`;
+  }
+
+  // fix
+  return `You are an automation debugging expert. The user's workflow encountered an error:
+
+Workflow:
+${workflowJson}
+
+Error: ${context.error}
+
+Identify the likely cause and provide a specific fix. Mention which node is likely failing and what to change. Keep it concise and actionable.`;
+}
 
 /**
  * Type for automation execution request from frontend
@@ -37,6 +77,8 @@ interface AutomationExecuteRequest {
   nodes: Node[];
   edges: Edge[];
   headless?: boolean;
+  automationId?: string;
+  automationName?: string;
 }
 
 /**
@@ -67,6 +109,23 @@ export function registerIPCHandlers(
     mainWindow?.webContents.send("browser:closed");
   });
 
+  // Cancellation signal for running automations
+  let currentCancelSignal: { cancelled: boolean } | null = null;
+
+  /**
+   * Cancel the currently running automation
+   */
+  ipcMain.handle("automation:cancel", async () => {
+    if (currentCancelSignal) {
+      currentCancelSignal.cancelled = true;
+      logger.info("Automation cancellation requested");
+      return true;
+    }
+    return false;
+  });
+
+  const historyStore = new ExecutionHistoryStore();
+
   /**
    * Execute entire automation workflow in backend
    * Handles complete ReactFlow nodes/edges directly, sends node status updates to frontend
@@ -74,6 +133,8 @@ export function registerIPCHandlers(
   ipcMain.handle("automation:execute", async (event, automation: AutomationExecuteRequest) => {
     const mainWindow = windowManager.getMainWindow();
     const { nodes, edges, headless } = automation;
+    const startTime = Date.now();
+    const stepRecords: ExecutionStepRecord[] = [];
 
     try {
       // Extract clean node data (ReactFlow nodes contain extra UI properties)
@@ -128,6 +189,10 @@ export function registerIPCHandlers(
 
       const browserWindow = hasBrowserSteps && !headless ? windowManager.getBrowserWindow() : null;
 
+      // Create cancellation signal for this execution
+      currentCancelSignal = { cancelled: false };
+      const cancelSignal = currentCancelSignal;
+
       // Execute using shared graph executor
       await executeAutomationGraph({
         nodes: cleanNodes,
@@ -135,7 +200,19 @@ export function registerIPCHandlers(
         browserWindow,
         executor,
         headless,
+        cancelSignal,
         onNodeStatus: (nodeId, status, error) => {
+          // Track step records for history
+          if (status === "success" || status === "error") {
+            const node = cleanNodes.find((n) => n.id === nodeId);
+            stepRecords.push({
+              nodeId,
+              stepType: node?.data?.step?.type || node?.type || "unknown",
+              status: status as "success" | "error",
+              error,
+              timestamp: new Date().toISOString(),
+            });
+          }
           mainWindow?.webContents.send("node:status", {
             nodeId,
             status,
@@ -144,9 +221,43 @@ export function registerIPCHandlers(
         },
       });
 
+      currentCancelSignal = null;
+
+      // Save execution history
+      const record: ExecutionRecord = {
+        id: `exec_${Date.now()}`,
+        automationId: (automation as AutomationExecuteRequest & { automationId?: string }).automationId || "unknown",
+        automationName: (automation as AutomationExecuteRequest & { automationName?: string }).automationName || "Untitled",
+        timestamp: new Date().toISOString(),
+        duration: Date.now() - startTime,
+        success: true,
+        stepCount: stepRecords.length,
+        steps: stepRecords,
+      };
+      try { historyStore.save(record); } catch (e) { logger.error("Failed to save execution history", e); }
+
       return { success: true, variables: executor.getVariables() };
     } catch (error) {
-      return { success: false, error: error instanceof Error ? error.message : String(error) };
+      currentCancelSignal = null;
+      const message = error instanceof Error ? error.message : String(error);
+      const cancelled = message === "Execution cancelled";
+
+      // Save failed/cancelled execution history
+      const record: ExecutionRecord = {
+        id: `exec_${Date.now()}`,
+        automationId: (automation as AutomationExecuteRequest & { automationId?: string }).automationId || "unknown",
+        automationName: (automation as AutomationExecuteRequest & { automationName?: string }).automationName || "Untitled",
+        timestamp: new Date().toISOString(),
+        duration: Date.now() - startTime,
+        success: false,
+        cancelled,
+        error: message,
+        stepCount: stepRecords.length,
+        steps: stepRecords,
+      };
+      try { historyStore.save(record); } catch (e) { logger.error("Failed to save execution history", e); }
+
+      return { success: false, error: message, cancelled };
     }
   });
 
@@ -438,5 +549,190 @@ export function registerIPCHandlers(
     const { ScheduleStore } = await import("./scheduleStore");
     const store = new ScheduleStore();
     return store.getByWorkflow(workflowId);
+  });
+
+  /**
+   * AI: Generate workflow from natural language description
+   */
+  ipcMain.handle("ai:generateWorkflow", async (_event, params) => {
+    try {
+      const generator = new WorkflowGenerator();
+      const result = await generator.generate(params);
+      return { success: true, data: result };
+    } catch (error) {
+      logger.error("AI workflow generation failed", error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : String(error),
+      };
+    }
+  });
+
+  /**
+   * AI Copilot: Explain or suggest based on workflow context
+   */
+  ipcMain.handle("ai:copilot", async (_event, params: {
+    action: "explain" | "suggest" | "fix";
+    context: {
+      nodes: unknown[];
+      edges: unknown[];
+      selectedNodeId?: string;
+      error?: string;
+    };
+    provider: "openai" | "anthropic" | "ollama";
+    credentialId?: string;
+    apiKey?: string;
+    model?: string;
+    baseUrl?: string;
+  }) => {
+    try {
+      const generator = new WorkflowGenerator();
+      const apiKey = params.credentialId || params.apiKey
+        ? await (async () => {
+            if (params.credentialId) {
+              const { getCredential: getCred } = await import("./credentialsStore");
+              const cred = await getCred(params.credentialId!);
+              if (!cred) throw new Error("Credential not found");
+              return cred.data.apiKey || cred.data.key || cred.data.token || cred.data.accessToken || "";
+            }
+            return params.apiKey || "";
+          })()
+        : "";
+
+      const systemPrompt = buildCopilotPrompt(params.action, params.context);
+
+      let userPrompt: string;
+      if (params.action === "explain") {
+        userPrompt = params.context.selectedNodeId
+          ? `Explain what node "${params.context.selectedNodeId}" does in this workflow and how it fits in the overall flow.`
+          : "Explain what this entire workflow does, step by step.";
+      } else if (params.action === "suggest") {
+        userPrompt = "Based on this workflow, suggest what steps to add next. Be specific with step types and configurations.";
+      } else {
+        userPrompt = `The workflow encountered this error: "${params.context.error}". Explain the likely cause and how to fix it.`;
+      }
+
+      // Use the same AI call infrastructure
+      const callParams = {
+        prompt: userPrompt,
+        provider: params.provider,
+        apiKey: apiKey,
+        model: params.model,
+        baseUrl: params.baseUrl,
+      };
+
+      let response: string;
+      if (params.provider === "openai") {
+        const baseUrl = callParams.baseUrl || "https://api.openai.com/v1";
+        const model = callParams.model || "gpt-4o-mini";
+        const res = await axios.post(
+          `${baseUrl}/chat/completions`,
+          {
+            model,
+            messages: [
+              { role: "system", content: systemPrompt },
+              { role: "user", content: userPrompt },
+            ],
+            temperature: 0.3,
+            max_tokens: 1024,
+          },
+          {
+            headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+            timeout: 30000,
+          }
+        );
+        response = res.data.choices[0]?.message?.content || "";
+      } else if (params.provider === "anthropic") {
+        const baseUrl = callParams.baseUrl || "https://api.anthropic.com";
+        const model = callParams.model || "claude-sonnet-4-5-20250929";
+        const res = await axios.post(
+          `${baseUrl}/v1/messages`,
+          {
+            model,
+            system: systemPrompt,
+            messages: [{ role: "user", content: userPrompt }],
+            max_tokens: 1024,
+            temperature: 0.3,
+          },
+          {
+            headers: {
+              "x-api-key": apiKey,
+              "anthropic-version": "2023-06-01",
+              "Content-Type": "application/json",
+            },
+            timeout: 30000,
+          }
+        );
+        const content = res.data.content;
+        response = Array.isArray(content) && content.length > 0 ? content[0].text || "" : "";
+      } else {
+        const baseUrl = callParams.baseUrl || "http://localhost:11434";
+        const model = callParams.model || "mistral";
+        const res = await axios.post(
+          `${baseUrl}/api/chat`,
+          {
+            model,
+            messages: [
+              { role: "system", content: systemPrompt },
+              { role: "user", content: userPrompt },
+            ],
+            stream: false,
+          },
+          { timeout: 60000 }
+        );
+        response = res.data.message?.content || "";
+      }
+
+      return { success: true, response };
+    } catch (error) {
+      logger.error("AI copilot failed", error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : String(error),
+      };
+    }
+  });
+
+  /**
+   * Execution History: Get all history records
+   */
+  ipcMain.handle("history:getAll", async () => {
+    return historyStore.getAll();
+  });
+
+  /**
+   * Execution History: Get records for a specific automation
+   */
+  ipcMain.handle("history:getByAutomation", async (_event, automationId: string) => {
+    return historyStore.getByAutomation(automationId);
+  });
+
+  /**
+   * Execution History: Delete a single record
+   */
+  ipcMain.handle("history:deleteRecord", async (_event, automationId: string, recordId: string) => {
+    return historyStore.deleteRecord(automationId, recordId);
+  });
+
+  /**
+   * Execution History: Delete all records for an automation
+   */
+  ipcMain.handle("history:deleteByAutomation", async (_event, automationId: string) => {
+    return historyStore.deleteByAutomation(automationId);
+  });
+
+  /**
+   * Execution History: Clear all history
+   */
+  ipcMain.handle("history:clearAll", async () => {
+    historyStore.clearAll();
+    return true;
+  });
+
+  /**
+   * Workflow Validation
+   */
+  ipcMain.handle("workflow:validate", async (_event, data: { nodes: unknown[]; edges: unknown[] }) => {
+    return validateWorkflow(data.nodes as Parameters<typeof validateWorkflow>[0], data.edges as Parameters<typeof validateWorkflow>[1]);
   });
 }

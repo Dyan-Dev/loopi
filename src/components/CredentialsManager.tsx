@@ -1,5 +1,6 @@
 import type { Credential } from "@app-types/globals";
 import { Key, Plus, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 import { useEffect, useState } from "react";
 import { Button } from "./ui/button";
 import { Card } from "./ui/card";
@@ -64,8 +65,9 @@ export function CredentialsManager() {
   };
 
   const handleDelete = async (id: string) => {
-    if (confirm("Are you sure you want to delete this credential?")) {
+    {
       await window.electronAPI?.credentials.delete(id);
+      toast.success("Credential deleted");
       loadCredentials();
     }
   };
