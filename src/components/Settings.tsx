@@ -1,5 +1,5 @@
-import type { AppSettings } from "@app-types/globals";
-import { FolderOpen, Key, Moon, Settings as SettingsIcon, Sun } from "lucide-react";
+import type { AppSettings, Credential } from "@app-types/globals";
+import { FolderOpen, Key, Moon, Settings as SettingsIcon, Sparkles, Sun } from "lucide-react";
 import { useEffect, useState } from "react";
 import { CredentialsManager } from "./CredentialsManager";
 import { Button } from "./ui/button";
@@ -32,6 +32,7 @@ export function Settings() {
   });
 
   const [loading, setLoading] = useState(true);
+  const [credentials, setCredentials] = useState<Credential[]>([]);
 
   useEffect(() => {
     const loadSettings = async () => {
@@ -49,6 +50,17 @@ export function Settings() {
     };
 
     loadSettings();
+    window.electronAPI?.credentials.list().then((creds) => {
+      setCredentials(
+        creds.filter(
+          (c) =>
+            c.type === "openai" ||
+            c.type === "anthropic" ||
+            c.type === "apiKey" ||
+            c.type === "custom"
+        )
+      );
+    });
   }, []);
 
   useEffect(() => {
@@ -77,6 +89,10 @@ export function Settings() {
             <TabsTrigger value="credentials" className="flex items-center gap-2">
               <Key className="h-4 w-4" />
               Credentials
+            </TabsTrigger>
+            <TabsTrigger value="ai" className="flex items-center gap-2">
+              <Sparkles className="h-4 w-4" />
+              AI
             </TabsTrigger>
           </TabsList>
 
@@ -214,6 +230,112 @@ export function Settings() {
 
           <TabsContent value="credentials">
             <CredentialsManager />
+          </TabsContent>
+
+          <TabsContent value="ai" className="space-y-6">
+            <Card className="p-6">
+              <h2 className="text-xl font-semibold mb-6 flex items-center">
+                <Sparkles className="h-5 w-5 mr-2" />
+                AI Configuration
+              </h2>
+              <div className="space-y-4">
+                <div>
+                  <Label className="text-base mb-2 block">Provider</Label>
+                  <div className="flex gap-2">
+                    {(["openai", "anthropic", "ollama"] as const).map((p) => (
+                      <Button
+                        key={p}
+                        variant={settings.aiProvider === p ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setSettings({ ...settings, aiProvider: p })}
+                      >
+                        {p === "openai" ? "OpenAI" : p === "anthropic" ? "Anthropic" : "Ollama"}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <Label htmlFor="aiModel" className="text-base mb-2 block">
+                    Model
+                  </Label>
+                  <Input
+                    id="aiModel"
+                    value={settings.aiModel || ""}
+                    onChange={(e) => setSettings({ ...settings, aiModel: e.target.value })}
+                    placeholder={
+                      settings.aiProvider === "anthropic"
+                        ? "claude-sonnet-4-5-20250929"
+                        : settings.aiProvider === "ollama"
+                          ? "mistral"
+                          : "gpt-4o-mini"
+                    }
+                  />
+                </div>
+
+                {settings.aiProvider !== "ollama" && (
+                  <>
+                    <div>
+                      <Label className="text-base mb-2 block">Credential</Label>
+                      <select
+                        className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                        value={settings.aiCredentialId || ""}
+                        onChange={(e) => {
+                          setSettings({
+                            ...settings,
+                            aiCredentialId: e.target.value || undefined,
+                            ...(e.target.value ? { aiApiKey: undefined } : {}),
+                          });
+                        }}
+                      >
+                        <option value="">Enter key manually</option>
+                        {credentials.map((c) => (
+                          <option key={c.id} value={c.id}>
+                            {c.name} ({c.type})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {!settings.aiCredentialId && (
+                      <div>
+                        <Label htmlFor="aiApiKey" className="text-base mb-2 block">
+                          API Key
+                        </Label>
+                        <Input
+                          id="aiApiKey"
+                          type="password"
+                          value={settings.aiApiKey || ""}
+                          onChange={(e) => setSettings({ ...settings, aiApiKey: e.target.value })}
+                          placeholder={
+                            settings.aiProvider === "anthropic" ? "sk-ant-..." : "sk-..."
+                          }
+                        />
+                      </div>
+                    )}
+                  </>
+                )}
+
+                {settings.aiProvider === "ollama" && (
+                  <div>
+                    <Label htmlFor="ollamaBaseUrl" className="text-base mb-2 block">
+                      Ollama Base URL
+                    </Label>
+                    <Input
+                      id="ollamaBaseUrl"
+                      value={settings.ollamaBaseUrl || ""}
+                      onChange={(e) =>
+                        setSettings({ ...settings, ollamaBaseUrl: e.target.value })
+                      }
+                      placeholder="http://localhost:11434"
+                    />
+                    <p className="text-xs text-muted-foreground mt-2">
+                      Leave empty to use the default (http://localhost:11434)
+                    </p>
+                  </div>
+                )}
+              </div>
+            </Card>
           </TabsContent>
         </Tabs>
       </div>

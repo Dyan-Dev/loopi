@@ -24,18 +24,23 @@ export interface StoredAutomation extends Automation {
   updatedAt: string;
 }
 
-export interface ExecutionLogEntry {
-  stepId: string;
-  success: boolean;
+export interface ExecutionStepRecord {
+  nodeId: string;
+  stepType: string;
+  status: "success" | "error";
   error?: string;
-  screenshot?: string;
+  timestamp: string;
 }
 
-export interface ExecutionLog {
+export interface ExecutionRecord {
   id: string;
   automationId: string;
-  timestamp: Date;
-  success: boolean;
+  automationName: string;
+  timestamp: string;
   duration: number;
-  steps: ExecutionLogEntry[];
+  success: boolean;
+  cancelled?: boolean;
+  error?: string;
+  stepCount: number;
+  steps: ExecutionStepRecord[];
 }

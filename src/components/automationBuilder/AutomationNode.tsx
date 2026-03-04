@@ -3,15 +3,15 @@ import { Handle, NodeProps, Position } from "reactflow";
 
 const AutomationNode = ({ id, data, selected = false }: NodeProps<NodeData>) => {
   const isConditional =
-    !data.step ||
-    data.step.type === "browserConditional" ||
-    data.step.type === "variableConditional";
+    data.step?.type === "browserConditional" || data.step?.type === "variableConditional";
+  const isForEach = data.step?.type === "forEach";
   const isDark = document.documentElement.classList.contains("dark");
 
   const getNodeLabel = () => {
     if (data.step) {
       if (data.step.type === "browserConditional") return "Browser If";
       if (data.step.type === "variableConditional") return "Variable If";
+      if (data.step.type === "forEach") return "ForEach";
       return data.step.type;
     }
     return "Conditional";
@@ -52,6 +52,45 @@ const AutomationNode = ({ id, data, selected = false }: NodeProps<NodeData>) => 
       : "border-gray-200 bg-white text-gray-900";
   };
 
+  const renderHandles = () => {
+    if (isForEach) {
+      return (
+        <>
+          <Handle type="source" position={Position.Left} id="loop" />
+          <span
+            className="absolute text-[8px] opacity-60"
+            style={{ left: -4, top: "50%", transform: "translate(-100%, -50%)" }}
+          >
+            loop
+          </span>
+          <Handle type="source" position={Position.Right} id="done" />
+          <span
+            className="absolute text-[8px] opacity-60"
+            style={{ right: -4, top: "50%", transform: "translate(100%, -50%)" }}
+          >
+            done
+          </span>
+        </>
+      );
+    }
+    if (isConditional) {
+      return (
+        <>
+          <Handle type="source" position={Position.Left} id="if" />
+          <Handle type="source" position={Position.Right} id="else" />
+        </>
+      );
+    }
+    return (
+      <Handle
+        type="source"
+        position={Position.Bottom}
+        id="default"
+        style={{ left: "50%", bottom: -5, transform: "translateX(-50%)" }}
+      />
+    );
+  };
+
   return (
     <div className="relative">
       <Handle type="target" position={Position.Top} style={{ top: -5 }} />
@@ -60,19 +99,7 @@ const AutomationNode = ({ id, data, selected = false }: NodeProps<NodeData>) => 
       >
         {getNodeLabel()}
       </div>
-      {isConditional ? (
-        <>
-          <Handle type="source" position={Position.Left} id="if" />
-          <Handle type="source" position={Position.Right} id="else" />
-        </>
-      ) : (
-        <Handle
-          type="source"
-          position={Position.Bottom}
-          id="default"
-          style={{ left: "50%", bottom: -5, transform: "translateX(-50%)" }}
-        />
-      )}
+      {renderHandles()}
     </div>
   );
 };

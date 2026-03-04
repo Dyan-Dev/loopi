@@ -1,5 +1,5 @@
 import type { AutomationStep, NodeData, ReactFlowEdge, ReactFlowNode } from "@app-types";
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import type { NodeTypes } from "reactflow";
 import ReactFlow, {
   Background,
@@ -13,9 +13,11 @@ import ReactFlow, {
 } from "reactflow";
 import "reactflow/dist/style.css";
 import AddStepPopup from "./AddStepPopup";
+import { AiCopilotPanel } from "./AiCopilotPanel";
 import DebugLogsPanel from "./DebugLogsPanel";
 import NodeDetails from "./NodeDetails";
 import NodeSearch from "./NodeSearch";
+import VariableInspector from "./VariableInspector";
 
 interface BuilderCanvasProps {
   nodes: ReactFlowNode[];
@@ -41,6 +43,8 @@ interface BuilderCanvasProps {
   highlightedNodeId: string | null;
   setHighlightedNodeId: (id: string | null) => void;
   setSelectedNodeId: (id: string | null) => void;
+  isAutomationRunning?: boolean;
+  lastError?: string | null;
 }
 
 /**
@@ -52,6 +56,7 @@ interface BuilderCanvasProps {
  * - AddStepPopup for adding new nodes
  * - NodeDetails panel for editing selected node
  * - Optional DebugLogsPanel for split-screen debugging
+ * - Variable Inspector panel for live variable state
  */
 export const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
   nodes,
@@ -73,7 +78,12 @@ export const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
   highlightedNodeId,
   setHighlightedNodeId,
   setSelectedNodeId,
+  isAutomationRunning = false,
+  lastError,
 }) => {
+  const [showVariables, setShowVariables] = useState(false);
+  const [showCopilot, setShowCopilot] = useState(false);
+
   // Apply highlighting styles to nodes
   const nodesWithHighlight = useMemo(() => {
     return nodes.map((node) => ({
@@ -102,8 +112,8 @@ export const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
         />
 
         {/* Left side - ReactFlow canvas */}
-        <div className="flex-1 h-full">
-          <div className="h-full w-full relative">
+        <div className="flex-1 flex flex-col h-full">
+          <div className="flex-1 w-full relative">
             <ReactFlow
               nodes={nodesWithHighlight}
               edges={edges}
@@ -171,8 +181,55 @@ export const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
                 </button>
               </div>
             )}
+
+            {/* Top-right toolbar: Variables + AI Copilot toggles */}
+            <div className="absolute top-4 right-4 z-40 flex gap-2">
+              {!showVariables && (
+                <button
+                  type="button"
+                  onClick={() => setShowVariables(true)}
+                  className="bg-card border border-border rounded-md px-3 py-1.5 text-xs font-medium hover:bg-muted shadow-sm"
+                  title="Show variable inspector"
+                >
+                  Variables
+                </button>
+              )}
+              {!showCopilot && (
+                <button
+                  type="button"
+                  onClick={() => setShowCopilot(true)}
+                  className="bg-card border border-border rounded-md px-3 py-1.5 text-xs font-medium hover:bg-muted shadow-sm"
+                  title="Open AI Copilot"
+                >
+                  AI Copilot
+                </button>
+              )}
+            </div>
           </div>
         </div>
+
+        {/* Right sidebar - Variable Inspector & AI Copilot */}
+        {(showVariables || showCopilot) && (
+          <div className="w-80 border-l border-border flex flex-col h-full overflow-hidden">
+            {showVariables && (
+              <div className={`${showCopilot ? "resize-y overflow-auto min-h-[150px]" : "flex-1"}`}>
+                <VariableInspector
+                  isRunning={isAutomationRunning}
+                  onClose={() => setShowVariables(false)}
+                />
+              </div>
+            )}
+            {showCopilot && (
+              <AiCopilotPanel
+                nodes={nodes}
+                edges={edges}
+                selectedNodeId={selectedNodeId}
+                lastError={lastError}
+                onClose={() => setShowCopilot(false)}
+              />
+            )}
+          </div>
+        )}
 
         {/* Right side - Debug logs panel (conditional) */}
         {isDebugEnabled && (

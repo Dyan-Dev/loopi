@@ -1,5 +1,4 @@
 import crypto from "crypto";
-import { app } from "electron";
 import fs from "fs";
 import path from "path";
 
@@ -25,7 +24,14 @@ const ENCRYPTION_KEY =
   process.env.LOOPI_ENCRYPTION_KEY || "loopi-default-key-change-this-in-production";
 const ALGORITHM = "aes-256-cbc";
 
-const credentialsPath = path.join(app.getPath("userData"), "credentials.json");
+let _credentialsPath: string | null = null;
+function getCredentialsPath(): string {
+  if (!_credentialsPath) {
+    const { app } = require("electron");
+    _credentialsPath = path.join(app.getPath("userData"), "credentials.json");
+  }
+  return _credentialsPath;
+}
 
 /**
  * Encrypt sensitive data
@@ -57,8 +63,8 @@ function decrypt(text: string): string {
  */
 export function loadCredentials(): Credential[] {
   try {
-    if (fs.existsSync(credentialsPath)) {
-      const data = fs.readFileSync(credentialsPath, "utf-8");
+    if (fs.existsSync(getCredentialsPath())) {
+      const data = fs.readFileSync(getCredentialsPath(), "utf-8");
       const encrypted = JSON.parse(data) as { credentials: string };
       if (encrypted.credentials) {
         const decrypted = decrypt(encrypted.credentials);
@@ -79,7 +85,7 @@ function saveCredentials(credentials: Credential[]): boolean {
     const serialized = JSON.stringify(credentials);
     const encrypted = encrypt(serialized);
     const data = JSON.stringify({ credentials: encrypted }, null, 2);
-    fs.writeFileSync(credentialsPath, data, "utf-8");
+    fs.writeFileSync(getCredentialsPath(), data, "utf-8");
     return true;
   } catch (error) {
     console.error("Failed to save credentials:", error);

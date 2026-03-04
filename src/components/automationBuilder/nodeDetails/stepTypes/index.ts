@@ -1,3 +1,4 @@
+import { ForEachStep } from "./logic/ForEachStep";
 import { ClickStep } from "./browser/ClickStep";
 import { ExtractStep } from "./browser/ExtractStep";
 import { NavigateStep } from "./browser/NavigateStep";
@@ -43,6 +44,7 @@ import { ModifyVariableStep } from "./variable/ModifyVariableStep";
 import { SetVariableStep } from "./variable/SetVariableStep";
 
 export {
+  ForEachStep,
   ApiCallStep,
   AiOpenAIStep,
   AiAnthropicStep,

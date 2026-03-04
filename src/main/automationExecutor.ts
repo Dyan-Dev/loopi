@@ -12,7 +12,7 @@ import {
   VariableOperationHandler,
 } from "@main/handlers";
 import { HeadlessExecutor } from "@main/headlessExecutor";
-import { BrowserWindow } from "electron";
+import type { BrowserWindow } from "electron";
 
 /**
  * Handles execution of automation steps in the browser window
@@ -58,7 +58,7 @@ export class AutomationExecutor {
   /**
    * Get a variable value, supporting dot notation and array indexing
    */
-  private getVariableValue(path: string): unknown {
+  public getVariableValue(path: string): unknown {
     return this.variableManager.getVariableValue(path);
   }
 
@@ -79,7 +79,7 @@ export class AutomationExecutor {
   /**
    * Set a variable value
    */
-  private setVariable(key: string, value: unknown) {
+  public setVariable(key: string, value: unknown) {
     this.variableManager.setVariable(key, value);
   }
 

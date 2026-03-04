@@ -1,0 +1,72 @@
+{
+  "id": "ai-content-summarizer",
+  "name": "AI Content Summarizer",
+  "description": "Demonstrates AI step with variable piping: extracts article text and summarizes it with AI",
+  "nodes": [
+    {
+      "id": "1",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "1",
+          "type": "navigate",
+          "description": "Go to an article page",
+          "value": "https://example.com"
+        }
+      },
+      "position": { "x": 250, "y": 50 }
+    },
+    {
+      "id": "2",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "2",
+          "type": "extract",
+          "description": "Extract article body text",
+          "selector": "body",
+          "storeKey": "articleText"
+        }
+      },
+      "position": { "x": 250, "y": 170 }
+    },
+    {
+      "id": "3",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "3",
+          "type": "aiOpenAI",
+          "description": "Summarize the article with AI",
+          "model": "gpt-4o-mini",
+          "prompt": "Summarize the following article in 3 bullet points:\n\n{{articleText}}",
+          "systemPrompt": "You are a concise summarization assistant.",
+          "temperature": 0,
+          "maxTokens": 256,
+          "baseUrl": "https://api.openai.com/v1",
+          "storeKey": "summary"
+        }
+      },
+      "position": { "x": 250, "y": 290 }
+    },
+    {
+      "id": "4",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "4",
+          "type": "setVariable",
+          "description": "Store report with summary",
+          "variableName": "report",
+          "value": "Summary: {{summary}}"
+        }
+      },
+      "position": { "x": 250, "y": 410 }
+    }
+  ],
+  "edges": [
+    { "id": "e1-2", "source": "1", "target": "2" },
+    { "id": "e2-3", "source": "2", "target": "3" },
+    { "id": "e3-4", "source": "3", "target": "4" }
+  ]
+}

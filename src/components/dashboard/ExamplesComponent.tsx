@@ -23,12 +23,6 @@ export const EXAMPLES: Array<{
     fileName: "contact_form_submission.json",
   },
   {
-    id: "ecommerce-monitor",
-    name: "E-commerce Price Monitor",
-    description: "Monitor product prices on an e-commerce website and track changes",
-    fileName: "ecommerce_price_monitor.json",
-  },
-  {
     id: "api-github",
     name: "GitHub User API Call",
     description: "Fetch user data from GitHub API and extract information",
@@ -51,6 +45,30 @@ export const EXAMPLES: Array<{
     name: "Pagination Price Extraction Loop",
     description: "Extract prices with pagination using variable loops",
     fileName: "pagination_price_extraction_variable_loop.json",
+  },
+  {
+    id: "foreach-url-scraper",
+    name: "ForEach URL Scraper",
+    description: "Demonstrates forEach loop: iterates over URLs, navigates to each, and extracts page titles",
+    fileName: "foreach_url_scraper.json",
+  },
+  {
+    id: "conditional-login-check",
+    name: "Conditional Login Check",
+    description: "Demonstrates variableConditional branching: checks if user is logged in and acts accordingly",
+    fileName: "conditional_login_check.json",
+  },
+  {
+    id: "ai-content-summarizer",
+    name: "AI Content Summarizer",
+    description: "Demonstrates AI step with variable piping: extracts article text and summarizes with AI",
+    fileName: "ai_content_summarizer.json",
+  },
+  {
+    id: "variable-operations-counter",
+    name: "Variable Operations Counter",
+    description: "Demonstrates setVariable and modifyVariable: creates a counter and builds status strings",
+    fileName: "variable_operations_counter.json",
   },
 ];
 

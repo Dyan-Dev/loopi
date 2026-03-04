@@ -1,6 +1,7 @@
 import type { ReactFlowEdge, ReactFlowNode } from "@app-types";
 import type { Connection } from "reactflow";
 import { addEdge } from "reactflow";
+import { toast } from "sonner";
 
 /**
  * Validates and creates a new edge based on node type and constraints.
@@ -22,14 +23,42 @@ export function validateAndCreateEdge({
   const sourceNode = nodes.find((n) => n.id === params.source);
   if (!sourceNode) return null;
 
-  let sourceHandle: "if" | "else" | undefined = params.sourceHandle as "if" | "else" | undefined;
+  let sourceHandle: string | undefined = params.sourceHandle as string | undefined;
 
   const isConditionalNode =
     sourceNode.type === "browserConditional" || sourceNode.type === "variableConditional";
-  if (!isConditionalNode) {
+  const isForEachNode = sourceNode.type === "forEach";
+
+  if (isForEachNode) {
+    if (sourceHandle === "loop") {
+      const existing = edges.find((e) => e.source === params.source && e.sourceHandle === "loop");
+      if (existing) {
+        toast.warning("The 'loop' branch is already connected");
+        return null;
+      }
+    } else if (sourceHandle === "done") {
+      const existing = edges.find((e) => e.source === params.source && e.sourceHandle === "done");
+      if (existing) {
+        toast.warning("The 'done' branch is already connected");
+        return null;
+      }
+    } else {
+      const loopExisting = edges.find(
+        (e) => e.source === params.source && e.sourceHandle === "loop"
+      );
+      const doneExisting = edges.find(
+        (e) => e.source === params.source && e.sourceHandle === "done"
+      );
+      if (loopExisting && doneExisting) {
+        toast.warning("Both 'loop' and 'done' branches are already connected");
+        return null;
+      }
+      sourceHandle = loopExisting ? "done" : "loop";
+    }
+  } else if (!isConditionalNode) {
     const outgoing = edges.filter((e) => e.source === params.source && !e.sourceHandle).length;
     if (outgoing >= 1) {
-      alert("Cannot add more than one outgoing edge to a non-conditional node");
+      toast.warning("Cannot add more than one outgoing edge to a non-conditional node");
       return null;
     }
     sourceHandle = undefined;
@@ -37,13 +66,13 @@ export function validateAndCreateEdge({
     if (sourceHandle === "if") {
       const existing = edges.find((e) => e.source === params.source && e.sourceHandle === "if");
       if (existing) {
-        alert("The 'if' branch is already connected");
+        toast.warning("The 'if' branch is already connected");
         return null;
       }
     } else if (sourceHandle === "else") {
       const existing = edges.find((e) => e.source === params.source && e.sourceHandle === "else");
       if (existing) {
-        alert("The 'else' branch is already connected");
+        toast.warning("The 'else' branch is already connected");
         return null;
       }
     } else {
@@ -52,7 +81,7 @@ export function validateAndCreateEdge({
         (e) => e.source === params.source && e.sourceHandle === "else"
       );
       if (ifExisting && elseExisting) {
-        alert("Both 'if' and 'else' branches are already connected");
+        toast.warning("Both 'if' and 'else' branches are already connected");
         return null;
       }
       sourceHandle = ifExisting ? "else" : "if";
@@ -65,7 +94,7 @@ export function validateAndCreateEdge({
     target: params.target!,
     sourceHandle,
     ...(sourceHandle && {
-      data: { label: sourceHandle === "if" ? "if" : "else" },
+      data: { label: sourceHandle },
     }),
   };
   setEdges((eds: ReactFlowEdge[]) => addEdge(newEdge, eds));

@@ -14,7 +14,10 @@
     "make:windows": "electron-forge make --platform=win32",
     "make:mac": "electron-forge make --platform=darwin",
     "format": "pnpm exec biome check --write",
-    "react-dev": "npx webpack serve --config webpack.dev.config.ts"
+    "react-dev": "npx webpack serve --config webpack.dev.config.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "run:workflow": "tsx src/cli/runWorkflow.ts"
   },
   "keywords": [],
   "license": "O'Saasy",
@@ -46,7 +49,9 @@
     "style-loader": "^4.0.0",
     "ts-loader": "^9.5.2",
     "ts-node": "^10.9.2",
+    "tsx": "^4.21.0",
     "typescript": "~5.8.2",
+    "vitest": "^4.0.18",
     "webpack-cli": "^6.0.1"
   },
   "dependencies": {

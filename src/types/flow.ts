@@ -48,7 +48,7 @@ export interface NodeDataBase {
 
 export interface Node {
   id: string;
-  type: "automationStep";
+  type: "automationStep" | "browserConditional" | "variableConditional" | "forEach";
   data: NodeDataBase;
   position: NodePosition;
 }

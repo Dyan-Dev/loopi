@@ -1,4 +1,5 @@
 import type { AutomationStep, Node, ReactFlowEdge, ReactFlowNode } from "@app-types";
+import { toast } from "sonner";
 import { validateAndCreateEdge } from "@hooks/utils/edgeUtils";
 import { updateOrDeleteNode } from "@hooks/utils/nodeActions";
 import { createNode } from "@hooks/utils/nodeFactory";
@@ -71,12 +72,17 @@ export default function useNodeActions({
         if (sourceNode) {
           const isConditionalNode =
             sourceNode.type === "browserConditional" || sourceNode.type === "variableConditional";
-          if (isConditionalNode) {
+          const isForEachNode = sourceNode.type === "forEach";
+          if (isConditionalNode || isForEachNode) {
             let maxOutgoing = false;
             setEdges((edgesInner: ReactFlowEdge[]) => {
               const outgoingEdges = edgesInner.filter((e) => e.source === sourceId);
               if (outgoingEdges.length >= 2) {
-                alert("Cannot add more than two outgoing edges from a conditional node.");
+                toast.warning(
+                  isForEachNode
+                    ? "Cannot add more than two outgoing edges from a forEach node."
+                    : "Cannot add more than two outgoing edges from a conditional node."
+                );
                 maxOutgoing = true;
                 return edgesInner;
               }
@@ -90,7 +96,7 @@ export default function useNodeActions({
                 (e) => e.source === sourceId && !e.sourceHandle
               ).length;
               if (outgoingCount >= 1) {
-                alert("Cannot add more than one outgoing edge from a non-conditional node.");
+                toast.warning("Cannot add more than one outgoing edge from a non-conditional node.");
                 maxOutgoing = true;
                 return edgesInner;
               }
@@ -112,7 +118,8 @@ export default function useNodeActions({
 
       // Add edge for new node
       const isConditionalType = type === "browserConditional" || type === "variableConditional";
-      if (isConditionalType) {
+      const isForEachType = type === "forEach";
+      if (isConditionalType || isForEachType) {
         setEdges((eds: ReactFlowEdge[]) =>
           addEdge({ id: `e${sourceId}-${newId}`, source: sourceId, target: newId }, eds)
         );
@@ -121,7 +128,26 @@ export default function useNodeActions({
           const sourceNode = currentNodes.find((n) => n.id === sourceId);
           const isSourceConditional =
             sourceNode?.type === "browserConditional" || sourceNode?.type === "variableConditional";
-          if (isSourceConditional) {
+          const isSourceForEach = sourceNode?.type === "forEach";
+          if (isSourceForEach) {
+            setEdges((currentEdges: ReactFlowEdge[]) => {
+              const outgoingEdges = currentEdges.filter((e) => e.source === sourceId);
+              if (outgoingEdges.length >= 2) {
+                return currentEdges;
+              }
+              const handle = outgoingEdges.length === 0 ? "loop" : "done";
+              return addEdge(
+                {
+                  id: `e${sourceId}-${newId}-${handle}`,
+                  source: sourceId,
+                  target: newId,
+                  sourceHandle: handle,
+                  data: { label: handle },
+                },
+                currentEdges
+              );
+            });
+          } else if (isSourceConditional) {
             setEdges((currentEdges: ReactFlowEdge[]) => {
               const outgoingEdges = currentEdges.filter((e) => e.source === sourceId);
               if (outgoingEdges.length >= 2) {

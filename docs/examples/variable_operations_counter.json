@@ -1,0 +1,70 @@
+{
+  "id": "variable-operations-counter",
+  "name": "Variable Operations Counter",
+  "description": "Demonstrates setVariable and modifyVariable operations: creates a counter, increments it, and builds a status string",
+  "nodes": [
+    {
+      "id": "1",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "1",
+          "type": "setVariable",
+          "description": "Initialize counter to 0",
+          "variableName": "counter",
+          "value": "0"
+        }
+      },
+      "position": { "x": 250, "y": 50 }
+    },
+    {
+      "id": "2",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "2",
+          "type": "modifyVariable",
+          "description": "Increment counter by 1",
+          "variableName": "counter",
+          "operation": "increment",
+          "value": "1"
+        }
+      },
+      "position": { "x": 250, "y": 170 }
+    },
+    {
+      "id": "3",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "3",
+          "type": "modifyVariable",
+          "description": "Increment counter by 1 again",
+          "variableName": "counter",
+          "operation": "increment",
+          "value": "1"
+        }
+      },
+      "position": { "x": 250, "y": 290 }
+    },
+    {
+      "id": "4",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "4",
+          "type": "setVariable",
+          "description": "Build status message using counter",
+          "variableName": "status",
+          "value": "Count is {{counter}}"
+        }
+      },
+      "position": { "x": 250, "y": 410 }
+    }
+  ],
+  "edges": [
+    { "id": "e1-2", "source": "1", "target": "2" },
+    { "id": "e2-3", "source": "2", "target": "3" },
+    { "id": "e3-4", "source": "3", "target": "4" }
+  ]
+}

@@ -1,4 +1,4 @@
-import { Automation, StoredAutomation, ScheduleType } from "./automation";
+import { Automation, ExecutionRecord, StoredAutomation, ScheduleType } from "./automation";
 import { AutomationStep } from "./steps";
 import type { LogEntry } from "@main/debugLogger";
 import type { ConditionalConfig, ConditionalResult } from "./conditions";
@@ -36,6 +36,11 @@ export interface AppSettings {
   enableNotifications: boolean;
   downloadPath?: string;
   debugMode?: boolean;
+  aiProvider?: "openai" | "anthropic" | "ollama";
+  aiModel?: string;
+  aiApiKey?: string;
+  aiCredentialId?: string;
+  ollamaBaseUrl?: string;
 }
 
 export interface ElectronAPI {
@@ -46,7 +51,10 @@ export interface ElectronAPI {
     nodes: unknown[];
     edges: unknown[];
     headless?: boolean;
-  }) => Promise<{ success: boolean; error?: string; variables?: Record<string, unknown> }>;
+    automationId?: string;
+    automationName?: string;
+  }) => Promise<{ success: boolean; error?: string; cancelled?: boolean; variables?: Record<string, unknown> }>;
+  cancelAutomation: () => Promise<boolean>;
   onNodeStatus: (
     callback: (data: { nodeId: string; status: string; error?: string }) => void
   ) => void;
@@ -100,6 +108,55 @@ export interface ElectronAPI {
     getByWorkflow: (workflowId: string) => Promise<WorkflowSchedule[]>;
   };
   saveFile: (data: { filePath: string; content: string }) => Promise<boolean>;
+  ai: {
+    generateWorkflow: (params: {
+      prompt: string;
+      provider: "openai" | "anthropic" | "ollama";
+      credentialId?: string;
+      apiKey?: string;
+      model?: string;
+      baseUrl?: string;
+    }) => Promise<{
+      success: boolean;
+      data?: {
+        nodes: unknown[];
+        edges: unknown[];
+        name: string;
+        description: string;
+      };
+      error?: string;
+    }>;
+    copilot: (params: {
+      action: "explain" | "suggest" | "fix";
+      context: {
+        nodes: unknown[];
+        edges: unknown[];
+        selectedNodeId?: string;
+        error?: string;
+      };
+      provider: "openai" | "anthropic" | "ollama";
+      credentialId?: string;
+      apiKey?: string;
+      model?: string;
+      baseUrl?: string;
+    }) => Promise<{
+      success: boolean;
+      response?: string;
+      error?: string;
+    }>;
+  };
+  validateWorkflow: (data: { nodes: unknown[]; edges: unknown[] }) => Promise<{
+    valid: boolean;
+    errors: string[];
+    warnings: string[];
+  }>;
+  history: {
+    getAll: () => Promise<ExecutionRecord[]>;
+    getByAutomation: (automationId: string) => Promise<ExecutionRecord[]>;
+    deleteRecord: (automationId: string, recordId: string) => Promise<boolean>;
+    deleteByAutomation: (automationId: string) => Promise<boolean>;
+    clearAll: () => Promise<boolean>;
+  };
 }
 
 declare global {

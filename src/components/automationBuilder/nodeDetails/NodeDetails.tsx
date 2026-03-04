@@ -1,4 +1,5 @@
 import { Node, ReactFlowNode } from "@app-types";
+import { toast } from "sonner";
 import { Card, CardContent, CardHeader } from "@components/ui/card";
 import BrowserConditionEditor from "./ConditionEditor";
 import NodeHeader from "./NodeHeader";
@@ -36,7 +37,7 @@ export default function NodeDetails({
     strategy: "css" | "xpath" | "dataAttr" | "id" | "aria" = "css"
   ) => {
     if (!window.electronAPI?.pickSelector) {
-      alert("Electron API not available. Ensure the browser is set up.");
+      toast.error("Electron API not available. Ensure the browser is set up.");
       return;
     }
 
@@ -66,7 +67,7 @@ export default function NodeDetails({
     } catch (err: unknown) {
       console.error("Selector pick failed:", err);
       const message = err instanceof Error ? err.message : String(err);
-      alert(message || "Failed to pick selector. Ensure the browser is open and try again.");
+      toast.error(message || "Failed to pick selector. Ensure the browser is open and try again.");
     }
   };
 

@@ -14,6 +14,7 @@ import {
   DiscordSendMessageStep,
   DiscordSendWebhookStep,
   ExtractStep,
+  ForEachStep,
   ModifyVariableStep,
   NavigateStep,
   ScreenshotStep,
@@ -174,6 +175,8 @@ export default function StepEditor({
         return <SlackAddReactionStep step={step} id={id} onUpdate={onUpdate} />;
       case "slackUploadFile":
         return <SlackUploadFileStep step={step} id={id} onUpdate={onUpdate} />;
+      case "forEach":
+        return <ForEachStep step={step} id={id} onUpdate={onUpdate} />;
       default:
         return null;
     }

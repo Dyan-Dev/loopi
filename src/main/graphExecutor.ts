@@ -1,7 +1,7 @@
 /**
  * Automation Graph Executor
  * Shared execution logic for automation workflows with graph-based flow control
- * Supports conditionals, loops, and both headless and browser-based execution
+ * Supports conditionals, forEach loops, and both headless and browser-based execution
  */
 
 import type { Edge, Node } from "@app-types/flow";
@@ -9,6 +9,7 @@ import { createLogger } from "@utils/logger";
 import type { BrowserWindow } from "electron";
 import { AutomationExecutor } from "./automationExecutor";
 import { HeadlessExecutor } from "./headlessExecutor";
+import { validateWorkflow } from "./workflowValidator";
 
 const logger = createLogger("GraphExecutor");
 
@@ -20,6 +21,35 @@ interface ExecutionContext {
   headless?: boolean;
   headlessExecutor?: HeadlessExecutor | null;
   onNodeStatus?: (nodeId: string, status: "running" | "success" | "error", error?: string) => void;
+  cancelSignal?: { cancelled: boolean };
+}
+
+/**
+ * Collect all node IDs reachable from a start node via BFS, stopping at boundary nodes.
+ * Used to identify the "loop body" of a forEach node.
+ */
+export function collectReachableNodes(
+  startNodeId: string,
+  edges: Edge[],
+  boundaryNodeIds: Set<string>
+): Set<string> {
+  const reachable = new Set<string>();
+  const queue = [startNodeId];
+
+  while (queue.length > 0) {
+    const current = queue.shift()!;
+    if (reachable.has(current)) continue;
+    reachable.add(current);
+
+    // Follow all outgoing edges, but don't cross back into the boundary
+    for (const edge of edges) {
+      if (edge.source === current && !boundaryNodeIds.has(edge.target) && !reachable.has(edge.target)) {
+        queue.push(edge.target);
+      }
+    }
+  }
+
+  return reachable;
 }
 
 /**
@@ -29,10 +59,21 @@ interface ExecutionContext {
 export async function executeAutomationGraph(
   context: ExecutionContext
 ): Promise<{ success: boolean }> {
-  const { nodes, edges, browserWindow, executor, headless, onNodeStatus } = context;
+  const { nodes, edges, browserWindow, executor, headless, onNodeStatus, cancelSignal } = context;
 
   if (!nodes || nodes.length === 0) {
     throw new Error("No nodes to execute");
+  }
+
+  // Pre-execution validation safety net
+  const validation = validateWorkflow(nodes, edges);
+  if (!validation.valid) {
+    throw new Error(`Workflow validation failed: ${validation.errors.join("; ")}`);
+  }
+  if (validation.warnings.length > 0) {
+    for (const warning of validation.warnings) {
+      logger.warn(`Validation warning: ${warning}`);
+    }
   }
 
   // If headless mode with browser steps, use Puppeteer
@@ -69,6 +110,7 @@ export async function executeAutomationGraph(
       onNodeStatus,
       headless,
       headlessExecutor,
+      cancelSignal,
     });
   } catch (error) {
     // Clean up headless executor on error
@@ -90,6 +132,7 @@ async function executeBrowserGraph({
   onNodeStatus,
   headless,
   headlessExecutor,
+  cancelSignal,
 }: {
   nodes: Node[];
   edges: Edge[];
@@ -98,12 +141,17 @@ async function executeBrowserGraph({
   onNodeStatus?: (nodeId: string, status: "running" | "success" | "error", error?: string) => void;
   headless: boolean;
   headlessExecutor?: HeadlessExecutor | null;
+  cancelSignal?: { cancelled: boolean };
 }): Promise<{ success: boolean }> {
   const executeGraph = async (
     nodeId: string,
     visited: Set<string>,
     iterations: { count: number }
   ): Promise<void> => {
+    if (cancelSignal?.cancelled) {
+      logger.info("Execution cancelled by user");
+      throw new Error("Execution cancelled");
+    }
     if (iterations.count++ > 10000) throw new Error("Maximum iteration limit reached");
     visited.add(nodeId);
     const node = nodes.find((n: Node) => n.id === nodeId);
@@ -113,6 +161,80 @@ async function executeBrowserGraph({
 
     try {
       let conditionResult: boolean | undefined;
+
+      // Handle forEach loop nodes
+      if (node.data.step?.type === "forEach") {
+        const step = node.data.step;
+        const arrayValue = executor.getVariableValue(step.arrayVariable);
+
+        // Find "loop" and "done" edges
+        const loopEdges = edges.filter(
+          (e: Edge) => e.source === nodeId && e.sourceHandle === "loop"
+        );
+        const doneEdges = edges.filter(
+          (e: Edge) => e.source === nodeId && e.sourceHandle === "done"
+        );
+
+        if (!Array.isArray(arrayValue)) {
+          logger.warn(
+            `ForEach: variable "${step.arrayVariable}" is not an array, skipping to done`
+          );
+          onNodeStatus?.(nodeId, "success");
+
+          // Skip to done edges
+          for (const doneEdge of doneEdges) {
+            await executeGraph(doneEdge.target, visited, iterations);
+          }
+          return;
+        }
+
+        if (arrayValue.length === 0 || loopEdges.length === 0) {
+          onNodeStatus?.(nodeId, "success");
+
+          // Empty array or no loop edge: skip to done
+          for (const doneEdge of doneEdges) {
+            await executeGraph(doneEdge.target, visited, iterations);
+          }
+          return;
+        }
+
+        // Collect loop body nodes (reachable from loop edge targets, not crossing done targets)
+        const doneTargets = new Set(doneEdges.map((e) => e.target));
+        // Also include the forEach node itself as a boundary to avoid re-entering it
+        doneTargets.add(nodeId);
+
+        const loopBodyNodeIds = new Set<string>();
+        for (const loopEdge of loopEdges) {
+          const reachable = collectReachableNodes(loopEdge.target, edges, doneTargets);
+          for (const id of reachable) {
+            loopBodyNodeIds.add(id);
+          }
+        }
+
+        // Iterate over the array
+        for (let i = 0; i < arrayValue.length; i++) {
+          executor.setVariable(step.itemVariable || "currentItem", arrayValue[i]);
+          executor.setVariable(step.indexVariable || "loopIndex", i);
+
+          // Clear visited status for loop body nodes so they re-execute
+          for (const bodyNodeId of loopBodyNodeIds) {
+            visited.delete(bodyNodeId);
+          }
+
+          // Execute from loop edge targets
+          for (const loopEdge of loopEdges) {
+            await executeGraph(loopEdge.target, visited, iterations);
+          }
+        }
+
+        onNodeStatus?.(nodeId, "success");
+
+        // After all iterations, follow done edges
+        for (const doneEdge of doneEdges) {
+          await executeGraph(doneEdge.target, visited, iterations);
+        }
+        return;
+      }
 
       if (node.data.step?.type === "browserConditional") {
         if (node.data.step.browserConditionType && node.data.step.selector) {
@@ -202,7 +324,7 @@ async function executeBrowserGraph({
 /**
  * Find start nodes using indegree analysis
  */
-function findStartNodes(nodes: Node[], edges: Edge[]): { startNodes: Node[] } {
+export function findStartNodes(nodes: Node[], edges: Edge[]): { startNodes: Node[] } {
   const nodeIds = new Set(nodes.map((n: Node) => n.id));
 
   // Filter out edges with invalid source or target nodes

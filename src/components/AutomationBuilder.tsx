@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { OnSelectionChangeParams, useEdgesState, useNodesState } from "reactflow";
 import "reactflow/dist/style.css";
+import { toast } from "sonner";
 import type {
   Automation,
   AutomationStep,
@@ -21,6 +22,7 @@ const nodeTypes = {
   automationStep: AutomationNode,
   browserConditional: AutomationNode,
   variableConditional: AutomationNode,
+  forEach: AutomationNode,
 };
 
 interface AutomationBuilderProps {
@@ -65,12 +67,12 @@ export function AutomationBuilder({ automation, onSave, onCancel }: AutomationBu
   const {
     isBrowserOpen,
     isAutomationRunning,
+    lastResult,
     openBrowser,
     closeBrowser,
     runAutomation,
-    pauseAutomation,
     stopAutomation,
-  } = useExecution({ nodes, edges, setNodes });
+  } = useExecution({ nodes, edges, setNodes, automationId: automation?.id, automationName: name });
 
   // Handle selection change (nodes & edges)
   const handleSelectionChange = useCallback(
@@ -87,6 +89,18 @@ export function AutomationBuilder({ automation, onSave, onCancel }: AutomationBu
     setEdges((eds) => eds.filter((e) => !selectedEdgeIds.includes(e.id)));
     setSelectedEdgeIds([]);
   }, [selectedEdgeIds, setEdges]);
+
+  // Show toast on execution result
+  useEffect(() => {
+    if (!lastResult) return;
+    if (lastResult.cancelled) {
+      toast.warning("Automation cancelled");
+    } else if (lastResult.success) {
+      toast.success("Automation completed successfully");
+    } else {
+      toast.error(lastResult.error || "Automation failed");
+    }
+  }, [lastResult]);
 
   // Sync debug mode with main process
   useEffect(() => {
@@ -112,6 +126,14 @@ export function AutomationBuilder({ automation, onSave, onCancel }: AutomationBu
       if (e.ctrlKey && e.key === "k") {
         e.preventDefault();
         setIsSearchOpen(true);
+      }
+      // Save with Ctrl+S
+      if (e.ctrlKey && e.key === "s") {
+        e.preventDefault();
+        if (name.trim()) {
+          handleSave();
+          toast.success("Automation saved");
+        }
       }
     };
     window.addEventListener("keydown", keyHandler);
@@ -214,7 +236,6 @@ export function AutomationBuilder({ automation, onSave, onCancel }: AutomationBu
         closeBrowser={closeBrowser}
         isAutomationRunning={isAutomationRunning}
         runAutomation={runAutomation}
-        pauseAutomation={pauseAutomation}
         stopAutomation={stopAutomation}
         handleSave={handleSave}
         onCancel={onCancel}
@@ -244,6 +265,8 @@ export function AutomationBuilder({ automation, onSave, onCancel }: AutomationBu
         highlightedNodeId={highlightedNodeId}
         setHighlightedNodeId={setHighlightedNodeId}
         setSelectedNodeId={setSelectedNodeId}
+        isAutomationRunning={isAutomationRunning}
+        lastError={lastResult && !lastResult.success ? lastResult.error : null}
         setBrowserOpen={(arg?: boolean | string) => {
           if (typeof arg === "string") {
             openBrowser(arg);
