@@ -25,6 +25,74 @@ export interface Credential {
     | "basic"
     | "openai"
     | "anthropic"
+    | "telegram"
+    | "github"
+    | "notion"
+    | "sendgrid"
+    | "stripe"
+    | "postgres"
+    | "googleSheets"
+    | "airtable"
+    | "jira"
+    | "hubspot"
+    | "twilio"
+    | "mailchimp"
+    | "zoom"
+    | "supabase"
+    | "salesforce"
+    | "trello"
+    | "googleCalendar"
+    | "googleDrive"
+    | "gmail"
+    | "mongodb"
+    | "mysql"
+    | "redis"
+    | "awsS3"
+    | "shopify"
+    | "asana"
+    | "linear"
+    | "clickup"
+    | "monday"
+    | "dropbox"
+    | "box"
+    | "gitlab"
+    | "paypal"
+    | "typeform"
+    | "calendly"
+    | "whatsapp"
+    | "intercom"
+    | "zendesk"
+    | "freshdesk"
+    | "woocommerce"
+    | "activecampaign"
+    | "bitly"
+    | "circleci"
+    | "jenkins"
+    | "cloudflare"
+    | "convertkit"
+    | "contentful"
+    | "mattermost"
+    | "pagerduty"
+    | "sentry"
+    | "todoist"
+    | "nocodb"
+    | "snowflake"
+    | "graphql"
+    | "baserow"
+    | "elasticsearch"
+    | "grafana"
+    | "netlify"
+    | "wordpress"
+    | "xero"
+    | "quickbooks"
+    | "pipedrive"
+    | "helpscout"
+    | "reddit"
+    | "spotify"
+    | "servicenow"
+    | "ghost"
+    | "webflow"
+    | "coda"
     | "custom";
   createdAt: string;
   updatedAt: string;
@@ -53,7 +121,12 @@ export interface ElectronAPI {
     headless?: boolean;
     automationId?: string;
     automationName?: string;
-  }) => Promise<{ success: boolean; error?: string; cancelled?: boolean; variables?: Record<string, unknown> }>;
+  }) => Promise<{
+    success: boolean;
+    error?: string;
+    cancelled?: boolean;
+    variables?: Record<string, unknown>;
+  }>;
   cancelAutomation: () => Promise<boolean>;
   onNodeStatus: (
     callback: (data: { nodeId: string; status: string; error?: string }) => void

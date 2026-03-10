@@ -1,0 +1,79 @@
+{
+  "name": "Postgres Data Sync",
+  "description": "Queries a Postgres database for new users, sends each a welcome email via SendGrid",
+  "nodes": [
+    {
+      "id": "node-1",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "step-1",
+          "type": "postgresSelect",
+          "description": "Select new users from DB",
+          "credentialId": "my-postgres-creds",
+          "table": "users",
+          "columns": "id, email, name",
+          "where": "created_at > NOW() - INTERVAL '24 hours'",
+          "storeKey": "newUsers"
+        }
+      },
+      "position": { "x": 0, "y": 0 }
+    },
+    {
+      "id": "node-2",
+      "type": "forEach",
+      "data": {
+        "step": {
+          "id": "step-2",
+          "type": "forEach",
+          "description": "Loop through new users",
+          "array": "{{newUsers.rows}}",
+          "itemVariable": "user",
+          "indexVariable": "idx"
+        }
+      },
+      "position": { "x": 0, "y": 100 }
+    },
+    {
+      "id": "node-3",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "step-3",
+          "type": "sendgridSendEmail",
+          "description": "Send welcome email",
+          "credentialId": "my-sendgrid-key",
+          "to": "{{user.email}}",
+          "from": "welcome@myapp.com",
+          "subject": "Welcome, {{user.name}}!",
+          "content": "Thanks for signing up! We're glad to have you.",
+          "contentType": "text/plain",
+          "storeKey": "emailResult"
+        }
+      },
+      "position": { "x": 0, "y": 200 }
+    },
+    {
+      "id": "node-4",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "step-4",
+          "type": "postgresUpdate",
+          "description": "Mark user as welcomed",
+          "credentialId": "my-postgres-creds",
+          "table": "users",
+          "set": "{\"welcomed\": true}",
+          "where": "id = {{user.id}}",
+          "storeKey": "updateResult"
+        }
+      },
+      "position": { "x": 0, "y": 300 }
+    }
+  ],
+  "edges": [
+    { "id": "e1-2", "source": "node-1", "target": "node-2" },
+    { "id": "e2-3", "source": "node-2", "target": "node-3", "sourceHandle": "loop" },
+    { "id": "e3-4", "source": "node-3", "target": "node-4" }
+  ]
+}

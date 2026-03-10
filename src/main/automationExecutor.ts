@@ -5,8 +5,17 @@ import {
   ApiCallHandler,
   BrowserStepHandler,
   ConditionalEvaluator,
+  DataTransformHandler,
   DiscordStepHandler,
+  GithubHandler,
+  GoogleSheetsHandler,
+  getHandler,
+  NotionHandler,
+  PostgresHandler,
+  SendGridHandler,
   SlackStepHandler,
+  StripeHandler,
+  TelegramHandler,
   TwitterStepHandler,
   VariableManager,
   VariableOperationHandler,
@@ -28,6 +37,14 @@ export class AutomationExecutor {
   private slackHandler: SlackStepHandler;
   private variableOperationHandler: VariableOperationHandler;
   private conditionalEvaluator: ConditionalEvaluator;
+  private dataTransformHandler: DataTransformHandler;
+  private telegramHandler: TelegramHandler;
+  private githubHandler: GithubHandler;
+  private notionHandler: NotionHandler;
+  private sendgridHandler: SendGridHandler;
+  private stripeHandler: StripeHandler;
+  private postgresHandler: PostgresHandler;
+  private googleSheetsHandler: GoogleSheetsHandler;
 
   constructor() {
     this.variableManager = new VariableManager();
@@ -39,6 +56,14 @@ export class AutomationExecutor {
     this.slackHandler = new SlackStepHandler();
     this.variableOperationHandler = new VariableOperationHandler();
     this.conditionalEvaluator = new ConditionalEvaluator();
+    this.dataTransformHandler = new DataTransformHandler();
+    this.telegramHandler = new TelegramHandler();
+    this.githubHandler = new GithubHandler();
+    this.notionHandler = new NotionHandler();
+    this.sendgridHandler = new SendGridHandler();
+    this.stripeHandler = new StripeHandler();
+    this.postgresHandler = new PostgresHandler();
+    this.googleSheetsHandler = new GoogleSheetsHandler();
   }
 
   /**
@@ -547,8 +572,362 @@ export class AutomationExecutor {
           );
           break;
 
-        default:
+        // Data transformation steps
+        case "jsonParse":
+          result = this.dataTransformHandler.executeJsonParse(
+            step,
+            this.substituteVariables.bind(this),
+            variables
+          );
+          break;
+
+        case "jsonStringify":
+          result = this.dataTransformHandler.executeJsonStringify(
+            step,
+            this.substituteVariables.bind(this),
+            variables
+          );
+          break;
+
+        case "mathOperation":
+          result = this.dataTransformHandler.executeMathOperation(
+            step,
+            this.substituteVariables.bind(this),
+            variables
+          );
+          break;
+
+        case "stringOperation":
+          result = this.dataTransformHandler.executeStringOperation(
+            step,
+            this.substituteVariables.bind(this),
+            variables
+          );
+          break;
+
+        case "dateTime":
+          result = this.dataTransformHandler.executeDateTime(
+            step,
+            this.substituteVariables.bind(this),
+            variables
+          );
+          break;
+
+        case "filterArray":
+          result = this.dataTransformHandler.executeFilterArray(
+            step,
+            this.substituteVariables.bind(this),
+            variables
+          );
+          break;
+
+        case "mapArray":
+          result = this.dataTransformHandler.executeMapArray(
+            step,
+            this.substituteVariables.bind(this),
+            variables
+          );
+          break;
+
+        case "codeExecute":
+          result = this.dataTransformHandler.executeCode(
+            step,
+            this.substituteVariables.bind(this),
+            variables
+          );
+          break;
+
+        // Telegram steps
+        case "telegramSendMessage":
+          result = await this.telegramHandler.executeSendMessage(
+            step,
+            this.substituteVariables.bind(this),
+            variables
+          );
+          break;
+        case "telegramSendPhoto":
+          result = await this.telegramHandler.executeSendPhoto(
+            step,
+            this.substituteVariables.bind(this),
+            variables
+          );
+          break;
+        case "telegramEditMessage":
+          result = await this.telegramHandler.executeEditMessage(
+            step,
+            this.substituteVariables.bind(this),
+            variables
+          );
+          break;
+        case "telegramDeleteMessage":
+          result = await this.telegramHandler.executeDeleteMessage(
+            step,
+            this.substituteVariables.bind(this)
+          );
+          break;
+        case "telegramSendLocation":
+          result = await this.telegramHandler.executeSendLocation(
+            step,
+            this.substituteVariables.bind(this),
+            variables
+          );
+          break;
+        case "telegramGetUpdates":
+          result = await this.telegramHandler.executeGetUpdates(
+            step,
+            this.substituteVariables.bind(this),
+            variables
+          );
+          break;
+        case "telegramSendDocument":
+          result = await this.telegramHandler.executeSendDocument(
+            step,
+            this.substituteVariables.bind(this),
+            variables
+          );
+          break;
+
+        // GitHub steps
+        case "githubCreateIssue":
+          result = await this.githubHandler.executeCreateIssue(
+            step,
+            this.substituteVariables.bind(this),
+            variables
+          );
+          break;
+        case "githubGetIssue":
+          result = await this.githubHandler.executeGetIssue(
+            step,
+            this.substituteVariables.bind(this),
+            variables
+          );
+          break;
+        case "githubListIssues":
+          result = await this.githubHandler.executeListIssues(
+            step,
+            this.substituteVariables.bind(this),
+            variables
+          );
+          break;
+        case "githubCreateComment":
+          result = await this.githubHandler.executeCreateComment(
+            step,
+            this.substituteVariables.bind(this),
+            variables
+          );
+          break;
+        case "githubGetRepo":
+          result = await this.githubHandler.executeGetRepo(
+            step,
+            this.substituteVariables.bind(this),
+            variables
+          );
+          break;
+        case "githubListRepos":
+          result = await this.githubHandler.executeListRepos(
+            step,
+            this.substituteVariables.bind(this),
+            variables
+          );
+          break;
+        case "githubCreateRelease":
+          result = await this.githubHandler.executeCreateRelease(
+            step,
+            this.substituteVariables.bind(this),
+            variables
+          );
+          break;
+
+        // Notion steps
+        case "notionCreatePage":
+          result = await this.notionHandler.executeCreatePage(
+            step,
+            this.substituteVariables.bind(this),
+            variables
+          );
+          break;
+        case "notionGetPage":
+          result = await this.notionHandler.executeGetPage(
+            step,
+            this.substituteVariables.bind(this),
+            variables
+          );
+          break;
+        case "notionUpdatePage":
+          result = await this.notionHandler.executeUpdatePage(
+            step,
+            this.substituteVariables.bind(this),
+            variables
+          );
+          break;
+        case "notionQueryDatabase":
+          result = await this.notionHandler.executeQueryDatabase(
+            step,
+            this.substituteVariables.bind(this),
+            variables
+          );
+          break;
+        case "notionCreateDatabaseEntry":
+          result = await this.notionHandler.executeCreateDatabaseEntry(
+            step,
+            this.substituteVariables.bind(this),
+            variables
+          );
+          break;
+        case "notionSearch":
+          result = await this.notionHandler.executeSearch(
+            step,
+            this.substituteVariables.bind(this),
+            variables
+          );
+          break;
+
+        // SendGrid steps
+        case "sendgridSendEmail":
+          result = await this.sendgridHandler.executeSendEmail(
+            step,
+            this.substituteVariables.bind(this),
+            variables
+          );
+          break;
+        case "sendgridSendTemplate":
+          result = await this.sendgridHandler.executeSendTemplateEmail(
+            step,
+            this.substituteVariables.bind(this),
+            variables
+          );
+          break;
+        case "sendgridGetContacts":
+          result = await this.sendgridHandler.executeGetContacts(
+            step,
+            this.substituteVariables.bind(this),
+            variables
+          );
+          break;
+
+        // Stripe steps
+        case "stripeGetBalance":
+          result = await this.stripeHandler.executeGetBalance(
+            step,
+            this.substituteVariables.bind(this),
+            variables
+          );
+          break;
+        case "stripeCreateCustomer":
+          result = await this.stripeHandler.executeCreateCustomer(
+            step,
+            this.substituteVariables.bind(this),
+            variables
+          );
+          break;
+        case "stripeGetCustomer":
+          result = await this.stripeHandler.executeGetCustomer(
+            step,
+            this.substituteVariables.bind(this),
+            variables
+          );
+          break;
+        case "stripeListCustomers":
+          result = await this.stripeHandler.executeListCustomers(
+            step,
+            this.substituteVariables.bind(this),
+            variables
+          );
+          break;
+        case "stripeCreateCharge":
+          result = await this.stripeHandler.executeCreateCharge(
+            step,
+            this.substituteVariables.bind(this),
+            variables
+          );
+          break;
+        case "stripeCreatePaymentIntent":
+          result = await this.stripeHandler.executeCreatePaymentIntent(
+            step,
+            this.substituteVariables.bind(this),
+            variables
+          );
+          break;
+        case "stripeListCharges":
+          result = await this.stripeHandler.executeListCharges(
+            step,
+            this.substituteVariables.bind(this),
+            variables
+          );
+          break;
+
+        // Postgres steps
+        case "postgresQuery":
+          result = await this.postgresHandler.executeQuery(
+            step,
+            this.substituteVariables.bind(this),
+            variables
+          );
+          break;
+        case "postgresInsert":
+          result = await this.postgresHandler.executeInsert(
+            step,
+            this.substituteVariables.bind(this),
+            variables
+          );
+          break;
+        case "postgresSelect":
+          result = await this.postgresHandler.executeSelect(
+            step,
+            this.substituteVariables.bind(this),
+            variables
+          );
+          break;
+        case "postgresUpdate":
+          result = await this.postgresHandler.executeUpdate(
+            step,
+            this.substituteVariables.bind(this),
+            variables
+          );
+          break;
+
+        // Google Sheets steps
+        case "googleSheetsReadRows":
+          result = await this.googleSheetsHandler.executeReadRows(
+            step,
+            this.substituteVariables.bind(this),
+            variables
+          );
+          break;
+        case "googleSheetsAppendRow":
+          result = await this.googleSheetsHandler.executeAppendRow(
+            step,
+            this.substituteVariables.bind(this),
+            variables
+          );
+          break;
+        case "googleSheetsUpdateRow":
+          result = await this.googleSheetsHandler.executeUpdateRow(
+            step,
+            this.substituteVariables.bind(this),
+            variables
+          );
+          break;
+        case "googleSheetsClear":
+          result = await this.googleSheetsHandler.executeClearRange(
+            step,
+            this.substituteVariables.bind(this),
+            variables
+          );
+          break;
+
+        default: {
+          // Check handler registry for new integrations
+          const handler = getHandler(step.type);
+          if (handler) {
+            result = await handler(step as unknown as Record<string, unknown>, {
+              substituteVariables: this.substituteVariables.bind(this),
+              variables,
+            });
+            break;
+          }
           throw new Error(`Unknown step type: ${step.type}`);
+        }
       }
 
       const duration = performance.now() - startTime;

@@ -1,3 +1,4 @@
+import type { StepApiCall } from "@app-types/steps";
 import { Button } from "@components/ui/button";
 import { Input } from "@components/ui/input";
 import { Label } from "@components/ui/label";
@@ -44,7 +45,7 @@ export function ApiCallStep({ step, id, onUpdate }: StepProps) {
         <Select
           value={step.method || "GET"}
           onValueChange={(value) =>
-            onUpdate(id, "update", { step: { ...step, method: value as "GET" | "POST" } })
+            onUpdate(id, "update", { step: { ...step, method: value as StepApiCall["method"] } })
           }
         >
           <SelectTrigger className="text-xs">
@@ -53,6 +54,11 @@ export function ApiCallStep({ step, id, onUpdate }: StepProps) {
           <SelectContent>
             <SelectItem value="GET">GET</SelectItem>
             <SelectItem value="POST">POST</SelectItem>
+            <SelectItem value="PUT">PUT</SelectItem>
+            <SelectItem value="DELETE">DELETE</SelectItem>
+            <SelectItem value="PATCH">PATCH</SelectItem>
+            <SelectItem value="HEAD">HEAD</SelectItem>
+            <SelectItem value="OPTIONS">OPTIONS</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -71,8 +77,8 @@ export function ApiCallStep({ step, id, onUpdate }: StepProps) {
         </p>
       </div>
 
-      {/* Body (for POST) */}
-      {step.method === "POST" && (
+      {/* Body (for POST/PUT/PATCH/DELETE) */}
+      {step.method && ["POST", "PUT", "PATCH", "DELETE"].includes(step.method) && (
         <div className="space-y-2">
           <Label className="text-xs">Request Body (JSON)</Label>
           <Textarea
@@ -144,7 +150,7 @@ export function ApiCallStep({ step, id, onUpdate }: StepProps) {
       <div className="bg-slate-50 p-3 rounded border border-slate-200">
         <p className="text-xs font-semibold mb-2">Example</p>
         <pre className="text-xs overflow-x-auto whitespace-pre-wrap wrap-break-words">
-          {`GET: https://api.example.com/price?id={{productId}}\n\nPOST: https://api.example.com/submit\nBody: {"email": "{{userEmail}}", "name": "John"}\nHeaders: {"Authorization": "Bearer {{token}}"}`}
+          {`GET: https://api.example.com/price?id={{productId}}\n\nPOST/PUT/PATCH: https://api.example.com/submit\nBody: {"email": "{{userEmail}}", "name": "John"}\nHeaders: {"Authorization": "Bearer {{token}}"}\n\nDELETE: https://api.example.com/item/{{itemId}}`}
         </pre>
       </div>
     </div>

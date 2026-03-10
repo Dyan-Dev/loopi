@@ -38,32 +38,32 @@ export function CredentialSelector({
 
   return (
     <div className="space-y-2">
-      <Label>{label}</Label>
-      <div className="flex gap-2">
-        <Select value={value} onValueChange={onChange} disabled={loading}>
-          <SelectTrigger className="flex-1">
-            <SelectValue placeholder={loading ? "Loading..." : "Select credential"} />
-          </SelectTrigger>
-          <SelectContent>
-            {credentials.length === 0 ? (
-              <div className="p-2 text-sm text-muted-foreground text-center">
-                No credentials found
-              </div>
-            ) : (
-              credentials.map((cred) => (
-                <SelectItem key={cred.id} value={cred.id}>
-                  <div className="flex items-center gap-2">
-                    <Key className="h-3 w-3" />
-                    {cred.name}
-                  </div>
-                </SelectItem>
-              ))
-            )}
-          </SelectContent>
-        </Select>
-      </div>
+      <Label className="text-xs">{label}</Label>
+      <Select value={value} onValueChange={onChange} disabled={loading}>
+        <SelectTrigger className="text-xs">
+          <SelectValue placeholder={loading ? "Loading..." : "Select credential"} />
+        </SelectTrigger>
+        <SelectContent>
+          {credentials.length === 0 ? (
+            <div className="p-2 text-xs text-muted-foreground text-center">
+              No {type} credentials found
+            </div>
+          ) : (
+            credentials.map((cred) => (
+              <SelectItem key={cred.id} value={cred.id}>
+                <div className="flex items-center gap-2">
+                  <Key className="h-3 w-3" />
+                  {cred.name}
+                </div>
+              </SelectItem>
+            ))
+          )}
+        </SelectContent>
+      </Select>
       {credentials.length === 0 && !loading && (
-        <p className="text-xs text-muted-foreground">No {type} credentials found.</p>
+        <p className="text-xs text-muted-foreground">
+          Add {type} credentials in Settings &gt; Credentials.
+        </p>
       )}
     </div>
   );

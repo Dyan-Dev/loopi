@@ -1,0 +1,124 @@
+{
+  "id": "data-transform-demo",
+  "name": "Data Transformation Pipeline",
+  "description": "Demonstrates JSON parsing, math, string operations, filtering, mapping, and code execution",
+  "updatedAt": "2024-03-07",
+  "nodes": [
+    {
+      "id": "1",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "1",
+          "type": "apiCall",
+          "description": "Fetch user data from API",
+          "method": "GET",
+          "url": "https://jsonplaceholder.typicode.com/users",
+          "storeKey": "apiResponse"
+        }
+      },
+      "position": { "x": 100, "y": 100 }
+    },
+    {
+      "id": "2",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "2",
+          "type": "dateTime",
+          "description": "Get current timestamp",
+          "operation": "now",
+          "storeKey": "fetchTime"
+        }
+      },
+      "position": { "x": 100, "y": 250 }
+    },
+    {
+      "id": "3",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "3",
+          "type": "mapArray",
+          "description": "Extract just names from users",
+          "sourceVariable": "apiResponse",
+          "expression": "name",
+          "storeKey": "userNames"
+        }
+      },
+      "position": { "x": 100, "y": 400 }
+    },
+    {
+      "id": "4",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "4",
+          "type": "filterArray",
+          "description": "Filter users with .biz email",
+          "sourceVariable": "apiResponse",
+          "condition": "contains",
+          "field": "email",
+          "compareValue": ".biz",
+          "storeKey": "bizUsers"
+        }
+      },
+      "position": { "x": 100, "y": 550 }
+    },
+    {
+      "id": "5",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "5",
+          "type": "mathOperation",
+          "description": "Count filtered users",
+          "operation": "add",
+          "valueA": "{{bizUsers.length}}",
+          "valueB": "0",
+          "storeKey": "bizCount"
+        }
+      },
+      "position": { "x": 100, "y": 700 }
+    },
+    {
+      "id": "6",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "6",
+          "type": "stringOperation",
+          "description": "Join user names into comma-separated string",
+          "operation": "join",
+          "value": "userNames",
+          "param1": ", ",
+          "storeKey": "namesList"
+        }
+      },
+      "position": { "x": 100, "y": 850 }
+    },
+    {
+      "id": "7",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "7",
+          "type": "codeExecute",
+          "description": "Build summary report",
+          "code": "return `Fetched at ${fetchTime}: ${userNames.length} total users, ${bizCount} with .biz email. Names: ${namesList}`",
+          "storeKey": "report"
+        }
+      },
+      "position": { "x": 100, "y": 1000 }
+    }
+  ],
+  "edges": [
+    { "id": "e1-2", "source": "1", "target": "2" },
+    { "id": "e2-3", "source": "2", "target": "3" },
+    { "id": "e3-4", "source": "3", "target": "4" },
+    { "id": "e4-5", "source": "4", "target": "5" },
+    { "id": "e5-6", "source": "5", "target": "6" },
+    { "id": "e6-7", "source": "6", "target": "7" }
+  ],
+  "steps": []
+}

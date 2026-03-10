@@ -2,6 +2,7 @@ import { AutomationBuilder } from "@components/AutomationBuilder";
 import { Dashboard } from "@components/Dashboard";
 import { Settings } from "@components/Settings";
 import { Button } from "@components/ui/button";
+import { Toaster } from "@components/ui/sonner";
 import { Tabs, TabsList, TabsTrigger } from "@components/ui/tabs";
 import { WorkflowScheduler } from "@components/WorkflowScheduler";
 import { Toaster } from "@components/ui/sonner";

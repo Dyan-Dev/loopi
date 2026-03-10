@@ -1,0 +1,59 @@
+{
+  "name": "Notion Content Pipeline",
+  "description": "Queries a Notion database, uses AI to summarize entries, and creates a new summary page",
+  "nodes": [
+    {
+      "id": "node-1",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "step-1",
+          "type": "notionQueryDatabase",
+          "description": "Query content database",
+          "credentialId": "my-notion-key",
+          "databaseId": "{{NOTION_DB_ID}}",
+          "filter": "{\"property\": \"Status\", \"select\": {\"equals\": \"Published\"}}",
+          "storeKey": "entries"
+        }
+      },
+      "position": { "x": 0, "y": 0 }
+    },
+    {
+      "id": "node-2",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "step-2",
+          "type": "aiOpenAI",
+          "description": "Summarize content entries",
+          "apiKey": "{{OPENAI_KEY}}",
+          "model": "gpt-4o-mini",
+          "prompt": "Summarize these content entries in 3 bullet points: {{JSON.stringify(entries)}}",
+          "storeKey": "summary"
+        }
+      },
+      "position": { "x": 0, "y": 100 }
+    },
+    {
+      "id": "node-3",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "step-3",
+          "type": "notionCreatePage",
+          "description": "Create summary page in Notion",
+          "credentialId": "my-notion-key",
+          "parentId": "{{NOTION_PARENT_PAGE}}",
+          "title": "Weekly Content Summary",
+          "content": "{{summary}}",
+          "storeKey": "newPage"
+        }
+      },
+      "position": { "x": 0, "y": 200 }
+    }
+  ],
+  "edges": [
+    { "id": "e1-2", "source": "node-1", "target": "node-2" },
+    { "id": "e2-3", "source": "node-2", "target": "node-3" }
+  ]
+}

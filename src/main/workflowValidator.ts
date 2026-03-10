@@ -3,7 +3,7 @@
  * Pure function, zero Electron deps. Validates workflow structure before execution.
  */
 
-interface ValidatorNode {
+export interface ValidatorNode {
   id: string;
   type: string;
   data: {
@@ -19,7 +19,7 @@ interface ValidatorNode {
   position?: { x: number; y: number };
 }
 
-interface ValidatorEdge {
+export interface ValidatorEdge {
   id: string;
   source: string;
   target: string;
@@ -36,10 +36,7 @@ export interface ValidationResult {
  * Validate a workflow before execution.
  * Returns errors (block execution) and warnings (informational).
  */
-export function validateWorkflow(
-  nodes: ValidatorNode[],
-  edges: ValidatorEdge[]
-): ValidationResult {
+export function validateWorkflow(nodes: ValidatorNode[], edges: ValidatorEdge[]): ValidationResult {
   const errors: string[] = [];
   const warnings: string[] = [];
 
@@ -143,10 +140,7 @@ export function validateWorkflow(
     if (step.type === "forEach" && !step.arrayVariable) {
       errors.push(`Node "${node.id}": forEach step is missing arrayVariable.`);
     }
-    if (
-      (step.type === "setVariable" || step.type === "modifyVariable") &&
-      !step.variableName
-    ) {
+    if ((step.type === "setVariable" || step.type === "modifyVariable") && !step.variableName) {
       warnings.push(`Node "${node.id}": ${step.type} step is missing variableName.`);
     }
   }

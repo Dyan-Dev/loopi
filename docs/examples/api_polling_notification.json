@@ -1,0 +1,113 @@
+{
+  "name": "API Polling with Notification",
+  "description": "Polls an API endpoint, checks if data matches a condition, and sends a Discord webhook notification when triggered",
+  "nodes": [
+    {
+      "id": "1",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "1",
+          "type": "setVariable",
+          "description": "Set API endpoint URL",
+          "variableName": "apiUrl",
+          "value": "https://httpbin.org/json"
+        }
+      },
+      "position": { "x": 250, "y": 50 }
+    },
+    {
+      "id": "2",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "2",
+          "type": "setVariable",
+          "description": "Set expected status",
+          "variableName": "expectedStatus",
+          "value": "active"
+        }
+      },
+      "position": { "x": 250, "y": 170 }
+    },
+    {
+      "id": "3",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "3",
+          "type": "apiCall",
+          "description": "Poll API endpoint",
+          "method": "GET",
+          "url": "{{apiUrl}}",
+          "storeKey": "pollResult"
+        }
+      },
+      "position": { "x": 250, "y": 290 }
+    },
+    {
+      "id": "4",
+      "type": "variableConditional",
+      "data": {
+        "step": {
+          "id": "4",
+          "type": "variableConditional",
+          "description": "Check if status matches expected",
+          "variableConditionType": "variableExists",
+          "variableName": "pollResult"
+        }
+      },
+      "position": { "x": 250, "y": 410 }
+    },
+    {
+      "id": "5",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "5",
+          "type": "setVariable",
+          "description": "Build notification message",
+          "variableName": "notificationMsg",
+          "value": "API Poll Result: Data received from {{apiUrl}}. Status check passed."
+        }
+      },
+      "position": { "x": 100, "y": 530 }
+    },
+    {
+      "id": "6",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "6",
+          "type": "discordSendWebhook",
+          "description": "Send Discord notification",
+          "webhookUrl": "https://discord.com/api/webhooks/YOUR_WEBHOOK_ID/YOUR_WEBHOOK_TOKEN",
+          "content": "{{notificationMsg}}"
+        }
+      },
+      "position": { "x": 100, "y": 650 }
+    },
+    {
+      "id": "7",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "7",
+          "type": "setVariable",
+          "description": "Log no-data status",
+          "variableName": "status",
+          "value": "No data received - will retry on next scheduled run"
+        }
+      },
+      "position": { "x": 400, "y": 530 }
+    }
+  ],
+  "edges": [
+    { "id": "e1-2", "source": "1", "target": "2" },
+    { "id": "e2-3", "source": "2", "target": "3" },
+    { "id": "e3-4", "source": "3", "target": "4" },
+    { "id": "e4-5", "source": "4", "target": "5", "sourceHandle": "if" },
+    { "id": "e4-7", "source": "4", "target": "7", "sourceHandle": "else" },
+    { "id": "e5-6", "source": "5", "target": "6" }
+  ]
+}

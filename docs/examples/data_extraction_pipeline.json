@@ -1,0 +1,114 @@
+{
+  "name": "Data Extraction Pipeline",
+  "description": "Extracts product data from a page, builds a structured summary, and sends it to an API endpoint",
+  "nodes": [
+    {
+      "id": "1",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "1",
+          "type": "navigate",
+          "description": "Go to product page",
+          "value": "https://books.toscrape.com/catalogue/a-light-in-the-attic_1000/index.html"
+        }
+      },
+      "position": { "x": 250, "y": 50 }
+    },
+    {
+      "id": "2",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "2",
+          "type": "extract",
+          "description": "Extract product name",
+          "selector": "h1",
+          "storeKey": "productName"
+        }
+      },
+      "position": { "x": 250, "y": 170 }
+    },
+    {
+      "id": "3",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "3",
+          "type": "extract",
+          "description": "Extract price",
+          "selector": ".price_color",
+          "storeKey": "productPrice"
+        }
+      },
+      "position": { "x": 250, "y": 290 }
+    },
+    {
+      "id": "4",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "4",
+          "type": "extract",
+          "description": "Extract product description",
+          "selector": "#product_description ~ p",
+          "storeKey": "productDescription"
+        }
+      },
+      "position": { "x": 250, "y": 410 }
+    },
+    {
+      "id": "5",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "5",
+          "type": "extract",
+          "description": "Extract availability",
+          "selector": ".instock.availability",
+          "storeKey": "availability"
+        }
+      },
+      "position": { "x": 250, "y": 530 }
+    },
+    {
+      "id": "6",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "6",
+          "type": "setVariable",
+          "description": "Build structured summary",
+          "variableName": "summary",
+          "value": "Product: {{productName}} | Price: {{productPrice}} | Status: {{availability}}"
+        }
+      },
+      "position": { "x": 250, "y": 650 }
+    },
+    {
+      "id": "7",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "7",
+          "type": "apiCall",
+          "description": "Send data to webhook",
+          "method": "POST",
+          "url": "https://httpbin.org/post",
+          "headers": { "Content-Type": "application/json" },
+          "body": "{\"name\": \"{{productName}}\", \"price\": \"{{productPrice}}\", \"description\": \"{{productDescription}}\"}",
+          "storeKey": "apiResponse"
+        }
+      },
+      "position": { "x": 250, "y": 770 }
+    }
+  ],
+  "edges": [
+    { "id": "e1-2", "source": "1", "target": "2" },
+    { "id": "e2-3", "source": "2", "target": "3" },
+    { "id": "e3-4", "source": "3", "target": "4" },
+    { "id": "e4-5", "source": "4", "target": "5" },
+    { "id": "e5-6", "source": "5", "target": "6" },
+    { "id": "e6-7", "source": "6", "target": "7" }
+  ]
+}

@@ -1,11 +1,11 @@
 import type { AutomationStep, Node, ReactFlowEdge, ReactFlowNode } from "@app-types";
-import { toast } from "sonner";
 import { validateAndCreateEdge } from "@hooks/utils/edgeUtils";
 import { updateOrDeleteNode } from "@hooks/utils/nodeActions";
 import { createNode } from "@hooks/utils/nodeFactory";
 import type { Dispatch, SetStateAction } from "react";
 import { useCallback } from "react";
 import { addEdge, Connection } from "reactflow";
+import { toast } from "sonner";
 
 interface UseNodeActionsArgs {
   nodes: ReactFlowNode[];
@@ -96,7 +96,9 @@ export default function useNodeActions({
                 (e) => e.source === sourceId && !e.sourceHandle
               ).length;
               if (outgoingCount >= 1) {
-                toast.warning("Cannot add more than one outgoing edge from a non-conditional node.");
+                toast.warning(
+                  "Cannot add more than one outgoing edge from a non-conditional node."
+                );
                 maxOutgoing = true;
                 return edgesInner;
               }

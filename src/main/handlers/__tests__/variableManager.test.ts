@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import { VariableManager } from "../variableManager";
 
 describe("VariableManager", () => {
@@ -118,9 +118,7 @@ describe("VariableManager", () => {
     });
 
     it("should substitute multiple variables in one string", () => {
-      expect(vm.substituteVariables("{{greeting}} {{target}}")).toBe(
-        "Hello World"
-      );
+      expect(vm.substituteVariables("{{greeting}} {{target}}")).toBe("Hello World");
     });
 
     it("should substitute dot notation variables", () => {
@@ -136,9 +134,7 @@ describe("VariableManager", () => {
     });
 
     it("should JSON.stringify object values", () => {
-      expect(vm.substituteVariables("data: {{obj}}")).toBe(
-        'data: {"a":1,"b":2}'
-      );
+      expect(vm.substituteVariables("data: {{obj}}")).toBe('data: {"a":1,"b":2}');
     });
 
     it('should return "" when input is null or undefined', () => {
@@ -147,15 +143,11 @@ describe("VariableManager", () => {
     });
 
     it("should substitute nested array+dot paths ({{users[0].name}})", () => {
-      expect(vm.substituteVariables("Name: {{users[0].name}}")).toBe(
-        "Name: Frank"
-      );
+      expect(vm.substituteVariables("Name: {{users[0].name}}")).toBe("Name: Frank");
     });
 
     it("should pass through a string with no templates", () => {
-      expect(vm.substituteVariables("no templates here")).toBe(
-        "no templates here"
-      );
+      expect(vm.substituteVariables("no templates here")).toBe("no templates here");
     });
 
     it("should handle whitespace inside templates {{ var }}", () => {
@@ -163,9 +155,9 @@ describe("VariableManager", () => {
     });
 
     it("should handle mixed text and multiple templates", () => {
-      expect(
-        vm.substituteVariables("Say {{greeting}} to {{user.name}} ({{count}})")
-      ).toBe("Say Hello to Eve (5)");
+      expect(vm.substituteVariables("Say {{greeting}} to {{user.name}} ({{count}})")).toBe(
+        "Say Hello to Eve (5)"
+      );
     });
 
     it('should return "" for an empty string input', () => {
@@ -209,9 +201,7 @@ describe("VariableManager", () => {
 
     it("should allow set and substituteVariables roundtrip", () => {
       vm.setVariable("lang", "TypeScript");
-      expect(vm.substituteVariables("I love {{lang}}")).toBe(
-        "I love TypeScript"
-      );
+      expect(vm.substituteVariables("I love {{lang}}")).toBe("I love TypeScript");
     });
   });
 });

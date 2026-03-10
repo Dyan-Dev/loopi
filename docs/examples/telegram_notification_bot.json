@@ -1,0 +1,55 @@
+{
+  "name": "Telegram Notification Bot",
+  "description": "Scrapes a webpage, extracts key info, and sends a Telegram notification with the result",
+  "nodes": [
+    {
+      "id": "node-1",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "step-1",
+          "type": "navigate",
+          "description": "Go to news site",
+          "url": "https://news.ycombinator.com"
+        }
+      },
+      "position": { "x": 0, "y": 0 }
+    },
+    {
+      "id": "node-2",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "step-2",
+          "type": "extract",
+          "description": "Extract top story title",
+          "selector": ".titleline > a",
+          "attribute": "textContent",
+          "storeKey": "topStory"
+        }
+      },
+      "position": { "x": 0, "y": 100 }
+    },
+    {
+      "id": "node-3",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "step-3",
+          "type": "telegramSendMessage",
+          "description": "Send top story to Telegram",
+          "credentialId": "my-telegram-bot",
+          "chatId": "{{TELEGRAM_CHAT_ID}}",
+          "text": "Top HN Story: {{topStory}}",
+          "parseMode": "Markdown",
+          "storeKey": "telegramResult"
+        }
+      },
+      "position": { "x": 0, "y": 200 }
+    }
+  ],
+  "edges": [
+    { "id": "e1-2", "source": "node-1", "target": "node-2" },
+    { "id": "e2-3", "source": "node-2", "target": "node-3" }
+  ]
+}

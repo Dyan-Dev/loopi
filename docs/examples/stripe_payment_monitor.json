@@ -1,0 +1,55 @@
+{
+  "name": "Stripe Payment Monitor",
+  "description": "Checks Stripe balance, lists recent charges, and sends a Slack summary",
+  "nodes": [
+    {
+      "id": "node-1",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "step-1",
+          "type": "stripeGetBalance",
+          "description": "Get Stripe balance",
+          "credentialId": "my-stripe-key",
+          "storeKey": "balance"
+        }
+      },
+      "position": { "x": 0, "y": 0 }
+    },
+    {
+      "id": "node-2",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "step-2",
+          "type": "stripeListCharges",
+          "description": "List recent charges",
+          "credentialId": "my-stripe-key",
+          "limit": 10,
+          "storeKey": "charges"
+        }
+      },
+      "position": { "x": 0, "y": 100 }
+    },
+    {
+      "id": "node-3",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "step-3",
+          "type": "slackSendMessage",
+          "description": "Send payment summary to Slack",
+          "credentialId": "my-slack-token",
+          "channel": "#finance",
+          "text": "Stripe Balance: ${{balance.available[0].amount / 100}} | Recent charges: {{charges.data.length}}",
+          "storeKey": "slackResult"
+        }
+      },
+      "position": { "x": 0, "y": 200 }
+    }
+  ],
+  "edges": [
+    { "id": "e1-2", "source": "node-1", "target": "node-2" },
+    { "id": "e2-3", "source": "node-2", "target": "node-3" }
+  ]
+}

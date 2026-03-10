@@ -1,0 +1,113 @@
+{
+  "name": "Loop Data Processing",
+  "description": "Demonstrates forEach loop: iterates over a list of URLs, navigates to each, extracts page titles, and builds a summary after the loop",
+  "nodes": [
+    {
+      "id": "1",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "1",
+          "type": "setVariable",
+          "description": "Set list of URLs to process",
+          "variableName": "urls",
+          "value": "[\"https://en.wikipedia.org/wiki/TypeScript\", \"https://en.wikipedia.org/wiki/React_(software)\", \"https://en.wikipedia.org/wiki/Electron_(software_framework)\"]"
+        }
+      },
+      "position": { "x": 250, "y": 50 }
+    },
+    {
+      "id": "2",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "2",
+          "type": "setVariable",
+          "description": "Initialize results array",
+          "variableName": "results",
+          "value": "[]"
+        }
+      },
+      "position": { "x": 250, "y": 170 }
+    },
+    {
+      "id": "3",
+      "type": "forEach",
+      "data": {
+        "step": {
+          "id": "3",
+          "type": "forEach",
+          "description": "Loop through each URL",
+          "arrayVariable": "urls",
+          "itemVariable": "currentUrl",
+          "indexVariable": "urlIndex"
+        }
+      },
+      "position": { "x": 250, "y": 290 }
+    },
+    {
+      "id": "4",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "4",
+          "type": "navigate",
+          "description": "Navigate to current URL",
+          "value": "{{currentUrl}}"
+        }
+      },
+      "position": { "x": 250, "y": 410 }
+    },
+    {
+      "id": "5",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "5",
+          "type": "extract",
+          "description": "Extract page title",
+          "selector": "h1",
+          "storeKey": "pageTitle"
+        }
+      },
+      "position": { "x": 250, "y": 530 }
+    },
+    {
+      "id": "6",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "6",
+          "type": "modifyVariable",
+          "description": "Append title to results",
+          "variableName": "results",
+          "operation": "append",
+          "value": "{{pageTitle}}"
+        }
+      },
+      "position": { "x": 250, "y": 650 }
+    },
+    {
+      "id": "7",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "7",
+          "type": "setVariable",
+          "description": "Build final summary",
+          "variableName": "finalSummary",
+          "value": "Processed {{urlIndex}} pages. Titles collected: {{results}}"
+        }
+      },
+      "position": { "x": 250, "y": 810 }
+    }
+  ],
+  "edges": [
+    { "id": "e1-2", "source": "1", "target": "2" },
+    { "id": "e2-3", "source": "2", "target": "3" },
+    { "id": "e3-4", "source": "3", "target": "4", "sourceHandle": "loop" },
+    { "id": "e4-5", "source": "4", "target": "5" },
+    { "id": "e5-6", "source": "5", "target": "6" },
+    { "id": "e3-7", "source": "3", "target": "7", "sourceHandle": "done" }
+  ]
+}
