@@ -1,6 +1,5 @@
 import type { Credential } from "@app-types/globals";
 import { Key, Plus, Trash2 } from "lucide-react";
-import { toast } from "sonner";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "./ui/button";

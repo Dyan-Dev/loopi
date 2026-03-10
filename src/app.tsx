@@ -5,7 +5,6 @@ import { Button } from "@components/ui/button";
 import { Toaster } from "@components/ui/sonner";
 import { Tabs, TabsList, TabsTrigger } from "@components/ui/tabs";
 import { WorkflowScheduler } from "@components/WorkflowScheduler";
-import { Toaster } from "@components/ui/sonner";
 import { Bot, Grid, Settings as SettingsIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import * as ReactDOM from "react-dom/client";
