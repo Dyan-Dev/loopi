@@ -226,15 +226,23 @@ export function registerIPCHandlers(
       // Save execution history
       const record: ExecutionRecord = {
         id: `exec_${Date.now()}`,
-        automationId: (automation as AutomationExecuteRequest & { automationId?: string }).automationId || "unknown",
-        automationName: (automation as AutomationExecuteRequest & { automationName?: string }).automationName || "Untitled",
+        automationId:
+          (automation as AutomationExecuteRequest & { automationId?: string }).automationId ||
+          "unknown",
+        automationName:
+          (automation as AutomationExecuteRequest & { automationName?: string }).automationName ||
+          "Untitled",
         timestamp: new Date().toISOString(),
         duration: Date.now() - startTime,
         success: true,
         stepCount: stepRecords.length,
         steps: stepRecords,
       };
-      try { historyStore.save(record); } catch (e) { logger.error("Failed to save execution history", e); }
+      try {
+        historyStore.save(record);
+      } catch (e) {
+        logger.error("Failed to save execution history", e);
+      }
 
       return { success: true, variables: executor.getVariables() };
     } catch (error) {
@@ -245,8 +253,12 @@ export function registerIPCHandlers(
       // Save failed/cancelled execution history
       const record: ExecutionRecord = {
         id: `exec_${Date.now()}`,
-        automationId: (automation as AutomationExecuteRequest & { automationId?: string }).automationId || "unknown",
-        automationName: (automation as AutomationExecuteRequest & { automationName?: string }).automationName || "Untitled",
+        automationId:
+          (automation as AutomationExecuteRequest & { automationId?: string }).automationId ||
+          "unknown",
+        automationName:
+          (automation as AutomationExecuteRequest & { automationName?: string }).automationName ||
+          "Untitled",
         timestamp: new Date().toISOString(),
         duration: Date.now() - startTime,
         success: false,
@@ -255,7 +267,11 @@ export function registerIPCHandlers(
         stepCount: stepRecords.length,
         steps: stepRecords,
       };
-      try { historyStore.save(record); } catch (e) { logger.error("Failed to save execution history", e); }
+      try {
+        historyStore.save(record);
+      } catch (e) {
+        logger.error("Failed to save execution history", e);
+      }
 
       return { success: false, error: message, cancelled };
     }
@@ -571,127 +587,140 @@ export function registerIPCHandlers(
   /**
    * AI Copilot: Explain or suggest based on workflow context
    */
-  ipcMain.handle("ai:copilot", async (_event, params: {
-    action: "explain" | "suggest" | "fix";
-    context: {
-      nodes: unknown[];
-      edges: unknown[];
-      selectedNodeId?: string;
-      error?: string;
-    };
-    provider: "openai" | "anthropic" | "ollama";
-    credentialId?: string;
-    apiKey?: string;
-    model?: string;
-    baseUrl?: string;
-  }) => {
-    try {
-      const generator = new WorkflowGenerator();
-      const apiKey = params.credentialId || params.apiKey
-        ? await (async () => {
-            if (params.credentialId) {
-              const { getCredential: getCred } = await import("./credentialsStore");
-              const cred = await getCred(params.credentialId!);
-              if (!cred) throw new Error("Credential not found");
-              return cred.data.apiKey || cred.data.key || cred.data.token || cred.data.accessToken || "";
-            }
-            return params.apiKey || "";
-          })()
-        : "";
-
-      const systemPrompt = buildCopilotPrompt(params.action, params.context);
-
-      let userPrompt: string;
-      if (params.action === "explain") {
-        userPrompt = params.context.selectedNodeId
-          ? `Explain what node "${params.context.selectedNodeId}" does in this workflow and how it fits in the overall flow.`
-          : "Explain what this entire workflow does, step by step.";
-      } else if (params.action === "suggest") {
-        userPrompt = "Based on this workflow, suggest what steps to add next. Be specific with step types and configurations.";
-      } else {
-        userPrompt = `The workflow encountered this error: "${params.context.error}". Explain the likely cause and how to fix it.`;
+  ipcMain.handle(
+    "ai:copilot",
+    async (
+      _event,
+      params: {
+        action: "explain" | "suggest" | "fix";
+        context: {
+          nodes: unknown[];
+          edges: unknown[];
+          selectedNodeId?: string;
+          error?: string;
+        };
+        provider: "openai" | "anthropic" | "ollama";
+        credentialId?: string;
+        apiKey?: string;
+        model?: string;
+        baseUrl?: string;
       }
+    ) => {
+      try {
+        const apiKey =
+          params.credentialId || params.apiKey
+            ? await (async () => {
+                if (params.credentialId) {
+                  const { getCredential: getCred } = await import("./credentialsStore");
+                  const cred = await getCred(params.credentialId!);
+                  if (!cred) throw new Error("Credential not found");
+                  return (
+                    cred.data.apiKey ||
+                    cred.data.key ||
+                    cred.data.token ||
+                    cred.data.accessToken ||
+                    ""
+                  );
+                }
+                return params.apiKey || "";
+              })()
+            : "";
 
-      // Use the same AI call infrastructure
-      const callParams = {
-        prompt: userPrompt,
-        provider: params.provider,
-        apiKey: apiKey,
-        model: params.model,
-        baseUrl: params.baseUrl,
-      };
+        const systemPrompt = buildCopilotPrompt(params.action, params.context);
 
-      let response: string;
-      if (params.provider === "openai") {
-        const baseUrl = callParams.baseUrl || "https://api.openai.com/v1";
-        const model = callParams.model || "gpt-4o-mini";
-        const res = await axios.post(
-          `${baseUrl}/chat/completions`,
-          {
-            model,
-            messages: [
-              { role: "system", content: systemPrompt },
-              { role: "user", content: userPrompt },
-            ],
-            temperature: 0.3,
-            max_tokens: 1024,
-          },
-          {
-            headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-            timeout: 30000,
-          }
-        );
-        response = res.data.choices[0]?.message?.content || "";
-      } else if (params.provider === "anthropic") {
-        const baseUrl = callParams.baseUrl || "https://api.anthropic.com";
-        const model = callParams.model || "claude-sonnet-4-5-20250929";
-        const res = await axios.post(
-          `${baseUrl}/v1/messages`,
-          {
-            model,
-            system: systemPrompt,
-            messages: [{ role: "user", content: userPrompt }],
-            max_tokens: 1024,
-            temperature: 0.3,
-          },
-          {
-            headers: {
-              "x-api-key": apiKey,
-              "anthropic-version": "2023-06-01",
-              "Content-Type": "application/json",
+        let userPrompt: string;
+        if (params.action === "explain") {
+          userPrompt = params.context.selectedNodeId
+            ? `Explain what node "${params.context.selectedNodeId}" does in this workflow and how it fits in the overall flow.`
+            : "Explain what this entire workflow does, step by step.";
+        } else if (params.action === "suggest") {
+          userPrompt =
+            "Based on this workflow, suggest what steps to add next. Be specific with step types and configurations.";
+        } else {
+          userPrompt = `The workflow encountered this error: "${params.context.error}". Explain the likely cause and how to fix it.`;
+        }
+
+        // Use the same AI call infrastructure
+        const callParams = {
+          prompt: userPrompt,
+          provider: params.provider,
+          apiKey: apiKey,
+          model: params.model,
+          baseUrl: params.baseUrl,
+        };
+
+        let response: string;
+        if (params.provider === "openai") {
+          const baseUrl = callParams.baseUrl || "https://api.openai.com/v1";
+          const model = callParams.model || "gpt-4o-mini";
+          const res = await axios.post(
+            `${baseUrl}/chat/completions`,
+            {
+              model,
+              messages: [
+                { role: "system", content: systemPrompt },
+                { role: "user", content: userPrompt },
+              ],
+              temperature: 0.3,
+              max_tokens: 1024,
             },
-            timeout: 30000,
-          }
-        );
-        const content = res.data.content;
-        response = Array.isArray(content) && content.length > 0 ? content[0].text || "" : "";
-      } else {
-        const baseUrl = callParams.baseUrl || "http://localhost:11434";
-        const model = callParams.model || "mistral";
-        const res = await axios.post(
-          `${baseUrl}/api/chat`,
-          {
-            model,
-            messages: [
-              { role: "system", content: systemPrompt },
-              { role: "user", content: userPrompt },
-            ],
-            stream: false,
-          },
-          { timeout: 60000 }
-        );
-        response = res.data.message?.content || "";
-      }
+            {
+              headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+              timeout: 30000,
+            }
+          );
+          response = res.data.choices[0]?.message?.content || "";
+        } else if (params.provider === "anthropic") {
+          const baseUrl = callParams.baseUrl || "https://api.anthropic.com";
+          const model = callParams.model || "claude-sonnet-4-5-20250929";
+          const res = await axios.post(
+            `${baseUrl}/v1/messages`,
+            {
+              model,
+              system: systemPrompt,
+              messages: [{ role: "user", content: userPrompt }],
+              max_tokens: 1024,
+              temperature: 0.3,
+            },
+            {
+              headers: {
+                "x-api-key": apiKey,
+                "anthropic-version": "2023-06-01",
+                "Content-Type": "application/json",
+              },
+              timeout: 30000,
+            }
+          );
+          const content = res.data.content;
+          response = Array.isArray(content) && content.length > 0 ? content[0].text || "" : "";
+        } else {
+          const baseUrl = callParams.baseUrl || "http://localhost:11434";
+          const model = callParams.model || "mistral";
+          const res = await axios.post(
+            `${baseUrl}/api/chat`,
+            {
+              model,
+              messages: [
+                { role: "system", content: systemPrompt },
+                { role: "user", content: userPrompt },
+              ],
+              stream: false,
+            },
+            { timeout: 60000 }
+          );
+          response = res.data.message?.content || "";
+        }
 
-      return { success: true, response };
-    } catch (error) {
-      logger.error("AI copilot failed", error);
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : String(error),
-      };
+        return { success: true, response };
+      } catch (error) {
+        logger.error("AI copilot failed", error);
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : String(error),
+        };
+      }
     }
-  });
+  );
 
   /**
    * Execution History: Get all history records
@@ -732,7 +761,13 @@ export function registerIPCHandlers(
   /**
    * Workflow Validation
    */
-  ipcMain.handle("workflow:validate", async (_event, data: { nodes: unknown[]; edges: unknown[] }) => {
-    return validateWorkflow(data.nodes as Parameters<typeof validateWorkflow>[0], data.edges as Parameters<typeof validateWorkflow>[1]);
-  });
+  ipcMain.handle(
+    "workflow:validate",
+    async (_event, data: { nodes: unknown[]; edges: unknown[] }) => {
+      return validateWorkflow(
+        data.nodes as Parameters<typeof validateWorkflow>[0],
+        data.edges as Parameters<typeof validateWorkflow>[1]
+      );
+    }
+  );
 }

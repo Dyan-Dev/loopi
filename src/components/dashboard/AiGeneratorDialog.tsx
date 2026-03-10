@@ -8,8 +8,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@components/ui/dialog";
-import { Textarea } from "@components/ui/textarea";
 import { Label } from "@components/ui/label";
+import { Textarea } from "@components/ui/textarea";
 import { Loader2, Settings } from "lucide-react";
 import { useEffect, useState } from "react";
 
@@ -43,9 +43,7 @@ export function AiGeneratorDialog({
   }, [open]);
 
   const isConfigured =
-    aiSettings?.aiProvider === "ollama" ||
-    aiSettings?.aiApiKey ||
-    aiSettings?.aiCredentialId;
+    aiSettings?.aiProvider === "ollama" || aiSettings?.aiApiKey || aiSettings?.aiCredentialId;
 
   const handleGenerate = async () => {
     if (!prompt.trim() || !aiSettings?.aiProvider) return;
@@ -119,7 +117,10 @@ export function AiGeneratorDialog({
                 <span>
                   Using <span className="font-medium text-foreground">{providerLabel}</span>
                   {aiSettings.aiModel && (
-                    <> / <span className="font-medium text-foreground">{aiSettings.aiModel}</span></>
+                    <>
+                      {" "}
+                      / <span className="font-medium text-foreground">{aiSettings.aiModel}</span>
+                    </>
                   )}
                 </span>
               </div>

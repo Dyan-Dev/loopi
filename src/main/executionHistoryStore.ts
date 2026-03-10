@@ -9,6 +9,7 @@ export class ExecutionHistoryStore {
 
   private get storagePath(): string {
     if (!this._storagePath) {
+      // biome-ignore lint/style/noCommonJs: lazy electron import
       const { app } = require("electron");
       this._storagePath = path.join(app.getPath("userData"), "execution-history");
       this.ensureDirectory();

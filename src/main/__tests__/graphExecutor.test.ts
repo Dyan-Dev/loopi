@@ -1,5 +1,4 @@
-import { describe, it, expect } from "vitest";
-import { vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 vi.mock("electron", () => ({ BrowserWindow: vi.fn() }));
 vi.mock("@main/automationExecutor", () => ({ AutomationExecutor: vi.fn() }));

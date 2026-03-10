@@ -87,13 +87,7 @@ export function VariableInspector({ isRunning, onClose }: VariableInspectorProps
           >
             <RefreshCw className={`h-3 w-3 ${loading ? "animate-spin" : ""}`} />
           </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-6 w-6"
-            onClick={onClose}
-            title="Close"
-          >
+          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onClose} title="Close">
             <X className="h-3 w-3" />
           </Button>
         </div>

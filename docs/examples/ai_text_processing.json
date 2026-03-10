@@ -1,0 +1,100 @@
+{
+  "name": "AI Text Processing Pipeline",
+  "description": "Extracts article text from a webpage, uses AI to summarize and extract key entities, then builds a final report",
+  "nodes": [
+    {
+      "id": "1",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "1",
+          "type": "navigate",
+          "description": "Go to news article",
+          "value": "https://en.wikipedia.org/wiki/Artificial_intelligence"
+        }
+      },
+      "position": { "x": 250, "y": 50 }
+    },
+    {
+      "id": "2",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "2",
+          "type": "extract",
+          "description": "Extract article title",
+          "selector": "h1",
+          "storeKey": "articleTitle"
+        }
+      },
+      "position": { "x": 250, "y": 170 }
+    },
+    {
+      "id": "3",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "3",
+          "type": "extract",
+          "description": "Extract first paragraph of article",
+          "selector": "#mw-content-text .mw-parser-output > p:not(.mw-empty-elt)",
+          "storeKey": "articleText"
+        }
+      },
+      "position": { "x": 250, "y": 290 }
+    },
+    {
+      "id": "4",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "4",
+          "type": "aiOpenAI",
+          "description": "Summarize article text",
+          "model": "gpt-4o-mini",
+          "systemPrompt": "You are a concise summarizer. Provide a 2-3 sentence summary.",
+          "prompt": "Summarize the following article excerpt:\n\nTitle: {{articleTitle}}\n\n{{articleText}}",
+          "storeKey": "summary"
+        }
+      },
+      "position": { "x": 250, "y": 410 }
+    },
+    {
+      "id": "5",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "5",
+          "type": "aiOpenAI",
+          "description": "Extract key entities",
+          "model": "gpt-4o-mini",
+          "systemPrompt": "Extract key entities (people, organizations, technologies) from the text. Return as a comma-separated list.",
+          "prompt": "Extract key entities from this text:\n\n{{articleText}}",
+          "storeKey": "entities"
+        }
+      },
+      "position": { "x": 250, "y": 530 }
+    },
+    {
+      "id": "6",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "6",
+          "type": "setVariable",
+          "description": "Build final report",
+          "variableName": "report",
+          "value": "=== AI Analysis Report ===\nTitle: {{articleTitle}}\n\nSummary: {{summary}}\n\nKey Entities: {{entities}}"
+        }
+      },
+      "position": { "x": 250, "y": 650 }
+    }
+  ],
+  "edges": [
+    { "id": "e1-2", "source": "1", "target": "2" },
+    { "id": "e2-3", "source": "2", "target": "3" },
+    { "id": "e3-4", "source": "3", "target": "4" },
+    { "id": "e4-5", "source": "4", "target": "5" },
+    { "id": "e5-6", "source": "5", "target": "6" }
+  ]
+}

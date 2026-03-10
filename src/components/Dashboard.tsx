@@ -1,11 +1,11 @@
 import type { StoredAutomation } from "@app-types";
 import { importAutomation } from "@utils/automationIO";
 import { BookOpen, History, Plus, Sparkles, Upload } from "lucide-react";
-import { toast } from "sonner";
 import { useState } from "react";
+import { toast } from "sonner";
 import { AiGeneratorDialog } from "./dashboard/AiGeneratorDialog";
-import { ExecutionHistory } from "./dashboard/ExecutionHistory";
 import { EXAMPLES, ExamplesComponent } from "./dashboard/ExamplesComponent";
+import { ExecutionHistory } from "./dashboard/ExecutionHistory";
 import { YourAutomations } from "./dashboard/YourAutomations";
 import { Button } from "./ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";

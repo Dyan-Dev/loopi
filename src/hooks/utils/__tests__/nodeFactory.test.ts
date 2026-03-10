@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 vi.mock("@app-types", () => ({
   stepTypes: [
@@ -70,9 +70,24 @@ describe("createNode", () => {
     });
 
     it("sets step.id to match the node id for special types", () => {
-      const bcNode = createNode({ type: "browserConditional", newId: "id-bc", handleNodeAction, currentNodes: [] });
-      const vcNode = createNode({ type: "variableConditional", newId: "id-vc", handleNodeAction, currentNodes: [] });
-      const feNode = createNode({ type: "forEach", newId: "id-fe", handleNodeAction, currentNodes: [] });
+      const bcNode = createNode({
+        type: "browserConditional",
+        newId: "id-bc",
+        handleNodeAction,
+        currentNodes: [],
+      });
+      const vcNode = createNode({
+        type: "variableConditional",
+        newId: "id-vc",
+        handleNodeAction,
+        currentNodes: [],
+      });
+      const feNode = createNode({
+        type: "forEach",
+        newId: "id-fe",
+        handleNodeAction,
+        currentNodes: [],
+      });
 
       expect(bcNode.data.step.id).toBe("id-bc");
       expect(vcNode.data.step.id).toBe("id-vc");
@@ -80,9 +95,24 @@ describe("createNode", () => {
     });
 
     it("sets nodeRunning to false for special types", () => {
-      const bcNode = createNode({ type: "browserConditional", newId: "nr-1", handleNodeAction, currentNodes: [] });
-      const vcNode = createNode({ type: "variableConditional", newId: "nr-2", handleNodeAction, currentNodes: [] });
-      const feNode = createNode({ type: "forEach", newId: "nr-3", handleNodeAction, currentNodes: [] });
+      const bcNode = createNode({
+        type: "browserConditional",
+        newId: "nr-1",
+        handleNodeAction,
+        currentNodes: [],
+      });
+      const vcNode = createNode({
+        type: "variableConditional",
+        newId: "nr-2",
+        handleNodeAction,
+        currentNodes: [],
+      });
+      const feNode = createNode({
+        type: "forEach",
+        newId: "nr-3",
+        handleNodeAction,
+        currentNodes: [],
+      });
 
       expect(bcNode.data.nodeRunning).toBe(false);
       expect(vcNode.data.nodeRunning).toBe(false);
@@ -90,9 +120,24 @@ describe("createNode", () => {
     });
 
     it("sets onAddNode to the handleNodeAction callback for special types", () => {
-      const bcNode = createNode({ type: "browserConditional", newId: "on-1", handleNodeAction, currentNodes: [] });
-      const vcNode = createNode({ type: "variableConditional", newId: "on-2", handleNodeAction, currentNodes: [] });
-      const feNode = createNode({ type: "forEach", newId: "on-3", handleNodeAction, currentNodes: [] });
+      const bcNode = createNode({
+        type: "browserConditional",
+        newId: "on-1",
+        handleNodeAction,
+        currentNodes: [],
+      });
+      const vcNode = createNode({
+        type: "variableConditional",
+        newId: "on-2",
+        handleNodeAction,
+        currentNodes: [],
+      });
+      const feNode = createNode({
+        type: "forEach",
+        newId: "on-3",
+        handleNodeAction,
+        currentNodes: [],
+      });
 
       expect(bcNode.data.onAddNode).toBe(handleNodeAction);
       expect(vcNode.data.onAddNode).toBe(handleNodeAction);
@@ -102,14 +147,24 @@ describe("createNode", () => {
 
   describe("Standard steps", () => {
     it("creates a navigate step with value 'https://'", () => {
-      const node = createNode({ type: "navigate", newId: "nav-1", handleNodeAction, currentNodes: [] });
+      const node = createNode({
+        type: "navigate",
+        newId: "nav-1",
+        handleNodeAction,
+        currentNodes: [],
+      });
       expect(node.type).toBe("automationStep");
       expect(node.data.step.type).toBe("navigate");
       expect((node.data.step as any).value).toBe("https://");
     });
 
     it("creates a click step with selector 'body'", () => {
-      const node = createNode({ type: "click", newId: "clk-1", handleNodeAction, currentNodes: [] });
+      const node = createNode({
+        type: "click",
+        newId: "clk-1",
+        handleNodeAction,
+        currentNodes: [],
+      });
       expect(node.type).toBe("automationStep");
       expect(node.data.step.type).toBe("click");
       expect((node.data.step as any).selector).toBe("body");
@@ -131,14 +186,24 @@ describe("createNode", () => {
     });
 
     it("creates a screenshot step with savePath", () => {
-      const node = createNode({ type: "screenshot", newId: "ss-1", handleNodeAction, currentNodes: [] });
+      const node = createNode({
+        type: "screenshot",
+        newId: "ss-1",
+        handleNodeAction,
+        currentNodes: [],
+      });
       expect(node.type).toBe("automationStep");
       expect(node.data.step.type).toBe("screenshot");
       expect((node.data.step as any).savePath).toBe("");
     });
 
     it("creates an extract step with selector and storeKey", () => {
-      const node = createNode({ type: "extract", newId: "ext-1", handleNodeAction, currentNodes: [] });
+      const node = createNode({
+        type: "extract",
+        newId: "ext-1",
+        handleNodeAction,
+        currentNodes: [],
+      });
       expect(node.type).toBe("automationStep");
       expect(node.data.step.type).toBe("extract");
       expect((node.data.step as any).selector).toBe("");
@@ -146,7 +211,12 @@ describe("createNode", () => {
     });
 
     it("creates an apiCall step with method GET, url, headers, and body", () => {
-      const node = createNode({ type: "apiCall", newId: "api-1", handleNodeAction, currentNodes: [] });
+      const node = createNode({
+        type: "apiCall",
+        newId: "api-1",
+        handleNodeAction,
+        currentNodes: [],
+      });
       expect(node.type).toBe("automationStep");
       expect(node.data.step.type).toBe("apiCall");
       expect((node.data.step as any).method).toBe("GET");
@@ -156,7 +226,12 @@ describe("createNode", () => {
     });
 
     it("creates a setVariable step with variableName and value", () => {
-      const node = createNode({ type: "setVariable", newId: "sv-1", handleNodeAction, currentNodes: [] });
+      const node = createNode({
+        type: "setVariable",
+        newId: "sv-1",
+        handleNodeAction,
+        currentNodes: [],
+      });
       expect(node.type).toBe("automationStep");
       expect(node.data.step.type).toBe("setVariable");
       expect((node.data.step as any).variableName).toBe("");
@@ -164,7 +239,12 @@ describe("createNode", () => {
     });
 
     it("creates a modifyVariable step with variableName, operation 'set', and value", () => {
-      const node = createNode({ type: "modifyVariable", newId: "mv-1", handleNodeAction, currentNodes: [] });
+      const node = createNode({
+        type: "modifyVariable",
+        newId: "mv-1",
+        handleNodeAction,
+        currentNodes: [],
+      });
       expect(node.type).toBe("automationStep");
       expect(node.data.step.type).toBe("modifyVariable");
       expect((node.data.step as any).variableName).toBe("");
@@ -173,7 +253,12 @@ describe("createNode", () => {
     });
 
     it("creates an aiOpenAI step with model 'gpt-4o-mini', prompt, and storeKey", () => {
-      const node = createNode({ type: "aiOpenAI", newId: "oai-1", handleNodeAction, currentNodes: [] });
+      const node = createNode({
+        type: "aiOpenAI",
+        newId: "oai-1",
+        handleNodeAction,
+        currentNodes: [],
+      });
       expect(node.type).toBe("automationStep");
       expect(node.data.step.type).toBe("aiOpenAI");
       expect((node.data.step as any).model).toBe("gpt-4o-mini");
@@ -182,14 +267,24 @@ describe("createNode", () => {
     });
 
     it("creates an aiAnthropic step with a model containing 'claude'", () => {
-      const node = createNode({ type: "aiAnthropic", newId: "ant-1", handleNodeAction, currentNodes: [] });
+      const node = createNode({
+        type: "aiAnthropic",
+        newId: "ant-1",
+        handleNodeAction,
+        currentNodes: [],
+      });
       expect(node.type).toBe("automationStep");
       expect(node.data.step.type).toBe("aiAnthropic");
       expect((node.data.step as any).model).toContain("claude");
     });
 
     it("creates an aiOllama step with model 'mistral' and baseUrl", () => {
-      const node = createNode({ type: "aiOllama", newId: "oll-1", handleNodeAction, currentNodes: [] });
+      const node = createNode({
+        type: "aiOllama",
+        newId: "oll-1",
+        handleNodeAction,
+        currentNodes: [],
+      });
       expect(node.type).toBe("automationStep");
       expect(node.data.step.type).toBe("aiOllama");
       expect((node.data.step as any).model).toBe("mistral");
@@ -197,14 +292,24 @@ describe("createNode", () => {
     });
 
     it("creates a scroll step with scrollType 'toElement'", () => {
-      const node = createNode({ type: "scroll", newId: "scr-1", handleNodeAction, currentNodes: [] });
+      const node = createNode({
+        type: "scroll",
+        newId: "scr-1",
+        handleNodeAction,
+        currentNodes: [],
+      });
       expect(node.type).toBe("automationStep");
       expect(node.data.step.type).toBe("scroll");
       expect((node.data.step as any).scrollType).toBe("toElement");
     });
 
     it("creates a fileUpload step with selector and filePath", () => {
-      const node = createNode({ type: "fileUpload", newId: "fu-1", handleNodeAction, currentNodes: [] });
+      const node = createNode({
+        type: "fileUpload",
+        newId: "fu-1",
+        handleNodeAction,
+        currentNodes: [],
+      });
       expect(node.type).toBe("automationStep");
       expect(node.data.step.type).toBe("fileUpload");
       expect((node.data.step as any).selector).toBe("");
@@ -212,14 +317,24 @@ describe("createNode", () => {
     });
 
     it("creates a hover step with selector", () => {
-      const node = createNode({ type: "hover", newId: "hov-1", handleNodeAction, currentNodes: [] });
+      const node = createNode({
+        type: "hover",
+        newId: "hov-1",
+        handleNodeAction,
+        currentNodes: [],
+      });
       expect(node.type).toBe("automationStep");
       expect(node.data.step.type).toBe("hover");
       expect((node.data.step as any).selector).toBe("");
     });
 
     it("creates a selectOption step with selector and optionValue", () => {
-      const node = createNode({ type: "selectOption", newId: "so-1", handleNodeAction, currentNodes: [] });
+      const node = createNode({
+        type: "selectOption",
+        newId: "so-1",
+        handleNodeAction,
+        currentNodes: [],
+      });
       expect(node.type).toBe("automationStep");
       expect(node.data.step.type).toBe("selectOption");
       expect((node.data.step as any).selector).toBe("");
@@ -227,7 +342,12 @@ describe("createNode", () => {
     });
 
     it("creates a discordSendMessage step with channelId and content", () => {
-      const node = createNode({ type: "discordSendMessage", newId: "dsm-1", handleNodeAction, currentNodes: [] });
+      const node = createNode({
+        type: "discordSendMessage",
+        newId: "dsm-1",
+        handleNodeAction,
+        currentNodes: [],
+      });
       expect(node.type).toBe("automationStep");
       expect(node.data.step.type).toBe("discordSendMessage");
       expect((node.data.step as any).channelId).toBe("");
@@ -235,7 +355,12 @@ describe("createNode", () => {
     });
 
     it("creates a slackSendMessage step with channelId and text", () => {
-      const node = createNode({ type: "slackSendMessage", newId: "ssm-1", handleNodeAction, currentNodes: [] });
+      const node = createNode({
+        type: "slackSendMessage",
+        newId: "ssm-1",
+        handleNodeAction,
+        currentNodes: [],
+      });
       expect(node.type).toBe("automationStep");
       expect(node.data.step.type).toBe("slackSendMessage");
       expect((node.data.step as any).channelId).toBe("");
@@ -243,14 +368,24 @@ describe("createNode", () => {
     });
 
     it("creates a twitterCreateTweet step with text", () => {
-      const node = createNode({ type: "twitterCreateTweet", newId: "tw-1", handleNodeAction, currentNodes: [] });
+      const node = createNode({
+        type: "twitterCreateTweet",
+        newId: "tw-1",
+        handleNodeAction,
+        currentNodes: [],
+      });
       expect(node.type).toBe("automationStep");
       expect(node.data.step.type).toBe("twitterCreateTweet");
       expect((node.data.step as any).text).toBe("");
     });
 
     it("falls through to click with selector 'body' for an unknown type", () => {
-      const node = createNode({ type: "unknownType" as any, newId: "unk-1", handleNodeAction, currentNodes: [] });
+      const node = createNode({
+        type: "unknownType" as any,
+        newId: "unk-1",
+        handleNodeAction,
+        currentNodes: [],
+      });
       expect(node.type).toBe("automationStep");
       expect(node.data.step.type).toBe("click");
       expect((node.data.step as any).selector).toBe("body");
@@ -259,14 +394,30 @@ describe("createNode", () => {
 
   describe("Positioning", () => {
     it("positions based on sourceNode when provided", () => {
-      const sourceNode = { id: "src", position: { x: 400, y: 300 }, data: {}, type: "automationStep" } as any;
-      const node = createNode({ type: "click", newId: "pos-1", handleNodeAction, currentNodes: [], sourceNode });
+      const sourceNode = {
+        id: "src",
+        position: { x: 400, y: 300 },
+        data: {},
+        type: "automationStep",
+      } as any;
+      const node = createNode({
+        type: "click",
+        newId: "pos-1",
+        handleNodeAction,
+        currentNodes: [],
+        sourceNode,
+      });
       expect(node.position.x).toBe(400);
       expect(node.position.y).toBe(400);
     });
 
     it("uses x=250 when no sourceNode is provided", () => {
-      const node = createNode({ type: "click", newId: "pos-2", handleNodeAction, currentNodes: [] });
+      const node = createNode({
+        type: "click",
+        newId: "pos-2",
+        handleNodeAction,
+        currentNodes: [],
+      });
       expect(node.position.x).toBe(250);
     });
 
@@ -281,14 +432,30 @@ describe("createNode", () => {
     });
 
     it("positions a browserConditional node correctly with sourceNode", () => {
-      const sourceNode = { id: "src", position: { x: 100, y: 200 }, data: {}, type: "automationStep" } as any;
-      const node = createNode({ type: "browserConditional", newId: "pos-4", handleNodeAction, currentNodes: [], sourceNode });
+      const sourceNode = {
+        id: "src",
+        position: { x: 100, y: 200 },
+        data: {},
+        type: "automationStep",
+      } as any;
+      const node = createNode({
+        type: "browserConditional",
+        newId: "pos-4",
+        handleNodeAction,
+        currentNodes: [],
+        sourceNode,
+      });
       expect(node.position.x).toBe(100);
       expect(node.position.y).toBe(300);
     });
 
     it("handles an empty currentNodes array for y calculation", () => {
-      const node = createNode({ type: "click", newId: "pos-5", handleNodeAction, currentNodes: [] });
+      const node = createNode({
+        type: "click",
+        newId: "pos-5",
+        handleNodeAction,
+        currentNodes: [],
+      });
       expect(node.position.y).toBe(0 * 150 + 50);
     });
   });

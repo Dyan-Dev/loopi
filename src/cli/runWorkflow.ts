@@ -8,16 +8,18 @@
 
 import { readFileSync } from "fs";
 import { resolve } from "path";
-import { validateWorkflow } from "../main/workflowValidator";
 import { AutomationExecutor } from "../main/automationExecutor";
 import { executeAutomationGraph } from "../main/graphExecutor";
+import { validateWorkflow } from "../main/workflowValidator";
 
 function printUsage() {
   console.log("Usage: pnpm run:workflow <workflow.json>");
   console.log("");
   console.log("Runs an automation workflow headlessly from the command line.");
   console.log("");
-  console.log("The workflow JSON file should contain nodes, edges, and optionally name/description.");
+  console.log(
+    "The workflow JSON file should contain nodes, edges, and optionally name/description."
+  );
 }
 
 async function main() {
@@ -34,7 +36,12 @@ async function main() {
   let workflowData: {
     name?: string;
     description?: string;
-    nodes: Array<{ id: string; type: string; data: Record<string, unknown>; position: { x: number; y: number } }>;
+    nodes: Array<{
+      id: string;
+      type: string;
+      data: Record<string, unknown>;
+      position: { x: number; y: number };
+    }>;
     edges: Array<{ id: string; source: string; target: string; sourceHandle?: string }>;
   };
 
@@ -54,7 +61,10 @@ async function main() {
   console.log("");
 
   // Pre-flight validation
-  const validation = validateWorkflow(nodes as Parameters<typeof validateWorkflow>[0], edges as Parameters<typeof validateWorkflow>[1]);
+  const validation = validateWorkflow(
+    nodes as Parameters<typeof validateWorkflow>[0],
+    edges as Parameters<typeof validateWorkflow>[1]
+  );
 
   if (validation.warnings.length > 0) {
     for (const warning of validation.warnings) {
@@ -77,9 +87,14 @@ async function main() {
   const executor = new AutomationExecutor();
   executor.initVariables();
 
-  const onNodeStatus = (nodeId: string, status: "running" | "success" | "error", error?: string) => {
+  const onNodeStatus = (
+    nodeId: string,
+    status: "running" | "success" | "error",
+    error?: string
+  ) => {
     const node = nodes.find((n) => n.id === nodeId);
-    const stepType = (node?.data as { step?: { type?: string } })?.step?.type || node?.type || "unknown";
+    const stepType =
+      (node?.data as { step?: { type?: string } })?.step?.type || node?.type || "unknown";
     const desc = (node?.data as { step?: { description?: string } })?.step?.description || "";
 
     if (status === "running") {

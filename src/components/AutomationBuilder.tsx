@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { OnSelectionChangeParams, useEdgesState, useNodesState } from "reactflow";
 import "reactflow/dist/style.css";
-import { toast } from "sonner";
 import type {
   Automation,
   AutomationStep,
@@ -14,6 +13,7 @@ import type {
 } from "@app-types";
 import useExecution from "@hooks/useExecution";
 import useNodeActions from "@hooks/useNodeActions";
+import { toast } from "sonner";
 import AutomationNode from "./automationBuilder/AutomationNode";
 import BuilderCanvas from "./automationBuilder/BuilderCanvas";
 import BuilderHeader from "./automationBuilder/BuilderHeader";

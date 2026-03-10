@@ -1,6 +1,6 @@
 import { Node, ReactFlowNode } from "@app-types";
-import { toast } from "sonner";
 import { Card, CardContent, CardHeader } from "@components/ui/card";
+import { toast } from "sonner";
 import BrowserConditionEditor from "./ConditionEditor";
 import NodeHeader from "./NodeHeader";
 import StepEditor from "./StepEditor";

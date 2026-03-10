@@ -7,8 +7,8 @@
 import type { ScheduleType, StoredAutomation } from "@app-types/automation";
 import type { WorkflowSchedule } from "@app-types/globals";
 import { Calendar, Clock, PauseCircle, PlayCircle, Plus, Trash2 } from "lucide-react";
-import { toast } from "sonner";
 import React, { useEffect, useState } from "react";
+import { toast } from "sonner";
 import { ScheduleConfig } from "./automationBuilder/ScheduleConfig";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";

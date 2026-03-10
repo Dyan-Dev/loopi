@@ -1,7 +1,7 @@
 import type { Credential } from "@app-types/globals";
 import { Key, Plus, Trash2 } from "lucide-react";
-import { toast } from "sonner";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import { Button } from "./ui/button";
 import { Card } from "./ui/card";
 import {
@@ -137,6 +137,253 @@ export function CredentialsManager() {
           { key: "username", label: "Username", type: "text" },
           { key: "password", label: "Password", type: "password" },
         ];
+      // ─── Integration credentials ──────────────────────────────
+      case "telegram":
+        return [{ key: "botToken", label: "Bot Token", type: "password" }];
+      case "github":
+        return [{ key: "accessToken", label: "Personal Access Token", type: "password" }];
+      case "notion":
+        return [{ key: "apiKey", label: "Integration Token", type: "password" }];
+      case "sendgrid":
+        return [{ key: "apiKey", label: "API Key", type: "password" }];
+      case "stripe":
+        return [{ key: "secretKey", label: "Secret Key", type: "password" }];
+      case "postgres":
+        return [
+          { key: "host", label: "Host", type: "text" },
+          { key: "port", label: "Port", type: "text" },
+          { key: "user", label: "User", type: "text" },
+          { key: "password", label: "Password", type: "password" },
+          { key: "database", label: "Database", type: "text" },
+        ];
+      case "mysql":
+        return [
+          { key: "host", label: "Host", type: "text" },
+          { key: "port", label: "Port", type: "text" },
+          { key: "user", label: "User", type: "text" },
+          { key: "password", label: "Password", type: "password" },
+          { key: "database", label: "Database", type: "text" },
+        ];
+      case "mongodb":
+        return [{ key: "connectionString", label: "Connection String", type: "password" }];
+      case "redis":
+        return [
+          { key: "host", label: "Host", type: "text" },
+          { key: "port", label: "Port", type: "text" },
+          { key: "password", label: "Password (optional)", type: "password" },
+        ];
+      case "googleSheets":
+      case "googleCalendar":
+      case "googleDrive":
+      case "gmail":
+        return [
+          { key: "apiKey", label: "API Key / Service Account Key", type: "password" },
+          { key: "accessToken", label: "OAuth Access Token (optional)", type: "password" },
+        ];
+      case "airtable":
+        return [{ key: "apiKey", label: "API Key / Personal Access Token", type: "password" }];
+      case "jira":
+        return [
+          { key: "email", label: "Email", type: "text" },
+          { key: "apiToken", label: "API Token", type: "password" },
+        ];
+      case "hubspot":
+        return [{ key: "accessToken", label: "Access Token", type: "password" }];
+      case "twilio":
+        return [
+          { key: "accountSid", label: "Account SID", type: "text" },
+          { key: "authToken", label: "Auth Token", type: "password" },
+        ];
+      case "mailchimp":
+        return [
+          { key: "apiKey", label: "API Key", type: "password" },
+          { key: "server", label: "Server Prefix (e.g. us1)", type: "text" },
+        ];
+      case "zoom":
+        return [{ key: "accessToken", label: "OAuth Access Token", type: "password" }];
+      case "supabase":
+        return [{ key: "apiKey", label: "Service Role Key", type: "password" }];
+      case "salesforce":
+        return [{ key: "accessToken", label: "Access Token", type: "password" }];
+      case "trello":
+        return [
+          { key: "apiKey", label: "API Key", type: "password" },
+          { key: "apiToken", label: "API Token", type: "password" },
+        ];
+      case "awsS3":
+        return [
+          { key: "accessKeyId", label: "Access Key ID", type: "text" },
+          { key: "secretAccessKey", label: "Secret Access Key", type: "password" },
+          { key: "region", label: "Region", type: "text" },
+        ];
+      case "shopify":
+        return [{ key: "accessToken", label: "Admin API Access Token", type: "password" }];
+      case "asana":
+      case "linear":
+      case "clickup":
+      case "monday":
+      case "todoist":
+      case "baserow":
+      case "nocodb":
+      case "coda":
+        return [{ key: "apiKey", label: "API Key / Token", type: "password" }];
+      case "dropbox":
+      case "box":
+        return [{ key: "accessToken", label: "Access Token", type: "password" }];
+      case "gitlab":
+        return [{ key: "accessToken", label: "Personal Access Token", type: "password" }];
+      case "paypal":
+        return [
+          { key: "clientId", label: "Client ID", type: "text" },
+          { key: "clientSecret", label: "Client Secret", type: "password" },
+          { key: "sandbox", label: "Sandbox Mode (true/false)", type: "text" },
+        ];
+      case "typeform":
+        return [{ key: "accessToken", label: "Personal Access Token", type: "password" }];
+      case "calendly":
+        return [{ key: "accessToken", label: "Personal Access Token", type: "password" }];
+      case "whatsapp":
+        return [
+          { key: "accessToken", label: "Access Token", type: "password" },
+          { key: "phoneNumberId", label: "Phone Number ID", type: "text" },
+        ];
+      case "intercom":
+        return [{ key: "accessToken", label: "Access Token", type: "password" }];
+      case "zendesk":
+        return [
+          { key: "email", label: "Email", type: "text" },
+          { key: "apiToken", label: "API Token", type: "password" },
+          { key: "subdomain", label: "Subdomain", type: "text" },
+        ];
+      case "freshdesk":
+        return [
+          { key: "apiKey", label: "API Key", type: "password" },
+          { key: "domain", label: "Domain (e.g. yourcompany)", type: "text" },
+        ];
+      case "woocommerce":
+        return [
+          { key: "consumerKey", label: "Consumer Key", type: "password" },
+          { key: "consumerSecret", label: "Consumer Secret", type: "password" },
+          { key: "siteUrl", label: "Site URL", type: "text" },
+        ];
+      case "activecampaign":
+        return [
+          { key: "apiKey", label: "API Key", type: "password" },
+          { key: "baseUrl", label: "Account URL", type: "text" },
+        ];
+      case "bitly":
+        return [{ key: "accessToken", label: "Access Token", type: "password" }];
+      case "circleci":
+        return [{ key: "apiToken", label: "API Token", type: "password" }];
+      case "jenkins":
+        return [
+          { key: "username", label: "Username", type: "text" },
+          { key: "apiToken", label: "API Token", type: "password" },
+          { key: "baseUrl", label: "Jenkins URL", type: "text" },
+        ];
+      case "cloudflare":
+        return [
+          { key: "apiToken", label: "API Token", type: "password" },
+          { key: "accountId", label: "Account ID (optional)", type: "text" },
+        ];
+      case "convertkit":
+        return [{ key: "apiSecret", label: "API Secret", type: "password" }];
+      case "contentful":
+        return [
+          { key: "accessToken", label: "Content Management Token", type: "password" },
+          { key: "spaceId", label: "Space ID", type: "text" },
+        ];
+      case "mattermost":
+        return [
+          { key: "accessToken", label: "Personal Access Token", type: "password" },
+          { key: "baseUrl", label: "Server URL", type: "text" },
+        ];
+      case "pagerduty":
+        return [{ key: "apiKey", label: "API Key", type: "password" }];
+      case "sentry":
+        return [
+          { key: "authToken", label: "Auth Token", type: "password" },
+          { key: "organization", label: "Organization Slug", type: "text" },
+        ];
+      case "snowflake":
+        return [
+          { key: "account", label: "Account", type: "text" },
+          { key: "username", label: "Username", type: "text" },
+          { key: "password", label: "Password", type: "password" },
+          { key: "warehouse", label: "Warehouse", type: "text" },
+          { key: "database", label: "Database", type: "text" },
+        ];
+      case "graphql":
+        return [
+          { key: "apiKey", label: "API Key / Bearer Token", type: "password" },
+          { key: "endpoint", label: "GraphQL Endpoint URL", type: "text" },
+        ];
+      case "elasticsearch":
+        return [
+          { key: "username", label: "Username", type: "text" },
+          { key: "password", label: "Password", type: "password" },
+          { key: "baseUrl", label: "Cluster URL", type: "text" },
+        ];
+      case "grafana":
+        return [
+          { key: "apiKey", label: "API Key", type: "password" },
+          { key: "baseUrl", label: "Grafana URL", type: "text" },
+        ];
+      case "netlify":
+        return [{ key: "accessToken", label: "Personal Access Token", type: "password" }];
+      case "wordpress":
+        return [
+          { key: "username", label: "Username", type: "text" },
+          { key: "password", label: "Application Password", type: "password" },
+          { key: "siteUrl", label: "Site URL", type: "text" },
+        ];
+      case "xero":
+        return [
+          { key: "clientId", label: "Client ID", type: "text" },
+          { key: "clientSecret", label: "Client Secret", type: "password" },
+          { key: "accessToken", label: "Access Token", type: "password" },
+          { key: "tenantId", label: "Tenant ID", type: "text" },
+        ];
+      case "quickbooks":
+        return [
+          { key: "clientId", label: "Client ID", type: "text" },
+          { key: "clientSecret", label: "Client Secret", type: "password" },
+          { key: "accessToken", label: "Access Token", type: "password" },
+          { key: "realmId", label: "Realm ID", type: "text" },
+        ];
+      case "pipedrive":
+        return [{ key: "apiToken", label: "API Token", type: "password" }];
+      case "helpscout":
+        return [
+          { key: "appId", label: "App ID", type: "text" },
+          { key: "appSecret", label: "App Secret", type: "password" },
+        ];
+      case "reddit":
+        return [
+          { key: "clientId", label: "Client ID", type: "text" },
+          { key: "clientSecret", label: "Client Secret", type: "password" },
+          { key: "username", label: "Username", type: "text" },
+          { key: "password", label: "Password", type: "password" },
+        ];
+      case "spotify":
+        return [
+          { key: "clientId", label: "Client ID", type: "text" },
+          { key: "clientSecret", label: "Client Secret", type: "password" },
+          { key: "accessToken", label: "Access Token (optional)", type: "password" },
+        ];
+      case "servicenow":
+        return [
+          { key: "username", label: "Username", type: "text" },
+          { key: "password", label: "Password", type: "password" },
+          { key: "instanceUrl", label: "Instance URL", type: "text" },
+        ];
+      case "ghost":
+        return [
+          { key: "apiKey", label: "Admin API Key", type: "password" },
+          { key: "apiUrl", label: "API URL", type: "text" },
+        ];
+      case "webflow":
+        return [{ key: "accessToken", label: "API Token", type: "password" }];
       default:
         return [];
     }
@@ -173,16 +420,101 @@ export function CredentialsManager() {
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="twitter">Twitter/X</SelectItem>
-                <SelectItem value="discord">Discord</SelectItem>
-                <SelectItem value="slack">Slack</SelectItem>
-                <SelectItem value="openai">OpenAI</SelectItem>
-                <SelectItem value="anthropic">Anthropic</SelectItem>
-                <SelectItem value="oauth">OAuth 2.0</SelectItem>
+              <SelectContent className="max-h-64 overflow-y-auto">
+                {/* General */}
                 <SelectItem value="apiKey">API Key</SelectItem>
+                <SelectItem value="oauth">OAuth 2.0</SelectItem>
                 <SelectItem value="basic">Basic Auth</SelectItem>
                 <SelectItem value="custom">Custom</SelectItem>
+                {/* AI */}
+                <SelectItem value="openai">OpenAI</SelectItem>
+                <SelectItem value="anthropic">Anthropic</SelectItem>
+                {/* Communication */}
+                <SelectItem value="discord">Discord</SelectItem>
+                <SelectItem value="slack">Slack</SelectItem>
+                <SelectItem value="telegram">Telegram</SelectItem>
+                <SelectItem value="twitter">Twitter/X</SelectItem>
+                <SelectItem value="whatsapp">WhatsApp</SelectItem>
+                <SelectItem value="mattermost">Mattermost</SelectItem>
+                {/* Email */}
+                <SelectItem value="gmail">Gmail</SelectItem>
+                <SelectItem value="sendgrid">SendGrid</SelectItem>
+                <SelectItem value="mailchimp">Mailchimp</SelectItem>
+                <SelectItem value="convertkit">ConvertKit</SelectItem>
+                {/* Dev / Project */}
+                <SelectItem value="github">GitHub</SelectItem>
+                <SelectItem value="gitlab">GitLab</SelectItem>
+                <SelectItem value="jira">Jira</SelectItem>
+                <SelectItem value="asana">Asana</SelectItem>
+                <SelectItem value="linear">Linear</SelectItem>
+                <SelectItem value="clickup">ClickUp</SelectItem>
+                <SelectItem value="monday">Monday.com</SelectItem>
+                <SelectItem value="trello">Trello</SelectItem>
+                <SelectItem value="todoist">Todoist</SelectItem>
+                {/* Cloud / Storage */}
+                <SelectItem value="awsS3">AWS S3</SelectItem>
+                <SelectItem value="dropbox">Dropbox</SelectItem>
+                <SelectItem value="box">Box</SelectItem>
+                <SelectItem value="googleDrive">Google Drive</SelectItem>
+                {/* Google */}
+                <SelectItem value="googleSheets">Google Sheets</SelectItem>
+                <SelectItem value="googleCalendar">Google Calendar</SelectItem>
+                {/* Databases */}
+                <SelectItem value="postgres">PostgreSQL</SelectItem>
+                <SelectItem value="mysql">MySQL</SelectItem>
+                <SelectItem value="mongodb">MongoDB</SelectItem>
+                <SelectItem value="redis">Redis</SelectItem>
+                <SelectItem value="supabase">Supabase</SelectItem>
+                <SelectItem value="snowflake">Snowflake</SelectItem>
+                <SelectItem value="elasticsearch">Elasticsearch</SelectItem>
+                {/* CRM / Sales */}
+                <SelectItem value="hubspot">HubSpot</SelectItem>
+                <SelectItem value="salesforce">Salesforce</SelectItem>
+                <SelectItem value="pipedrive">Pipedrive</SelectItem>
+                {/* Payments */}
+                <SelectItem value="stripe">Stripe</SelectItem>
+                <SelectItem value="paypal">PayPal</SelectItem>
+                <SelectItem value="xero">Xero</SelectItem>
+                <SelectItem value="quickbooks">QuickBooks</SelectItem>
+                {/* E-Commerce */}
+                <SelectItem value="shopify">Shopify</SelectItem>
+                <SelectItem value="woocommerce">WooCommerce</SelectItem>
+                {/* Support */}
+                <SelectItem value="zendesk">Zendesk</SelectItem>
+                <SelectItem value="freshdesk">Freshdesk</SelectItem>
+                <SelectItem value="intercom">Intercom</SelectItem>
+                <SelectItem value="helpscout">Help Scout</SelectItem>
+                {/* CMS / Content */}
+                <SelectItem value="notion">Notion</SelectItem>
+                <SelectItem value="contentful">Contentful</SelectItem>
+                <SelectItem value="wordpress">WordPress</SelectItem>
+                <SelectItem value="ghost">Ghost</SelectItem>
+                <SelectItem value="webflow">Webflow</SelectItem>
+                <SelectItem value="coda">Coda</SelectItem>
+                <SelectItem value="airtable">Airtable</SelectItem>
+                <SelectItem value="baserow">Baserow</SelectItem>
+                <SelectItem value="nocodb">NocoDB</SelectItem>
+                {/* Phone / SMS */}
+                <SelectItem value="twilio">Twilio</SelectItem>
+                <SelectItem value="calendly">Calendly</SelectItem>
+                <SelectItem value="zoom">Zoom</SelectItem>
+                <SelectItem value="typeform">Typeform</SelectItem>
+                {/* DevOps / Infra */}
+                <SelectItem value="circleci">CircleCI</SelectItem>
+                <SelectItem value="jenkins">Jenkins</SelectItem>
+                <SelectItem value="cloudflare">Cloudflare</SelectItem>
+                <SelectItem value="netlify">Netlify</SelectItem>
+                <SelectItem value="grafana">Grafana</SelectItem>
+                <SelectItem value="sentry">Sentry</SelectItem>
+                <SelectItem value="pagerduty">PagerDuty</SelectItem>
+                <SelectItem value="servicenow">ServiceNow</SelectItem>
+                {/* Marketing */}
+                <SelectItem value="activecampaign">ActiveCampaign</SelectItem>
+                <SelectItem value="bitly">Bitly</SelectItem>
+                {/* Other */}
+                <SelectItem value="graphql">GraphQL</SelectItem>
+                <SelectItem value="reddit">Reddit</SelectItem>
+                <SelectItem value="spotify">Spotify</SelectItem>
               </SelectContent>
             </Select>
           </div>

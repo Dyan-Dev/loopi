@@ -7,43 +7,24 @@ import {
   AiOpenAIStep,
   ApiCallStep,
   ClickStep,
-  DiscordDeleteMessageStep,
-  DiscordGetMessageStep,
-  DiscordListMessagesStep,
-  DiscordReactStep,
-  DiscordSendMessageStep,
-  DiscordSendWebhookStep,
+  CodeExecuteStep,
+  DateTimeStep,
   ExtractStep,
+  FilterArrayStep,
   ForEachStep,
+  IntegrationStepEditor,
+  isIntegrationStep,
+  JsonParseStep,
+  JsonStringifyStep,
+  MapArrayStep,
+  MathOperationStep,
   ModifyVariableStep,
   NavigateStep,
   ScreenshotStep,
   ScrollStep,
   SelectOptionStep,
   SetVariableStep,
-  SlackAddReactionStep,
-  SlackArchiveChannelStep,
-  SlackCreateChannelStep,
-  SlackDeleteMessageStep,
-  SlackGetChannelStep,
-  SlackGetHistoryStep,
-  SlackGetUserStep,
-  SlackInviteUsersStep,
-  SlackListChannelsStep,
-  SlackListMembersStep,
-  SlackListUsersStep,
-  SlackSendMessageStep,
-  SlackSetTopicStep,
-  SlackUnarchiveChannelStep,
-  SlackUpdateMessageStep,
-  SlackUploadFileStep,
-  TwitterCreateTweetStep,
-  TwitterDeleteTweetStep,
-  TwitterLikeTweetStep,
-  TwitterRetweetStep,
-  TwitterSearchTweetsStep,
-  TwitterSearchUserStep,
-  TwitterSendDMStep,
+  StringOperationStep,
   TypeStep,
   WaitStep,
 } from "./stepTypes";
@@ -69,6 +50,7 @@ export default function StepEditor({
 
   const renderStepType = () => {
     switch (step.type) {
+      // ─── Browser steps ────────────────────────────────────────
       case "navigate":
         return <NavigateStep step={step} id={id} onUpdate={onUpdate} />;
       case "click":
@@ -105,6 +87,8 @@ export default function StepEditor({
         return (
           <ScrollStep step={step} id={id} onUpdate={onUpdate} onPickWithSetter={onPickWithSetter} />
         );
+
+      // ─── API / AI steps ───────────────────────────────────────
       case "apiCall":
         return <ApiCallStep step={step} id={id} onUpdate={onUpdate} />;
       case "aiOpenAI":
@@ -113,71 +97,40 @@ export default function StepEditor({
         return <AiAnthropicStep step={step} id={id} onUpdate={onUpdate} />;
       case "aiOllama":
         return <AiOllamaStep step={step} id={id} onUpdate={onUpdate} />;
-      case "discordSendMessage":
-        return <DiscordSendMessageStep step={step} id={id} onUpdate={onUpdate} />;
-      case "discordSendWebhook":
-        return <DiscordSendWebhookStep step={step} id={id} onUpdate={onUpdate} />;
-      case "discordReactMessage":
-        return <DiscordReactStep step={step} id={id} onUpdate={onUpdate} />;
-      case "discordGetMessage":
-        return <DiscordGetMessageStep step={step} id={id} onUpdate={onUpdate} />;
-      case "discordListMessages":
-        return <DiscordListMessagesStep step={step} id={id} onUpdate={onUpdate} />;
-      case "discordDeleteMessage":
-        return <DiscordDeleteMessageStep step={step} id={id} onUpdate={onUpdate} />;
+
+      // ─── Variable steps ───────────────────────────────────────
       case "modifyVariable":
         return <ModifyVariableStep step={step} id={id} onUpdate={onUpdate} />;
       case "setVariable":
         return <SetVariableStep step={step} id={id} onUpdate={onUpdate} />;
-      case "twitterCreateTweet":
-        return <TwitterCreateTweetStep step={step} id={id} onUpdate={onUpdate} />;
-      case "twitterDeleteTweet":
-        return <TwitterDeleteTweetStep step={step} id={id} onUpdate={onUpdate} />;
-      case "twitterLikeTweet":
-        return <TwitterLikeTweetStep step={step} id={id} onUpdate={onUpdate} />;
-      case "twitterRetweet":
-        return <TwitterRetweetStep step={step} id={id} onUpdate={onUpdate} />;
-      case "twitterSearchTweets":
-        return <TwitterSearchTweetsStep step={step} id={id} onUpdate={onUpdate} />;
-      case "twitterSendDM":
-        return <TwitterSendDMStep step={step} id={id} onUpdate={onUpdate} />;
-      case "twitterSearchUser":
-        return <TwitterSearchUserStep step={step} id={id} onUpdate={onUpdate} />;
-      case "slackSendMessage":
-        return <SlackSendMessageStep step={step} id={id} onUpdate={onUpdate} />;
-      case "slackUpdateMessage":
-        return <SlackUpdateMessageStep step={step} id={id} onUpdate={onUpdate} />;
-      case "slackDeleteMessage":
-        return <SlackDeleteMessageStep step={step} id={id} onUpdate={onUpdate} />;
-      case "slackCreateChannel":
-        return <SlackCreateChannelStep step={step} id={id} onUpdate={onUpdate} />;
-      case "slackGetChannel":
-        return <SlackGetChannelStep step={step} id={id} onUpdate={onUpdate} />;
-      case "slackListChannels":
-        return <SlackListChannelsStep step={step} id={id} onUpdate={onUpdate} />;
-      case "slackInviteUsers":
-        return <SlackInviteUsersStep step={step} id={id} onUpdate={onUpdate} />;
-      case "slackListMembers":
-        return <SlackListMembersStep step={step} id={id} onUpdate={onUpdate} />;
-      case "slackSetTopic":
-        return <SlackSetTopicStep step={step} id={id} onUpdate={onUpdate} />;
-      case "slackArchiveChannel":
-        return <SlackArchiveChannelStep step={step} id={id} onUpdate={onUpdate} />;
-      case "slackUnarchiveChannel":
-        return <SlackUnarchiveChannelStep step={step} id={id} onUpdate={onUpdate} />;
-      case "slackGetHistory":
-        return <SlackGetHistoryStep step={step} id={id} onUpdate={onUpdate} />;
-      case "slackGetUser":
-        return <SlackGetUserStep step={step} id={id} onUpdate={onUpdate} />;
-      case "slackListUsers":
-        return <SlackListUsersStep step={step} id={id} onUpdate={onUpdate} />;
-      case "slackAddReaction":
-        return <SlackAddReactionStep step={step} id={id} onUpdate={onUpdate} />;
-      case "slackUploadFile":
-        return <SlackUploadFileStep step={step} id={id} onUpdate={onUpdate} />;
+
+      // ─── Logic steps ──────────────────────────────────────────
       case "forEach":
         return <ForEachStep step={step} id={id} onUpdate={onUpdate} />;
+
+      // ─── Data steps ───────────────────────────────────────────
+      case "jsonParse":
+        return <JsonParseStep step={step} id={id} onUpdate={onUpdate} />;
+      case "jsonStringify":
+        return <JsonStringifyStep step={step} id={id} onUpdate={onUpdate} />;
+      case "mathOperation":
+        return <MathOperationStep step={step} id={id} onUpdate={onUpdate} />;
+      case "stringOperation":
+        return <StringOperationStep step={step} id={id} onUpdate={onUpdate} />;
+      case "dateTime":
+        return <DateTimeStep step={step} id={id} onUpdate={onUpdate} />;
+      case "filterArray":
+        return <FilterArrayStep step={step} id={id} onUpdate={onUpdate} />;
+      case "mapArray":
+        return <MapArrayStep step={step} id={id} onUpdate={onUpdate} />;
+      case "codeExecute":
+        return <CodeExecuteStep step={step} id={id} onUpdate={onUpdate} />;
+
+      // ─── All integration steps ────────────────────────────────
       default:
+        if (isIntegrationStep(step.type)) {
+          return <IntegrationStepEditor step={step} id={id} onUpdate={onUpdate} />;
+        }
         return null;
     }
   };

@@ -2,15 +2,7 @@ import type { ExecutionRecord } from "@app-types/automation";
 import { Badge } from "@components/ui/badge";
 import { Button } from "@components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@components/ui/card";
-import {
-  CheckCircle2,
-  ChevronDown,
-  ChevronRight,
-  Clock,
-  Trash2,
-  XCircle,
-  Ban,
-} from "lucide-react";
+import { Ban, CheckCircle2, ChevronDown, ChevronRight, Clock, Trash2, XCircle } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -162,7 +154,13 @@ export function ExecutionHistory({ automationId }: ExecutionHistoryProps) {
 
                     <div className="flex items-center gap-2">
                       <Badge
-                        variant={record.cancelled ? "secondary" : record.success ? "default" : "destructive"}
+                        variant={
+                          record.cancelled
+                            ? "secondary"
+                            : record.success
+                              ? "default"
+                              : "destructive"
+                        }
                         className="text-[10px]"
                       >
                         {record.cancelled ? "Cancelled" : record.success ? "Success" : "Failed"}
@@ -213,9 +211,7 @@ export function ExecutionHistory({ automationId }: ExecutionHistoryProps) {
                               <XCircle className="h-3 w-3 text-red-500 shrink-0" />
                             )}
                             <code className="text-muted-foreground">{step.stepType}</code>
-                            <span className="text-muted-foreground/60 truncate">
-                              {step.nodeId}
-                            </span>
+                            <span className="text-muted-foreground/60 truncate">{step.nodeId}</span>
                             {step.error && (
                               <span className="text-red-500 truncate ml-auto">{step.error}</span>
                             )}

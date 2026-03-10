@@ -497,7 +497,15 @@ export function createNode({
       } as AutomationStep;
       break;
     default:
-      step = { id: newId, type: "click", description: `${label} step`, selector: "body" };
+      // Handle all other step types generically (integration nodes, data nodes, etc.)
+      // Create a step with the correct type and common fields
+      step = {
+        id: newId,
+        type,
+        description: `${label} step`,
+        credentialId: "",
+        storeKey: "",
+      } as AutomationStep;
   }
   return {
     id: newId,

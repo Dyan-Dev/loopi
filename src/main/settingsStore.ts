@@ -5,6 +5,7 @@ import path from "path";
 let _settingsPath: string | null = null;
 function getSettingsPath(): string {
   if (!_settingsPath) {
+    // biome-ignore lint/style/noCommonJs: lazy electron import
     const { app } = require("electron");
     _settingsPath = path.join(app.getPath("userData"), "settings.json");
   }
@@ -13,6 +14,7 @@ function getSettingsPath(): string {
 
 function getDefaultSettings(): AppSettings {
   try {
+    // biome-ignore lint/style/noCommonJs: lazy electron import
     const { app } = require("electron");
     return {
       theme: "light",

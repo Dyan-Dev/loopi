@@ -44,19 +44,107 @@ export interface GenerateResult {
 }
 
 const VALID_STEP_TYPES = new Set([
-  "navigate", "click", "type", "wait", "screenshot", "extract", "scroll",
-  "selectOption", "fileUpload", "hover", "setVariable", "modifyVariable",
-  "browserConditional", "variableConditional", "forEach", "apiCall",
-  "aiOpenAI", "aiAnthropic", "aiOllama",
-  "discordSendMessage", "discordSendWebhook", "discordReactMessage",
-  "discordGetMessage", "discordListMessages", "discordDeleteMessage",
-  "twitterCreateTweet", "twitterDeleteTweet", "twitterLikeTweet",
-  "twitterRetweet", "twitterSearchTweets", "twitterSendDM", "twitterSearchUser",
-  "slackSendMessage", "slackUpdateMessage", "slackDeleteMessage",
-  "slackCreateChannel", "slackGetChannel", "slackListChannels",
-  "slackInviteUsers", "slackListMembers", "slackSetTopic",
-  "slackArchiveChannel", "slackUnarchiveChannel", "slackGetHistory",
-  "slackGetUser", "slackListUsers", "slackAddReaction", "slackUploadFile",
+  "navigate",
+  "click",
+  "type",
+  "wait",
+  "screenshot",
+  "extract",
+  "scroll",
+  "selectOption",
+  "fileUpload",
+  "hover",
+  "setVariable",
+  "modifyVariable",
+  "browserConditional",
+  "variableConditional",
+  "forEach",
+  "apiCall",
+  "aiOpenAI",
+  "aiAnthropic",
+  "aiOllama",
+  "jsonParse",
+  "jsonStringify",
+  "mathOperation",
+  "stringOperation",
+  "dateTime",
+  "filterArray",
+  "mapArray",
+  "codeExecute",
+  "discordSendMessage",
+  "discordSendWebhook",
+  "discordReactMessage",
+  "discordGetMessage",
+  "discordListMessages",
+  "discordDeleteMessage",
+  "twitterCreateTweet",
+  "twitterDeleteTweet",
+  "twitterLikeTweet",
+  "twitterRetweet",
+  "twitterSearchTweets",
+  "twitterSendDM",
+  "twitterSearchUser",
+  "slackSendMessage",
+  "slackUpdateMessage",
+  "slackDeleteMessage",
+  "slackCreateChannel",
+  "slackGetChannel",
+  "slackListChannels",
+  "slackInviteUsers",
+  "slackListMembers",
+  "slackSetTopic",
+  "slackArchiveChannel",
+  "slackUnarchiveChannel",
+  "slackGetHistory",
+  "slackGetUser",
+  "slackListUsers",
+  "slackAddReaction",
+  "slackUploadFile",
+  // Telegram
+  "telegramSendMessage",
+  "telegramSendPhoto",
+  "telegramEditMessage",
+  "telegramDeleteMessage",
+  "telegramSendLocation",
+  "telegramGetUpdates",
+  "telegramSendDocument",
+  // GitHub
+  "githubCreateIssue",
+  "githubGetIssue",
+  "githubListIssues",
+  "githubCreateComment",
+  "githubGetRepo",
+  "githubListRepos",
+  "githubCreateRelease",
+  // Notion
+  "notionCreatePage",
+  "notionGetPage",
+  "notionUpdatePage",
+  "notionQueryDatabase",
+  "notionCreateDatabaseEntry",
+  "notionSearch",
+  // SendGrid
+  "sendgridSendEmail",
+  "sendgridSendTemplate",
+  "sendgridGetContacts",
+  // Stripe
+  "stripeGetBalance",
+  "stripeCreateCustomer",
+  "stripeGetCustomer",
+  "stripeListCustomers",
+  "stripeCreateCharge",
+  "stripeCreatePaymentIntent",
+  "stripeListCharges",
+  // Postgres
+  "postgresQuery",
+  "postgresInsert",
+  "postgresSelect",
+  "postgresUpdate",
+  // Google Sheets
+  "googleSheetsReadRows",
+  "googleSheetsAppendRow",
+  "googleSheetsUpdateRow",
+  "googleSheetsClear",
 ]);
 
 const CONDITIONAL_TYPES = new Set(["browserConditional", "variableConditional"]);
@@ -70,12 +158,13 @@ export class WorkflowGenerator {
 
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
       try {
-        const promptToUse = attempt === 0
-          ? params
-          : {
-              ...params,
-              prompt: `${params.prompt}\n\nIMPORTANT: Your previous response failed to parse. Error: ${lastError?.message}. Please return ONLY valid JSON with no extra text.`,
-            };
+        const promptToUse =
+          attempt === 0
+            ? params
+            : {
+                ...params,
+                prompt: `${params.prompt}\n\nIMPORTANT: Your previous response failed to parse. Error: ${lastError?.message}. Please return ONLY valid JSON with no extra text.`,
+              };
         const rawResponse = await this.callAI(promptToUse, systemPrompt);
         return this.parseAndValidate(rawResponse);
       } catch (error) {
@@ -374,16 +463,127 @@ Return ONLY valid JSON (no markdown fences, no explanation):
       edges.push(edge);
     }
 
+    // Auto-fix: add missing edges between sequential nodes that have no connections
+    this.autoFixMissingEdges(nodes, edges, warnings);
+
+    // Auto-fix: ensure conditional/forEach nodes have correct sourceHandle on edges
+    this.autoFixSourceHandles(nodes, edges, warnings);
+
+    // Node sanity checks
+    for (const node of nodes) {
+      const step = node.data.step;
+      const stepType = step.type as string;
+
+      // forEach must have arrayVariable
+      if (stepType === "forEach" && !step.arrayVariable) {
+        warnings.push(`Node "${node.id}": forEach missing arrayVariable - defaulting to "items"`);
+        step.arrayVariable = "items";
+      }
+
+      // forEach should have itemVariable defaults
+      if (stepType === "forEach") {
+        if (!step.itemVariable) step.itemVariable = "currentItem";
+        if (!step.indexVariable) step.indexVariable = "loopIndex";
+      }
+
+      // navigate must have value (URL)
+      if (stepType === "navigate" && !step.value) {
+        warnings.push(`Node "${node.id}": navigate step has no URL`);
+      }
+
+      // extract must have selector and storeKey
+      if (stepType === "extract" && !step.selector) {
+        warnings.push(`Node "${node.id}": extract step has no selector`);
+      }
+
+      // apiCall must have url
+      if (stepType === "apiCall" && !step.url) {
+        warnings.push(`Node "${node.id}": apiCall step has no url`);
+      }
+    }
+
     // Auto-layout if positions seem default/missing
-    const needsLayout = nodes.every(
-      (n) => n.position.x === 0 && n.position.y === 0
-    ) || nodes.length > 0 && !nodes[0].position;
+    const needsLayout =
+      nodes.every((n) => n.position.x === 0 && n.position.y === 0) ||
+      (nodes.length > 0 && !nodes[0].position);
 
     if (needsLayout) {
       this.autoLayout(nodes, edges);
     }
 
     return { nodes, edges, name, description, warnings };
+  }
+
+  /**
+   * Auto-fix: if sequential nodes have no edges between them, add them.
+   * Only applies when there are nodes but fewer edges than expected.
+   */
+  private autoFixMissingEdges(
+    nodes: GeneratedNode[],
+    edges: GeneratedEdge[],
+    warnings: string[]
+  ): void {
+    if (nodes.length <= 1) return;
+
+    // Find nodes that have no incoming and no outgoing edges (isolated)
+    // but only if there are some edges (don't auto-connect a fully edge-less workflow differently)
+    if (edges.length === 0 && nodes.length > 1) {
+      // No edges at all - connect sequentially
+      for (let i = 0; i < nodes.length - 1; i++) {
+        const edgeId = `e${nodes[i].id}-${nodes[i + 1].id}-auto`;
+        edges.push({
+          id: edgeId,
+          source: nodes[i].id,
+          target: nodes[i + 1].id,
+        });
+      }
+      warnings.push("Auto-connected nodes sequentially (no edges were provided)");
+    }
+  }
+
+  /**
+   * Auto-fix: ensure conditional and forEach edges have correct sourceHandle
+   */
+  private autoFixSourceHandles(
+    nodes: GeneratedNode[],
+    edges: GeneratedEdge[],
+    warnings: string[]
+  ): void {
+    for (const node of nodes) {
+      const stepType = node.data.step.type as string;
+
+      if (CONDITIONAL_TYPES.has(stepType)) {
+        const outEdges = edges.filter((e) => e.source === node.id);
+        const hasHandles = outEdges.some(
+          (e) => e.sourceHandle === "if" || e.sourceHandle === "else"
+        );
+
+        if (!hasHandles && outEdges.length >= 2) {
+          outEdges[0].sourceHandle = "if";
+          outEdges[1].sourceHandle = "else";
+          warnings.push(`Auto-assigned if/else handles to conditional node "${node.id}"`);
+        } else if (!hasHandles && outEdges.length === 1) {
+          outEdges[0].sourceHandle = "if";
+          warnings.push(`Auto-assigned "if" handle to conditional node "${node.id}"`);
+        }
+      }
+
+      if (stepType === FOREACH_TYPE) {
+        const outEdges = edges.filter((e) => e.source === node.id);
+        const hasHandles = outEdges.some(
+          (e) => e.sourceHandle === "loop" || e.sourceHandle === "done"
+        );
+
+        if (!hasHandles && outEdges.length >= 2) {
+          outEdges[0].sourceHandle = "loop";
+          outEdges[1].sourceHandle = "done";
+          warnings.push(`Auto-assigned loop/done handles to forEach node "${node.id}"`);
+        } else if (!hasHandles && outEdges.length === 1) {
+          outEdges[0].sourceHandle = "loop";
+          warnings.push(`Auto-assigned "loop" handle to forEach node "${node.id}"`);
+        }
+      }
+    }
   }
 
   autoLayout(nodes: GeneratedNode[], edges: GeneratedEdge[]): void {

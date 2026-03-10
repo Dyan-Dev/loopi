@@ -9,9 +9,12 @@ import { createLogger } from "@utils/logger";
 import type { BrowserWindow } from "electron";
 import { AutomationExecutor } from "./automationExecutor";
 import { HeadlessExecutor } from "./headlessExecutor";
-import { validateWorkflow } from "./workflowValidator";
+import { type ValidatorNode, validateWorkflow } from "./workflowValidator";
 
 const logger = createLogger("GraphExecutor");
+
+/** Default per-step timeout in milliseconds (2 minutes) */
+const STEP_TIMEOUT_MS = 120_000;
 
 interface ExecutionContext {
   nodes: Node[];
@@ -22,6 +25,37 @@ interface ExecutionContext {
   headlessExecutor?: HeadlessExecutor | null;
   onNodeStatus?: (nodeId: string, status: "running" | "success" | "error", error?: string) => void;
   cancelSignal?: { cancelled: boolean };
+  /** Per-step timeout in ms (default: 120000) */
+  stepTimeout?: number;
+}
+
+/**
+ * Execute a step with a timeout. If the step takes longer than the timeout,
+ * an error is thrown with a descriptive message.
+ */
+async function withTimeout<T>(
+  promise: Promise<T>,
+  timeoutMs: number,
+  stepType: string,
+  nodeId: string
+): Promise<T> {
+  let timer: ReturnType<typeof setTimeout>;
+  const timeoutPromise = new Promise<never>((_resolve, reject) => {
+    timer = setTimeout(
+      () =>
+        reject(
+          new Error(
+            `Step "${stepType}" on node "${nodeId}" timed out after ${(timeoutMs / 1000).toFixed(0)}s`
+          )
+        ),
+      timeoutMs
+    );
+  });
+  try {
+    return await Promise.race([promise, timeoutPromise]);
+  } finally {
+    clearTimeout(timer!);
+  }
 }
 
 /**
@@ -43,7 +77,11 @@ export function collectReachableNodes(
 
     // Follow all outgoing edges, but don't cross back into the boundary
     for (const edge of edges) {
-      if (edge.source === current && !boundaryNodeIds.has(edge.target) && !reachable.has(edge.target)) {
+      if (
+        edge.source === current &&
+        !boundaryNodeIds.has(edge.target) &&
+        !reachable.has(edge.target)
+      ) {
         queue.push(edge.target);
       }
     }
@@ -66,7 +104,7 @@ export async function executeAutomationGraph(
   }
 
   // Pre-execution validation safety net
-  const validation = validateWorkflow(nodes, edges);
+  const validation = validateWorkflow(nodes as unknown as ValidatorNode[], edges);
   if (!validation.valid) {
     throw new Error(`Workflow validation failed: ${validation.errors.join("; ")}`);
   }
@@ -273,7 +311,12 @@ async function executeBrowserGraph({
           );
         }
       } else if (node.data.step) {
-        await executor.executeStep(browserWindow, headless, headlessExecutor, node.data.step);
+        await withTimeout(
+          executor.executeStep(browserWindow, headless, headlessExecutor, node.data.step),
+          STEP_TIMEOUT_MS,
+          node.data.step.type,
+          nodeId
+        );
       }
 
       onNodeStatus?.(nodeId, "success");

@@ -27,7 +27,13 @@ interface UseExecutionArgs {
  * - Node-by-node step execution with visual feedback
  * - Proper cancellation via IPC signal to backend
  */
-export default function useExecution({ nodes, edges, setNodes, automationId, automationName }: UseExecutionArgs) {
+export default function useExecution({
+  nodes,
+  edges,
+  setNodes,
+  automationId,
+  automationName,
+}: UseExecutionArgs) {
   const [isBrowserOpen, setIsBrowserOpen] = useState(false);
   const [isAutomationRunning, setIsAutomationRunning] = useState(false);
   const [currentNodeId, setCurrentNodeId] = useState<string | null>(null);

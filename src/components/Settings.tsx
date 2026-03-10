@@ -324,9 +324,7 @@ export function Settings() {
                     <Input
                       id="ollamaBaseUrl"
                       value={settings.ollamaBaseUrl || ""}
-                      onChange={(e) =>
-                        setSettings({ ...settings, ollamaBaseUrl: e.target.value })
-                      }
+                      onChange={(e) => setSettings({ ...settings, ollamaBaseUrl: e.target.value })}
                       placeholder="http://localhost:11434"
                     />
                     <p className="text-xs text-muted-foreground mt-2">

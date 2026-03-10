@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@main/debugLogger", () => ({
   debugLogger: {
@@ -248,11 +248,7 @@ describe("ConditionalEvaluator - evaluateVariableConditional", () => {
   describe("edge cases", () => {
     it("should throw when variableConditionType is missing", () => {
       expect(() =>
-        evaluator.evaluateVariableConditional(
-          { variableName: "myVar" },
-          passthrough,
-          () => "value"
-        )
+        evaluator.evaluateVariableConditional({ variableName: "myVar" }, passthrough, () => "value")
       ).toThrow("variableConditionType and variableName are required");
     });
 
