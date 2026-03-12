@@ -1,4 +1,5 @@
 import type { Configuration } from "webpack";
+import webpack from "webpack";
 import { rules } from "./webpack.rules";
 
 export const mainConfig: Configuration = {
@@ -18,4 +19,13 @@ export const mainConfig: Configuration = {
       "@utils": __dirname + "/src/utils",
     },
   },
+  plugins: [
+    // These are optional runtime dependencies loaded via dynamic import().
+    // Ignore them at build time so webpack doesn't fail when they're not installed.
+    new webpack.IgnorePlugin({ resourceRegExp: /^@aws-sdk\/client-s3$/ }),
+    new webpack.IgnorePlugin({ resourceRegExp: /^mongodb$/ }),
+    new webpack.IgnorePlugin({ resourceRegExp: /^mysql2\/promise$/ }),
+    new webpack.IgnorePlugin({ resourceRegExp: /^pg$/ }),
+    new webpack.IgnorePlugin({ resourceRegExp: /^ioredis$/ }),
+  ],
 };
