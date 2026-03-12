@@ -84,7 +84,8 @@
   },
   "pnpm": {
     "overrides": {
-      "basic-ftp": "npm:empty-npm-package@1.0.0"
+      "basic-ftp": "npm:empty-npm-package@1.0.0",
+      "node-forge": ">=1.3.2"
     }
   }
 }
