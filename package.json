@@ -1,18 +1,22 @@
 {
   "name": "loopi",
-  "version": "1.6.2",
+  "version": "1.7.0",
   "description": "Loopi — Visual Browser Automation for humans and teams",
   "author": "Dyan-Dev",
   "main": ".webpack/main",
+  "bin": {
+    "loopi-cli": "bin/loopi"
+  },
   "scripts": {
     "start": "electron-forge start -- --no-sandbox",
     "package": "electron-forge package",
-    "make": "electron-forge make",
+    "make": "pnpm build:cli && electron-forge make",
     "publish": "electron-forge publish",
-    "make:all": "electron-forge make",
-    "make:linux": "electron-forge make --platform=linux",
-    "make:windows": "electron-forge make --platform=win32",
-    "make:mac": "electron-forge make --platform=darwin",
+    "make:all": "pnpm build:cli && electron-forge make",
+    "make:linux": "pnpm build:cli && electron-forge make --platform=linux",
+    "make:windows": "pnpm build:cli && electron-forge make --platform=win32",
+    "make:mac": "pnpm build:cli && electron-forge make --platform=darwin",
+    "build:cli": "webpack --config webpack.cli.config.ts",
     "format": "pnpm exec biome check --write",
     "react-dev": "npx webpack serve --config webpack.dev.config.ts",
     "test": "vitest run",

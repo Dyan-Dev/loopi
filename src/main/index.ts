@@ -1,6 +1,8 @@
 import { app, BrowserWindow } from "electron";
 import squirrelStartup from "electron-squirrel-startup";
 import { AutomationExecutor } from "./automationExecutor";
+import { installCli } from "./cliInstaller";
+import { startCliServer, stopCliServer } from "./cliServer";
 import { DesktopScheduler } from "./desktopScheduler";
 import { setupDownloadHandler } from "./downloadManager";
 import { registerIPCHandlers } from "./ipcHandlers";
@@ -47,6 +49,12 @@ app.on("ready", async () => {
 
   const mainWindow = windowManager.createMainWindow();
 
+  // Start CLI server for command-line workflow execution
+  startCliServer(windowManager);
+
+  // Install CLI command so `loopi` works from the terminal
+  installCli();
+
   // Load and activate schedules
   scheduler.loadAndActivateSchedules().catch((error) => {
     console.error("Failed to load schedules:", error);
@@ -62,6 +70,7 @@ app.on("ready", async () => {
  * Clean up before quitting to prevent "Object has been destroyed" errors
  */
 app.on("before-quit", () => {
+  stopCliServer();
   scheduler.cleanup();
   windowManager.cleanup();
 });

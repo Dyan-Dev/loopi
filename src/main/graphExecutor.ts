@@ -146,7 +146,7 @@ export async function executeAutomationGraph(
       browserWindow,
       executor,
       onNodeStatus,
-      headless,
+      headless: headless ?? false,
       headlessExecutor,
       cancelSignal,
     });
@@ -160,8 +160,47 @@ export async function executeAutomationGraph(
 }
 
 /**
- * Execute workflow using Electron browser window
+ * Polls `window.__loopi_key_queue` and forwards entries as trusted keyboard
+ * events via `webContents.sendInputEvent()`. Returns a cleanup function.
  */
+function startInputBridge(browserWindow: BrowserWindow): () => void {
+  const wc = browserWindow.webContents;
+  let stopped = false;
+
+  if (!wc.isDestroyed()) {
+    wc.executeJavaScript("window.__loopi_key_queue = []").catch(() => {
+      // Page not ready yet — the queue will be created on first codeExecute instead
+    });
+  }
+
+  const interval = setInterval(async () => {
+    if (stopped || wc.isDestroyed()) return;
+    try {
+      const keys: string[] = await wc.executeJavaScript(
+        "(function(){ var q = window.__loopi_key_queue || []; window.__loopi_key_queue = []; return q; })()"
+      );
+      if (keys.length === 0) return;
+      if (!browserWindow.isDestroyed() && !browserWindow.isFocused()) {
+        browserWindow.focus();
+      }
+      for (const key of keys) {
+        if (stopped || wc.isDestroyed()) return;
+        wc.sendInputEvent({ type: "keyDown", keyCode: key } as Electron.KeyboardInputEvent);
+        await new Promise((r) => setTimeout(r, 80));
+        if (stopped || wc.isDestroyed()) return;
+        wc.sendInputEvent({ type: "keyUp", keyCode: key } as Electron.KeyboardInputEvent);
+      }
+    } catch {
+      // Page navigated or destroyed
+    }
+  }, 50);
+
+  return () => {
+    stopped = true;
+    clearInterval(interval);
+  };
+}
+
 async function executeBrowserGraph({
   nodes,
   edges,
@@ -181,6 +220,11 @@ async function executeBrowserGraph({
   headlessExecutor?: HeadlessExecutor | null;
   cancelSignal?: { cancelled: boolean };
 }): Promise<{ success: boolean }> {
+  let stopInputBridge: (() => void) | null = null;
+  if (browserWindow && !headless) {
+    stopInputBridge = startInputBridge(browserWindow);
+  }
+
   const executeGraph = async (
     nodeId: string,
     visited: Set<string>,
@@ -276,6 +320,9 @@ async function executeBrowserGraph({
 
       if (node.data.step?.type === "browserConditional") {
         if (node.data.step.browserConditionType && node.data.step.selector) {
+          if (!browserWindow) {
+            throw new Error("Browser window required for browser conditional evaluation");
+          }
           const result = await executor.evaluateBrowserConditional(
             browserWindow,
             headless,
@@ -312,7 +359,7 @@ async function executeBrowserGraph({
         }
       } else if (node.data.step) {
         await withTimeout(
-          executor.executeStep(browserWindow, headless, headlessExecutor, node.data.step),
+          executor.executeStep(browserWindow ?? null, headless, headlessExecutor, node.data.step),
           STEP_TIMEOUT_MS,
           node.data.step.type,
           nodeId
@@ -356,7 +403,7 @@ async function executeBrowserGraph({
 
     return { success: true };
   } finally {
-    // Clean up headless executor
+    stopInputBridge?.();
     if (headlessExecutor) {
       await headlessExecutor.close();
       logger.info("Closed Puppeteer headless browser");

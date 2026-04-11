@@ -133,6 +133,10 @@ export class AutomationExecutor {
       type: step.type,
     });
 
+    if (browserWindow && (browserWindow.isDestroyed() || browserWindow.webContents.isDestroyed())) {
+      throw new Error("Browser window was destroyed — cannot execute step");
+    }
+
     try {
       let result: unknown;
       const variables = this.getVariablesObject();
@@ -256,7 +260,7 @@ export class AutomationExecutor {
             this.substituteVariables.bind(this)
           );
           if ((step as StepAIOpenAI).storeKey) {
-            variables[(step as StepAIOpenAI).storeKey] = result;
+            variables[(step as StepAIOpenAI).storeKey!] = result;
             debugLogger.debug(
               "AI OpenAI",
               `Stored response in variable: ${(step as StepAIOpenAI).storeKey}`
@@ -270,7 +274,7 @@ export class AutomationExecutor {
             this.substituteVariables.bind(this)
           );
           if ((step as StepAIAnthropic).storeKey) {
-            variables[(step as StepAIAnthropic).storeKey] = result;
+            variables[(step as StepAIAnthropic).storeKey!] = result;
             debugLogger.debug(
               "AI Anthropic",
               `Stored response in variable: ${(step as StepAIAnthropic).storeKey}`
@@ -284,7 +288,7 @@ export class AutomationExecutor {
             this.substituteVariables.bind(this)
           );
           if ((step as StepAIOllama).storeKey) {
-            variables[(step as StepAIOllama).storeKey] = result;
+            variables[(step as StepAIOllama).storeKey!] = result;
             debugLogger.debug(
               "AI Ollama",
               `Stored response in variable: ${(step as StepAIOllama).storeKey}`
@@ -401,6 +405,15 @@ export class AutomationExecutor {
 
         case "twitterSearchUser":
           result = await this.twitterHandler.executeSearchUser(
+            step,
+            this.substituteVariables.bind(this),
+            this.resolveTwitterCredentials.bind(this),
+            variables
+          );
+          break;
+
+        case "twitterUploadMedia":
+          result = await this.twitterHandler.executeUploadMedia(
             step,
             this.substituteVariables.bind(this),
             this.resolveTwitterCredentials.bind(this),
@@ -629,13 +642,30 @@ export class AutomationExecutor {
           );
           break;
 
-        case "codeExecute":
-          result = this.dataTransformHandler.executeCode(
-            step,
-            this.substituteVariables.bind(this),
-            variables
-          );
+        case "codeExecute": {
+          const code = this.substituteVariables(step.code);
+          const wrapCode = (c: string) =>
+            c.includes("return") ? `(async () => { ${c} })()` : `(async () => { return (${c}); })()`;
+
+          if (
+            browserWindow?.webContents &&
+            !browserWindow.isDestroyed() &&
+            !browserWindow.webContents.isDestroyed()
+          ) {
+            result = await browserWindow.webContents.executeJavaScript(wrapCode(code));
+            if (step.storeKey) variables[step.storeKey] = result;
+          } else if (headless && headlessExecutor?.getPage()) {
+            result = await headlessExecutor.getPage()!.evaluate(wrapCode(code));
+            if (step.storeKey) variables[step.storeKey] = result;
+          } else {
+            result = this.dataTransformHandler.executeCode(
+              step,
+              this.substituteVariables.bind(this),
+              variables
+            );
+          }
           break;
+        }
 
         // Telegram steps
         case "telegramSendMessage":

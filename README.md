@@ -61,6 +61,7 @@ Loopi gives AI models the ability to **act**: browse the web, call APIs, query d
 | Agentic workflows | Yes | Partial | No | No | No | No |
 | Runs locally | Yes | Self-host | No | Yes | Yes | Varies |
 | Open source | Yes | Yes | No | Yes | Yes | No |
+| CLI support | Yes | Yes | No | Yes | No | No |
 | Typed variables | Yes | No | No | N/A | No | No |
 | Free | Yes | Limits | No | Yes | Yes | No |
 
@@ -102,6 +103,8 @@ Loopi gives AI models the ability to **act**: browse the web, call APIs, query d
 
 **Import/Export** — Save and share automations as JSON. Includes example workflows to get started.
 
+**CLI Support** — Run and manage workflows from your terminal while the desktop app is running. List, create, update, delete, and execute workflows — all from the command line.
+
 ## Tech Stack
 
 Electron, React 19, TypeScript, ReactFlow, Tailwind CSS, Radix UI, Biome
@@ -109,6 +112,7 @@ Electron, React 19, TypeScript, ReactFlow, Tailwind CSS, Radix UI, Biome
 ## Documentation
 
 - [Getting Started](./docs/GETTING_STARTED.md) — Installation and first automation
+- [CLI](./docs/CLI.md) — Run and manage workflows from the command line
 - [Steps Reference](./docs/STEPS_REFERENCE.md) — All step types and their fields
 - [Variables](./docs/VARIABLES.md) — Variable system and access patterns
 - [Credentials](./docs/CREDENTIALS.md) — Managing API credentials

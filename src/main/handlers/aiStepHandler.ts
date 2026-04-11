@@ -155,7 +155,7 @@ export class AiStepHandler {
     const systemPrompt = substituteVariables(step.systemPrompt || "").trim();
     const model = substituteVariables(step.model || "").trim();
     const temperature = Math.max(0, Math.min(1, Number(step.temperature ?? 0)));
-    const maxTokens = Math.min(Math.max(1, Math.floor(Number(step.maxTokens ?? 256))), 4096);
+    const maxTokens = Math.min(Math.max(1, Math.floor(Number(step.maxTokens ?? 256))), 16384);
     const topPValue =
       step.topP === undefined ? undefined : Math.max(0, Math.min(1, Number(step.topP)));
     const timeoutMs = Math.min(Math.max(1000, Number(step.timeoutMs ?? 20000)), 120000);
@@ -186,6 +186,7 @@ export class AiStepHandler {
       model,
       messages: [...systemMessage, userMessage],
       stream: false,
+      think: step.think !== undefined ? step.think : undefined,
       options: {
         temperature,
         top_p: topPValue,

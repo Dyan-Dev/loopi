@@ -1,0 +1,203 @@
+{
+  "id": "game-tic-tac-toe",
+  "name": "Tic Tac Toe — Unbeatable AI Player",
+  "description": "Plays Tic Tac Toe on Google by searching for it, then uses minimax strategy via codeExecute to make optimal moves. The bot never loses. Shows off AI-like decision making + browser interaction.",
+  "nodes": [
+    {
+      "id": "1",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "1",
+          "type": "navigate",
+          "description": "Open a Tic Tac Toe game",
+          "value": "https://playtictactoe.org/"
+        }
+      },
+      "position": { "x": 400, "y": 50 }
+    },
+    {
+      "id": "2",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "2",
+          "type": "wait",
+          "description": "Wait for game to load",
+          "value": "3"
+        }
+      },
+      "position": { "x": 400, "y": 150 }
+    },
+    {
+      "id": "3",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "3",
+          "type": "screenshot",
+          "description": "Screenshot — empty board",
+          "savePath": "tictactoe_start.png"
+        }
+      },
+      "position": { "x": 400, "y": 250 }
+    },
+    {
+      "id": "4",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "4",
+          "type": "setVariable",
+          "description": "Move counter",
+          "variableName": "moveNum",
+          "value": "0"
+        }
+      },
+      "position": { "x": 400, "y": 350 }
+    },
+    {
+      "id": "5",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "5",
+          "type": "setVariable",
+          "description": "Max moves in tic tac toe",
+          "variableName": "maxMoves",
+          "value": "5"
+        }
+      },
+      "position": { "x": 400, "y": 450 }
+    },
+    {
+      "id": "6",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "6",
+          "type": "codeExecute",
+          "description": "Read board state and make the best move using minimax",
+          "code": "const cells = document.querySelectorAll('.board .square, td, [class*=\"cell\"], [class*=\"square\"]'); if (cells.length < 9) return 'Board not found'; const board = Array.from(cells).map(c => { const text = c.textContent.trim().toUpperCase(); if (text === 'X') return 'X'; if (text === 'O') return 'O'; return ''; }); function checkWin(b, p) { const w = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]]; return w.some(l => l.every(i => b[i] === p)); } function minimax(b, isMax) { if (checkWin(b, 'X')) return -10; if (checkWin(b, 'O')) return 10; if (b.every(c => c)) return 0; let best = isMax ? -Infinity : Infinity; for (let i = 0; i < 9; i++) { if (!b[i]) { b[i] = isMax ? 'O' : 'X'; const score = minimax(b, !isMax); best = isMax ? Math.max(best, score) : Math.min(best, score); b[i] = ''; } } return best; } let bestMove = -1, bestScore = -Infinity; for (let i = 0; i < 9; i++) { if (!board[i]) { board[i] = 'O'; const score = minimax(board, false); board[i] = ''; if (score > bestScore) { bestScore = score; bestMove = i; } } } if (bestMove >= 0) { cells[bestMove].click(); return 'Played position ' + bestMove; } return 'No move available';",
+          "storeKey": "moveResult"
+        }
+      },
+      "position": { "x": 400, "y": 570 }
+    },
+    {
+      "id": "7",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "7",
+          "type": "wait",
+          "description": "Wait for opponent move",
+          "value": "2"
+        }
+      },
+      "position": { "x": 400, "y": 680 }
+    },
+    {
+      "id": "8",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "8",
+          "type": "screenshot",
+          "description": "Screenshot after each move",
+          "savePath": "tictactoe_move_{{moveNum}}.png"
+        }
+      },
+      "position": { "x": 400, "y": 780 }
+    },
+    {
+      "id": "9",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "9",
+          "type": "codeExecute",
+          "description": "Check if game ended (win/draw/loss)",
+          "code": "const cells = document.querySelectorAll('.board .square, td, [class*=\"cell\"], [class*=\"square\"]'); const board = Array.from(cells).map(c => { const t = c.textContent.trim().toUpperCase(); return t === 'X' ? 'X' : t === 'O' ? 'O' : ''; }); const wins = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]]; for (const w of wins) { if (w.every(i => board[i] === 'O')) return 'WIN'; if (w.every(i => board[i] === 'X')) return 'LOSS'; } if (board.every(c => c)) return 'DRAW'; const status = document.querySelector('[class*=\"status\"], [class*=\"result\"], .game-over'); if (status && status.textContent.trim()) return status.textContent.trim(); return 'PLAYING';",
+          "storeKey": "gameStatus"
+        }
+      },
+      "position": { "x": 400, "y": 880 }
+    },
+    {
+      "id": "10",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "10",
+          "type": "modifyVariable",
+          "description": "Increment move counter",
+          "variableName": "moveNum",
+          "operation": "increment",
+          "value": "1"
+        }
+      },
+      "position": { "x": 400, "y": 980 }
+    },
+    {
+      "id": "11",
+      "type": "variableConditional",
+      "data": {
+        "step": {
+          "id": "11",
+          "type": "variableConditional",
+          "description": "Is game still playing?",
+          "variableConditionType": "variableEquals",
+          "variableName": "gameStatus",
+          "comparisonValue": "PLAYING"
+        }
+      },
+      "position": { "x": 400, "y": 1080 }
+    },
+    {
+      "id": "12",
+      "type": "variableConditional",
+      "data": {
+        "step": {
+          "id": "12",
+          "type": "variableConditional",
+          "description": "Safety check — max moves reached?",
+          "variableConditionType": "variableLessThan",
+          "variableName": "moveNum",
+          "comparisonValue": "{{maxMoves}}",
+          "parseAsNumber": true
+        }
+      },
+      "position": { "x": 200, "y": 1200 }
+    },
+    {
+      "id": "13",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "13",
+          "type": "screenshot",
+          "description": "Final screenshot — game result",
+          "savePath": "tictactoe_final.png"
+        }
+      },
+      "position": { "x": 700, "y": 1080 }
+    }
+  ],
+  "edges": [
+    { "id": "e1-2", "source": "1", "target": "2" },
+    { "id": "e2-3", "source": "2", "target": "3" },
+    { "id": "e3-4", "source": "3", "target": "4" },
+    { "id": "e4-5", "source": "4", "target": "5" },
+    { "id": "e5-6", "source": "5", "target": "6" },
+    { "id": "e6-7", "source": "6", "target": "7" },
+    { "id": "e7-8", "source": "7", "target": "8" },
+    { "id": "e8-9", "source": "8", "target": "9" },
+    { "id": "e9-10", "source": "9", "target": "10" },
+    { "id": "e10-11", "source": "10", "target": "11" },
+    { "id": "e11-12", "source": "11", "target": "12", "sourceHandle": "if" },
+    { "id": "e11-13", "source": "11", "target": "13", "sourceHandle": "else" },
+    { "id": "e12-6", "source": "12", "target": "6", "sourceHandle": "if" },
+    { "id": "e12-13", "source": "12", "target": "13", "sourceHandle": "else" }
+  ]
+}

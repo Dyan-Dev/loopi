@@ -15,6 +15,10 @@ export class HeadlessExecutor {
   private page: Page | null = null;
   private puppeteer: typeof import("puppeteer") | null = null;
 
+  getPage(): Page | null {
+    return this.page;
+  }
+
   /**
    * Lazy load Puppeteer
    */
@@ -331,29 +335,39 @@ export class HeadlessExecutor {
 
       if (config.parseAsNumber) {
         const a = parseFloat(transformed.replace(/[^0-9.-]/g, ""));
-        const b = parseFloat(expected.replace(/[^0-9.-]/g, ""));
-        conditionResult =
-          !isNaN(a) &&
-          !isNaN(b) &&
-          (op === "greaterThan"
-            ? a > b
-            : op === "lessThan"
-              ? a < b
-              : op === "contains"
-                ? transformed.includes(expected)
-                : a === b);
-        debugLogger.debug(
-          "BrowserConditional",
-          `Numeric comparison: ${a} ${op} ${b} = ${conditionResult}`
-        );
+        const b = parseFloat((expected || "").replace(/[^0-9.-]/g, ""));
+
+        if (isNaN(a) || isNaN(b)) {
+          debugLogger.warn(
+            "BrowserConditional",
+            "Failed to parse values as numbers for comparison",
+            { transformed, expected }
+          );
+          conditionResult = false;
+        } else {
+          conditionResult =
+            !isNaN(a) &&
+            !isNaN(b) &&
+            (op === "greaterThan"
+              ? a > b
+              : op === "lessThan"
+                ? a < b
+                : op === "contains"
+                  ? transformed.includes(expected || "")
+                  : a === b);
+          debugLogger.debug(
+            "BrowserConditional",
+            `Numeric comparison: ${a} ${op} ${b} = ${conditionResult}`
+          );
+        }
       } else {
         conditionResult =
           op === "contains"
-            ? transformed.includes(expected)
+            ? transformed.includes(expected || "")
             : op === "greaterThan"
-              ? parseFloat(transformed) > parseFloat(expected)
+              ? parseFloat(transformed) > parseFloat(expected || "")
               : op === "lessThan"
-                ? parseFloat(transformed) < parseFloat(expected)
+                ? parseFloat(transformed) < parseFloat(expected || "")
                 : transformed === expected;
       }
     }

@@ -12,6 +12,7 @@
 | Document | Description |
 |----------|-------------|
 | [GETTING_STARTED.md](./GETTING_STARTED.md) | Installation and first automation |
+| [CLI.md](./CLI.md) | Run and manage workflows from the command line |
 | [STEPS_REFERENCE.md](./STEPS_REFERENCE.md) | All 86+ step types — browser, data, API, and 80+ integrations |
 | [VARIABLES.md](./VARIABLES.md) | Variable system, types, dot notation, and access patterns |
 | [CREDENTIALS.md](./CREDENTIALS.md) | Managing API keys and tokens |
@@ -38,6 +39,7 @@
 | I want to... | Read... |
 |---|---|
 | Build my first automation | [GETTING_STARTED.md](./GETTING_STARTED.md) |
+| Run workflows from the terminal | [CLI.md](./CLI.md) |
 | Look up a step type | [STEPS_REFERENCE.md](./STEPS_REFERENCE.md) |
 | Use variables | [VARIABLES.md](./VARIABLES.md) |
 | Set up API credentials | [CREDENTIALS.md](./CREDENTIALS.md) |

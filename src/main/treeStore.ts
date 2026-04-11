@@ -87,7 +87,9 @@ export const listAutomations = (folder: string): Array<StoredAutomation> => {
   });
 };
 
-export const loadAutomation = (id: string, folder: string): StoredAutomation | null => {
+export const loadAutomation = (id: string | undefined, folder: string): StoredAutomation | null => {
+  if (!id) return null;
+
   checkFolder(folder);
 
   const filePath = path.join(folder, genFileName(id));

@@ -2,6 +2,9 @@ import { getCredential } from "@main/credentialsStore";
 import { debugLogger } from "@main/debugLogger";
 import axios from "axios";
 import crypto from "crypto";
+import FormData from "form-data";
+import fs from "fs";
+import path from "path";
 
 /**
  * Handles all Twitter/X-related automation steps
@@ -538,6 +541,84 @@ export class TwitterStepHandler {
   }
 
   /**
+   * Execute upload media step — uploads an image file to Twitter and returns the media_id
+   */
+  async executeUploadMedia(
+    step: {
+      filePath: string;
+      storeKey?: string;
+      credentialId?: string;
+      apiKey?: string;
+      apiSecret?: string;
+      accessToken?: string;
+      accessSecret?: string;
+    },
+    substituteVariables: (input?: string) => string,
+    resolveTwitterCredentials: (
+      step: Record<string, unknown>
+    ) => Promise<{ apiKey: string; apiSecret: string; accessToken: string; accessSecret: string }>,
+    variables: Record<string, unknown>
+  ): Promise<string> {
+    try {
+      const filePath = substituteVariables(step.filePath);
+      const resolvedPath = path.resolve(filePath);
+
+      if (!fs.existsSync(resolvedPath)) {
+        throw new Error(`File not found: ${resolvedPath}`);
+      }
+
+      const { apiKey, apiSecret, accessToken, accessSecret } =
+        await resolveTwitterCredentials(step);
+
+      debugLogger.debug("Twitter Upload Media", "Uploading media", { filePath: resolvedPath });
+
+      const uploadUrl = "https://upload.twitter.com/1.1/media/upload.json";
+
+      // For multipart/form-data, body params are NOT included in OAuth signature
+      const oauth = this.generateTwitterOAuthHeader(
+        "POST",
+        uploadUrl,
+        apiKey,
+        apiSecret,
+        accessToken,
+        accessSecret
+      );
+
+      // Use form-data package for proper multipart encoding
+      const form = new FormData();
+      form.append("media", fs.createReadStream(resolvedPath), {
+        filename: path.basename(resolvedPath),
+        contentType: "application/octet-stream",
+      });
+
+      const response = await axios.post(uploadUrl, form, {
+        headers: {
+          ...form.getHeaders(),
+          Authorization: oauth,
+        },
+        maxBodyLength: Infinity,
+        maxContentLength: Infinity,
+      });
+
+      const mediaId = response.data?.media_id_string;
+      if (!mediaId) {
+        throw new Error("Twitter media upload did not return a media_id");
+      }
+
+      debugLogger.debug("Twitter Upload Media", "Media uploaded successfully", { mediaId });
+
+      if (step.storeKey) {
+        variables[step.storeKey] = mediaId;
+      }
+
+      return mediaId;
+    } catch (error) {
+      debugLogger.error("Twitter Upload Media", "Failed to upload media", error);
+      throw error;
+    }
+  }
+
+  /**
    * Extract tweet ID from URL or return as-is if it's already an ID
    */
   private extractTweetId(input: string): string {
@@ -570,7 +651,8 @@ export class TwitterStepHandler {
     apiKey: string,
     apiSecret: string,
     accessToken: string,
-    accessSecret: string
+    accessSecret: string,
+    extraParams?: Record<string, string>
   ): string {
     const timestamp = Math.floor(Date.now() / 1000).toString();
     const nonce = crypto.randomBytes(32).toString("base64").replace(/\W/g, "");
@@ -591,8 +673,8 @@ export class TwitterStepHandler {
       urlParams[key] = value;
     });
 
-    // Combine all parameters
-    const allParams = { ...oauthParams, ...urlParams };
+    // Combine all parameters (including extra body params for signature)
+    const allParams = { ...oauthParams, ...urlParams, ...(extraParams || {}) };
 
     // Create parameter string
     const sortedKeys = Object.keys(allParams).sort();

@@ -1,0 +1,218 @@
+{
+  "id": "game-2048-bot",
+  "name": "2048 Auto-Player Bot",
+  "description": "Plays the 2048 puzzle game using a simple strategy — cycles arrow keys (Up, Right, Down, Left) to merge tiles, tracks the score, and takes screenshots as the board evolves.",
+  "nodes": [
+    {
+      "id": "1",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "1",
+          "type": "navigate",
+          "description": "Open 2048 game",
+          "value": "https://play2048.co/"
+        }
+      },
+      "position": { "x": 400, "y": 50 }
+    },
+    {
+      "id": "2",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "2",
+          "type": "wait",
+          "description": "Wait for game to load",
+          "value": "3"
+        }
+      },
+      "position": { "x": 400, "y": 150 }
+    },
+    {
+      "id": "3",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "3",
+          "type": "screenshot",
+          "description": "Screenshot — starting board",
+          "savePath": "2048_start.png"
+        }
+      },
+      "position": { "x": 400, "y": 250 }
+    },
+    {
+      "id": "4",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "4",
+          "type": "setVariable",
+          "description": "Set move counter",
+          "variableName": "moveCount",
+          "value": "0"
+        }
+      },
+      "position": { "x": 400, "y": 350 }
+    },
+    {
+      "id": "5",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "5",
+          "type": "setVariable",
+          "description": "Total move cycles (each cycle = 4 moves)",
+          "variableName": "maxCycles",
+          "value": "50"
+        }
+      },
+      "position": { "x": 400, "y": 450 }
+    },
+    {
+      "id": "6",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "6",
+          "type": "codeExecute",
+          "description": "Play one cycle: Up, Right, Down, Left",
+          "code": "function press(key) { document.dispatchEvent(new KeyboardEvent('keydown', { key, keyCode: key === 'ArrowUp' ? 38 : key === 'ArrowRight' ? 39 : key === 'ArrowDown' ? 40 : 37, bubbles: true })); } press('ArrowUp'); setTimeout(() => press('ArrowRight'), 150); setTimeout(() => press('ArrowDown'), 300); setTimeout(() => press('ArrowLeft'), 450); return 'Played Up-Right-Down-Left cycle';"
+        }
+      },
+      "position": { "x": 400, "y": 570 }
+    },
+    {
+      "id": "7",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "7",
+          "type": "wait",
+          "description": "Wait for animations",
+          "value": "1"
+        }
+      },
+      "position": { "x": 400, "y": 670 }
+    },
+    {
+      "id": "8",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "8",
+          "type": "codeExecute",
+          "description": "Extract current score",
+          "code": "const scoreEl = document.querySelector('.score-container'); return scoreEl ? scoreEl.textContent.trim().split('\\n')[0] : '0';",
+          "storeKey": "currentScore"
+        }
+      },
+      "position": { "x": 400, "y": 770 }
+    },
+    {
+      "id": "9",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "9",
+          "type": "codeExecute",
+          "description": "Check if game is over",
+          "code": "const gameOver = document.querySelector('.game-over'); return gameOver ? 'true' : 'false';",
+          "storeKey": "isGameOver"
+        }
+      },
+      "position": { "x": 400, "y": 870 }
+    },
+    {
+      "id": "10",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "10",
+          "type": "modifyVariable",
+          "description": "Increment move counter",
+          "variableName": "moveCount",
+          "operation": "increment",
+          "value": "1"
+        }
+      },
+      "position": { "x": 400, "y": 970 }
+    },
+    {
+      "id": "11",
+      "type": "variableConditional",
+      "data": {
+        "step": {
+          "id": "11",
+          "type": "variableConditional",
+          "description": "Is game over?",
+          "variableConditionType": "variableEquals",
+          "variableName": "isGameOver",
+          "comparisonValue": "true"
+        }
+      },
+      "position": { "x": 400, "y": 1070 }
+    },
+    {
+      "id": "12",
+      "type": "variableConditional",
+      "data": {
+        "step": {
+          "id": "12",
+          "type": "variableConditional",
+          "description": "More cycles remaining?",
+          "variableConditionType": "variableLessThan",
+          "variableName": "moveCount",
+          "comparisonValue": "{{maxCycles}}",
+          "parseAsNumber": true
+        }
+      },
+      "position": { "x": 200, "y": 1190 }
+    },
+    {
+      "id": "13",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "13",
+          "type": "screenshot",
+          "description": "Screenshot — final board state",
+          "savePath": "2048_final.png"
+        }
+      },
+      "position": { "x": 700, "y": 1190 }
+    },
+    {
+      "id": "14",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "14",
+          "type": "codeExecute",
+          "description": "Get highest tile on the board",
+          "code": "const tiles = document.querySelectorAll('.tile-inner'); let max = 0; tiles.forEach(t => { const val = parseInt(t.textContent); if (val > max) max = val; }); return String(max);",
+          "storeKey": "highestTile"
+        }
+      },
+      "position": { "x": 700, "y": 1290 }
+    }
+  ],
+  "edges": [
+    { "id": "e1-2", "source": "1", "target": "2" },
+    { "id": "e2-3", "source": "2", "target": "3" },
+    { "id": "e3-4", "source": "3", "target": "4" },
+    { "id": "e4-5", "source": "4", "target": "5" },
+    { "id": "e5-6", "source": "5", "target": "6" },
+    { "id": "e6-7", "source": "6", "target": "7" },
+    { "id": "e7-8", "source": "7", "target": "8" },
+    { "id": "e8-9", "source": "8", "target": "9" },
+    { "id": "e9-10", "source": "9", "target": "10" },
+    { "id": "e10-11", "source": "10", "target": "11" },
+    { "id": "e11-12", "source": "11", "target": "12", "sourceHandle": "else" },
+    { "id": "e11-13", "source": "11", "target": "13", "sourceHandle": "if" },
+    { "id": "e12-6", "source": "12", "target": "6", "sourceHandle": "if" },
+    { "id": "e12-13", "source": "12", "target": "13", "sourceHandle": "else" },
+    { "id": "e13-14", "source": "13", "target": "14" }
+  ]
+}

@@ -9,6 +9,7 @@ import { rendererConfig } from "./webpack.renderer.config";
 const config: ForgeConfig = {
   packagerConfig: {
     icon: "assets/logo", // no extension
+    extraResource: ["dist/loopi-cli.js", "bin/loopi"],
   },
 
   rebuildConfig: {},
@@ -31,6 +32,10 @@ const config: ForgeConfig = {
         options: {
           icon: "assets/logo.png",
           maintainer: "loopi",
+          scripts: {
+            postinst: "scripts/postinst.sh",
+            postrm: "scripts/postrm.sh",
+          },
         },
       },
       ["linux"]

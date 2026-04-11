@@ -1,0 +1,359 @@
+{
+  "id": "game-wordle-solver",
+  "name": "Wordle AI Solver (Ollama)",
+  "description": "Plays Wordle using a local LLM via Ollama. The AI guesses words, reads color feedback from the board, and adapts its strategy each round. On victory, posts a screenshot to Twitter.",
+  "nodes": [
+    {
+      "id": "1",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "1",
+          "type": "navigate",
+          "description": "Open Wordle Unlimited",
+          "value": "https://wordleunlimited.org/"
+        }
+      },
+      "position": { "x": 400, "y": 50 }
+    },
+    {
+      "id": "2",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "2",
+          "type": "wait",
+          "description": "Wait for game to load",
+          "value": "5"
+        }
+      },
+      "position": { "x": 400, "y": 150 }
+    },
+    {
+      "id": "3",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "3",
+          "type": "codeExecute",
+          "description": "Clear old game state and remove all ads/overlays",
+          "code": "var ga = document.querySelector('game-app'); if (!ga) return 'ERROR: game-app not found'; if (ga.gameStatus !== 'IN_PROGRESS' || !ga.canInput) { localStorage.clear(); sessionStorage.clear(); location.reload(); return 'RELOADING'; } try { document.querySelectorAll('iframe, [class*=\"ad\"], [id*=\"ad\"], [class*=\"overlay\"], [class*=\"banner\"], [class*=\"popup\"], [class*=\"modal\"], [class*=\"cookie\"], [class*=\"consent\"], [class*=\"gdpr\"]').forEach(function(el) { el.remove(); }); } catch(e) {} try { document.querySelectorAll('[aria-label=\"Close\"], .close-icon, button.close, [class*=\"close\"], [class*=\"dismiss\"]').forEach(function(b) { b.click(); }); } catch(e) {} return 'Page cleaned';",
+          "storeKey": "cleanResult"
+        }
+      },
+      "position": { "x": 400, "y": 250 }
+    },
+    {
+      "id": "4",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "4",
+          "type": "wait",
+          "description": "Wait for any reload to finish",
+          "value": "4"
+        }
+      },
+      "position": { "x": 400, "y": 350 }
+    },
+    {
+      "id": "20",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "20",
+          "type": "codeExecute",
+          "description": "Close game rules dialog and all shadow DOM modals",
+          "code": "var ga = document.querySelector('game-app'); if (!ga || !ga.shadowRoot) return 'No shadow root'; var sr = ga.shadowRoot; try { var closeIcons = sr.querySelectorAll('game-icon[icon=\"close\"]'); closeIcons.forEach(function(icon) { icon.click(); var parent = icon.closest('button'); if (parent) parent.click(); }); } catch(e) {} try { sr.querySelectorAll('[class*=\"close\"], [aria-label=\"Close\"], .overlay, .modal').forEach(function(el) { el.click(); }); } catch(e) {} try { var modals = sr.querySelectorAll('game-modal, game-help, game-settings, game-stats'); modals.forEach(function(m) { m.style.display = 'none'; var overlay = m.querySelector('.overlay'); if (overlay) overlay.click(); }); } catch(e) {} try { var toasts = sr.querySelectorAll('game-toast-manager, [class*=\"toast\"]'); toasts.forEach(function(t) { t.style.display = 'none'; }); } catch(e) {} try { document.querySelectorAll('iframe, [class*=\"ad\"], [id*=\"ad\"], [class*=\"overlay\"]:not(game-app), [class*=\"banner\"], [class*=\"popup\"]').forEach(function(el) { el.remove(); }); } catch(e) {} return 'Dialogs closed, ads removed';",
+          "storeKey": "dialogResult"
+        }
+      },
+      "position": { "x": 400, "y": 450 }
+    },
+    {
+      "id": "21",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "21",
+          "type": "wait",
+          "description": "Brief pause after closing dialogs",
+          "value": "2"
+        }
+      },
+      "position": { "x": 400, "y": 530 }
+    },
+    {
+      "id": "5",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "5",
+          "type": "setVariable",
+          "description": "Initialize feedback for first guess",
+          "variableName": "feedback",
+          "value": "No guesses yet. This is your first guess. Pick a strong starting word with common letters (e.g. words using S, T, A, R, E, C, L, O, N, I)."
+        }
+      },
+      "position": { "x": 400, "y": 620 }
+    },
+    {
+      "id": "6",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "6",
+          "type": "setVariable",
+          "description": "Guess counter starts at 0",
+          "variableName": "guessIndex",
+          "value": "0"
+        }
+      },
+      "position": { "x": 400, "y": 710 }
+    },
+    {
+      "id": "7",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "7",
+          "type": "setVariable",
+          "description": "Max 6 guesses in Wordle",
+          "variableName": "maxGuesses",
+          "value": "6"
+        }
+      },
+      "position": { "x": 400, "y": 800 }
+    },
+    {
+      "id": "22",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "22",
+          "type": "setVariable",
+          "description": "Initialize gameWon flag",
+          "variableName": "gameWon",
+          "value": "false"
+        }
+      },
+      "position": { "x": 400, "y": 890 }
+    },
+    {
+      "id": "8",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "8",
+          "type": "aiOllama",
+          "description": "LLM picks the next guess word",
+          "model": "llama3.2:3b",
+          "systemPrompt": "You are playing Wordle. You MUST pick exactly ONE word from the Candidates list below. Reply with ONLY that single word, lowercase, no punctuation, no explanation. NEVER invent a word outside the list.",
+          "prompt": "{{feedback}}\n\nYou MUST choose one of these candidates. Reply with ONLY the word:",
+          "temperature": 0.3,
+          "maxTokens": 50,
+          "timeoutMs": 30000,
+          "storeKey": "aiGuess"
+        }
+      },
+      "position": { "x": 400, "y": 1000 }
+    },
+    {
+      "id": "9",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "9",
+          "type": "codeExecute",
+          "description": "Type AI guess via on-screen keyboard (shadow DOM)",
+          "code": "var raw = '{{aiGuess}}'.trim().toLowerCase().replace(/[^a-z]/g, ''); var match = raw.match(/[a-z]{5}/); var word = match ? match[0] : raw.substring(0, 5); if (word.length !== 5) return 'ERROR: invalid word: ' + raw; var ga = document.querySelector('game-app'); if (!ga || !ga.shadowRoot) return 'ERROR: game-app not found'; var kbEl = ga.shadowRoot.querySelector('game-keyboard'); if (!kbEl || !kbEl.shadowRoot) return 'ERROR: keyboard not found'; var kb = kbEl.shadowRoot; function pressKey(key) { var btn = kb.querySelector('button[data-key=\"' + key + '\"]'); if (btn) { btn.click(); return true; } return false; } for (var i = 0; i < word.length; i++) { if (!pressKey(word[i])) return 'ERROR: key not found: ' + word[i]; } await new Promise(function(r) { setTimeout(r, 300); }); pressKey('↵'); return 'Typed: ' + word;",
+          "storeKey": "typedWord"
+        }
+      },
+      "position": { "x": 400, "y": 1120 }
+    },
+    {
+      "id": "10",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "10",
+          "type": "wait",
+          "description": "Wait for tile flip animations",
+          "value": "4"
+        }
+      },
+      "position": { "x": 400, "y": 1240 }
+    },
+    {
+      "id": "11",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "11",
+          "type": "codeExecute",
+          "description": "Read feedback and set gameWon flag",
+          "code": "var ga = document.querySelector('game-app'); if (!ga) return 'ERROR: game-app not found'; var bs = ga.boardState; var ev = ga.evaluations; var status = ga.gameStatus; var feedback = []; var absent = {}; var present = {}; var correctPos = {}; var guessed = []; for (var i = 0; i < bs.length; i++) { if (!bs[i] || !ev[i]) continue; var word = bs[i].toUpperCase(); guessed.push(word); var evals = ev[i]; var line = ''; for (var j = 0; j < word.length; j++) { line += word[j] + '(' + evals[j] + ') '; if (evals[j] === 'absent') absent[word[j]] = true; else if (evals[j] === 'present') present[word[j]] = true; else if (evals[j] === 'correct') { correctPos[j] = word[j]; present[word[j]] = true; } } feedback.push('Guess ' + (i + 1) + ': ' + line.trim()); } if (feedback.length === 0) return 'ERROR: no guesses found'; if (status === 'WIN') return 'GAME_WON'; var absentSet = {}; Object.keys(absent).forEach(function(l) { if (!present[l]) absentSet[l] = true; }); var words = 'aback,abase,abate,abbey,abbot,abhor,abide,abled,abode,abort,about,above,abuse,abyss,acorn,acrid,actor,acute,adage,adapt,adept,admin,admit,adobe,adopt,adore,adorn,adult,affix,afoot,afoul,after,again,agape,agate,agent,agile,aging,aglow,agony,agree,ahead,aider,aisle,alarm,album,alert,algae,alibi,alien,align,allay,alley,allot,allow,alloy,aloft,alone,along,aloof,aloud,alpha,altar,alter,amass,amaze,amber,amble,amend,amine,amiss,amity,among,ample,amply,amuse,angel,anger,angle,angry,angst,anime,ankle,annex,annoy,antic,anvil,aorta,apart,aphid,aping,apnea,apple,apply,apron,aptly,arbor,ardor,arena,argue,arise,armor,aroma,arose,array,arrow,arson,artsy,ascot,ashen,aside,askew,assay,asset,atlas,atoll,atone,attic,audio,audit,augur,aunty,avail,avert,avian,avoid,await,awake,award,aware,awash,awful,awoke,axial,axiom,azure,bacon,badge,badly,bagel,baggy,baker,baler,balmy,banal,banjo,barge,baron,basal,basic,basil,basin,basis,baste,batch,bathe,baton,batty,bawdy,bayou,beach,beady,beard,beast,beech,beefy,befit,began,begin,begun,being,belch,belly,below,bench,beret,berry,berth,beset,bible,bicep,biddy,bigot,bilge,billy,binge,bingo,biome,birch,birth,black,blade,blame,bland,blank,blare,blast,blaze,bleak,bleat,bleed,blend,bless,blimp,blind,blink,bliss,blitz,bloat,block,bloke,blond,blood,bloom,blown,bluer,bluff,blunt,blurb,blurt,blush,board,boast,bobby,boney,bonus,booby,boost,booth,booty,booze,boozy,borax,borne,bosom,bossy,botch,bound,bough,bousy,bowel,boxer,brace,braid,brain,brake,brand,brash,brass,brave,bravo,brawl,brawn,bread,break,breed,briar,bribe,brick,bride,brief,brine,bring,brink,briny,brisk,broad,broil,broke,brood,brook,broth,brown,brush,brunt,budge,buddy,buggy,bugle,build,built,bulge,bulky,bully,bunch,bunny,burst,bushy,butch,buyer,bylaw,cabal,cabin,cable,cadet,caddy,cagey,camel,cameo,candy,canny,canoe,caper,caput,carat,cargo,carol,carry,carve,catch,cater,cause,cavil,cease,cedar,chain,chair,chalk,champ,chant,chaos,chard,charm,chart,chase,cheap,cheat,check,cheek,cheer,chess,chest,chick,chide,chief,child,chili,chill,chime,china,chirp,chord,chore,chose,chunk,churn,cider,cigar,cinch,civic,civil,claim,clamp,clang,clank,clash,clasp,class,clean,clear,clerk,click,cliff,climb,cline,cling,clint,cloak,clock,clone,close,cloth,cloud,clout,clown,cluck,clued,clump,clung,coach,coast,cobra,cocoa,colon,color,comet,comic,comma,conch,condo,coral,comet,corny,couch,could,count,coupe,court,cover,covet,crack,craft,cramp,crane,crank,crash,crass,crate,crave,crawl,craze,crazy,creak,cream,creed,creek,creep,crest,crick,cried,crime,crimp,crisp,croak,crock,crone,crony,crook,cross,crowd,crown,crude,cruel,crush,crust,cubic,cumin,cupid,curry,curse,curve,curvy,cutie,cycle,cynic,daddy,daily,dairy,daisy,dance,dandy,datum,debug,debut,decal,decay,decor,decoy,decry,defer,deity,delay,delta,delve,demon,demur,denim,dense,depot,depth,derby,detox,deuce,devil,diary,dicey,digit,dilly,dimly,diner,dingy,diode,dirge,dirty,disco,ditch,ditto,ditty,diver,dizzy,dodge,dodgy,dogma,doing,dolly,donor,donut,dopey,doubt,dough,dowdy,dowel,draft,drain,drake,drama,drank,drape,drawl,drawn,dread,dream,dress,dried,drier,drift,drill,drink,drive,droit,droll,drone,drool,droop,dross,drove,drown,drunk,dryer,dryly,duchy,dummy,dunce,dusty,Dutch,duvet,dwarf,dwell,dying,eager,eagle,early,earth,easel,eaten,eater,edict,eight,elder,elect,elfin,elite,elope,elude,email,ember,emcee,emoji,emote,empty,enact,endow,enema,enemy,enjoy,ennui,ensue,enter,entry,envoy,epoch,equal,equip,erase,erode,error,erupt,essay,ether,ethic,evade,event,every,evict,evoke,exact,exalt,excel,exert,exile,exist,expat,expel,extol,extra,exude,exult,fable,facet,fagot,faint,fairy,faith,false,fancy,fanny,farce,fatal,fatty,fauna,favor,feast,feign,feint,fella,felon,femur,fence,ferry,fetal,fetch,fetid,fetus,fever,fewer,fiber,fibre,fifth,fifty,fight,filmy,filth,final,finch,finer,first,fishy,flair,flake,flaky,flame,flank,flare,flash,flask,flesh,flick,flier,fling,flint,float,flock,flood,floor,flora,floss,flour,flout,fluid,fluke,flung,flunk,flush,flute,focal,focus,foggy,folio,folly,foray,force,forge,forgo,forth,forum,forty,found,foyer,frail,frame,frank,fraud,freak,freed,fresh,friar,fried,frill,frisk,fritz,frock,front,frost,froth,frown,froze,fruit,frump,fully,fungi,funky,funny,furry,fussy,fuzzy,gaffe,gauge,gavel,gawky,gayer,gayly,gazer,geeky,genie,genre,ghost,giant,giddy,girth,given,giver,gland,glare,glass,glaze,gleam,glean,glide,glint,glitz,gloat,globe,gloom,glory,gloss,glove,glyph,gnash,goaty,godly,going,golem,golly,gonad,gonna,goody,gooey,goofy,goose,gorge,gouge,gourd,grace,grade,graft,grail,grain,grand,grant,grape,graph,grasp,grass,grate,grave,gravy,graze,great,greed,green,greet,grief,grill,grime,grimy,grind,gripe,groan,groin,groom,grope,gross,group,grout,grove,growl,grown,gruel,gruff,grump,grunt,guard,guava,guess,guest,guide,guild,guilt,guise,gulch,gully,gumbo,gummy,guppy,gusto,gusty,gypsy,habit,hairy,halve,happy,hardy,haste,hasty,batch,hatch,haunt,haven,hazel,heady,heart,heave,heavy,hedge,hefty,heist,helix,hello,hence,heron,hilly,hinge,hippo,hippy,hobby,hoist,holly,homer,honey,honor,hooky,horse,horsy,hotel,hotly,hound,house,howdy,hubby,human,humid,humps,humpy,humus,hunch,hunky,hurry,husky,hussy,hyena,hymen,hyper,icily,icing,ideal,idiom,idiot,idler,idyll,igloo,image,imbue,impel,imply,inane,inbox,incur,index,inept,inert,infer,ingot,inner,input,inter,intro,ionic,irate,irony,islet,issue,ivory,jaunt,jazzy,jelly,jerky,jewel,jiffy,jimmy,joker,jolly,joust,judge,juice,juicy,jumbo,jumpy,junco,juror,karma,kayak,kebab,knelt,ketch,khaki,kinky,kiosk,kitty,knack,knead,kneel,knelt,knife,knack,knobs,knock,knoll,known,koala,kudos,label,labor,laced,laden,ladle,lager,lance,lanky,lapel,lapse,large,larva,lasso,latch,later,lathe,latte,laugh,layer,leach,leafy,leaky,leant,leapt,learn,lease,leash,least,leave,ledge,leech,lefty,legal,leggy,lemon,lemur,level,lever,libel,light,liken,lilac,limbo,limit,linen,liner,lingo,lipid,liver,llama,loafy,lobby,local,lodge,lofty,logic,login,loner,loose,lorry,loser,lossy,lousy,lover,lower,lowly,loyal,lucid,lucky,lumen,lumpy,lunar,lunch,lunge,lusty,lying,lynch,lyric,macro,madam,madly,magic,magma,major,maker,mambo,mamma,mange,mango,mangy,mania,manic,manor,maple,march,marry,marsh,mason,match,matey,mauve,maxim,maybe,mayor,mealy,meant,meaty,media,medic,melee,melon,mercy,merge,merit,merry,metal,meter,midst,might,mince,miner,minim,minor,minus,mirth,miser,missy,mocha,modal,model,modem,mogul,moist,molar,moldy,money,month,moody,moose,moral,morph,mossy,motel,motif,motor,motto,moult,mound,mount,mourn,mouse,mousy,mouth,mover,movie,mower,mucus,muddy,muggy,mulch,mummy,mural,murky,mushy,music,musty,myrrh,nadir,naive,nanny,nasal,nasty,natal,naval,navel,needy,nerve,never,newer,newly,nexus,niche,niece,night,ninja,ninny,ninth,noble,nobly,noise,noisy,nomad,noose,north,notch,noted,novel,nudge,nurse,nutty,nylon,nymph,oaken,oasis,occur,ocean,oddly,offal,offer,often,olden,olive,omega,onset,opium,optic,orbit,order,organ,other,otter,ought,ounce,outdo,outer,outgo,ovary,ovate,overt,ovoid,owner,oxide,ozone,paddy,pager,paint,paler,palms,palsy,panel,panic,pansy,papal,paper,parch,parer,parse,party,pasta,paste,pasty,patch,patio,patsy,patty,pause,payee,payer,peace,peach,pearl,pecan,pedal,penal,pence,penny,perch,peril,perky,pesky,petal,petty,phase,phone,phony,photo,piano,picky,piece,piggy,pilot,pinch,piper,pipit,pique,pitch,pithy,pivot,pixel,pixie,pizza,place,plaid,plain,plait,plane,plank,plant,plate,plaza,plead,pleat,plied,plier,plods,plonk,pluck,plumb,plume,plump,plums,plunk,plush,plyer,poach,point,poise,poker,polar,polka,polyp,pooch,poppy,porch,posit,posse,pouch,poult,pound,pouty,power,prank,prawn,preen,press,price,prick,pride,prier,prima,prime,primo,print,prior,prism,privy,prize,probe,prone,prong,proof,prose,proud,prove,prowl,prude,prune,psalm,pubic,pudgy,pulse,punch,pupil,puppy,purge,purse,pushy,putty,pygmy,quack,quaff,quail,quake,qualm,quark,quasi,queen,queer,query,quest,queue,quick,quiet,quill,quirk,quota,quote,quoth,rabbi,rabid,racer,radar,radii,radio,rainy,raise,rally,ranch,range,rapid,rarer,raspy,ratio,raven,rayon,razor,reach,react,ready,realm,rebel,rebut,recap,recur,recut,reedy,refer,rehab,reign,relax,relay,relic,remit,renal,renew,repay,repel,reply,rerun,reset,resin,retch,retro,retry,reuse,revel,ridge,rifle,right,rigid,rigor,rinse,ripen,riper,risen,risky,rival,river,rivet,roach,roast,robin,robot,rocky,rodeo,roger,rogue,roomy,roost,rotor,rouge,rough,round,rouse,route,rover,rowdy,royal,rugby,ruing,ruler,rumba,rumor,rupee,rural,rusty,sadly,saint,salad,sally,salon,salsa,salty,salve,salvo,sandy,saner,sapid,saree,sassy,sauce,saucy,sauna,saute,savor,savoy,savvy,scald,scale,scalp,scaly,scamp,scant,scare,scarf,scary,scene,scent,scion,scoff,scold,scone,scoop,scope,score,scorn,scout,scowl,scram,scrap,scree,screw,scrub,sedan,seedy,segue,seize,sense,sepia,serif,serum,serve,setup,seven,sever,shade,shady,shaft,shake,shaky,shall,shame,shape,shard,share,shark,sharp,shawl,shear,sheen,sheep,sheer,sheet,shelf,shell,shift,shine,shiny,shire,shirt,shock,shore,short,shout,shove,shown,showy,shrub,shrug,shuck,shunt,shush,sight,sigma,silky,silly,since,sinew,siren,sissy,sixth,sixty,skate,skier,skimp,skirt,skull,skunk,slack,slain,slang,slant,slash,slate,slave,sleek,sleep,sleet,slept,slice,slide,slime,slimy,sling,slink,slope,slosh,sloth,slugs,slump,slung,slunk,slurp,smart,smash,smear,smell,smelt,smile,smirk,smite,smith,smock,smoke,smoky,snack,snail,snake,snaky,snare,snark,snarl,sneak,sneer,snide,sniff,snipe,snore,snort,snout,snowy,snuck,snuff,soapy,sober,soggy,solar,solid,solve,sonic,sooth,sooty,sorry,sound,south,space,spade,spank,spare,spark,spawn,speak,spear,speck,speed,spell,spend,spent,spice,spicy,rider,spike,spill,spine,spoke,spoof,spook,spool,spoon,spore,sport,spout,spray,spree,sprig,spunk,spurn,squat,squid,stack,staff,stage,staid,stain,stair,stake,stale,stalk,stall,stamp,stand,stank,staph,stare,stark,start,stash,state,stave,stead,steak,steal,steam,steel,steep,steer,stein,stern,stick,stiff,still,sting,stink,stint,stock,stoic,stoke,stole,stomp,stone,stony,stood,stool,stoop,store,stork,storm,story,stout,stove,strap,straw,stray,strip,strut,stuck,study,stuff,stump,stung,stunk,stunt,style,suave,sugar,suite,sulky,sunny,super,surge,sushi,swami,swamp,swarm,swath,swear,sweat,sweep,sweet,swept,swift,swill,swine,swing,swipe,swirl,swoon,swoop,sword,swore,sworn,swung,syrup,tabby,table,taboo,tacit,tacky,taffy,taint,taken,taker,talon,tango,tangy,tapir,tardy,tawny,teach,teeth,tempo,tenet,tenor,tense,tenth,tepee,tepid,terra,terse,testy,thank,theft,their,theme,there,these,thick,thief,thigh,thing,think,third,thorn,those,three,threw,throb,throw,thrum,thumb,thump,tiara,tidal,tiger,tight,tilde,timer,timid,tipsy,titan,title,toast,today,toddy,token,tonal,tongs,topic,torch,torso,total,totem,touch,tough,towel,tower,toxic,trace,track,trade,trail,train,trait,tramp,trash,trawl,tread,treat,trend,triad,trial,tribe,trick,tried,trill,tripe,trite,troll,troop,trope,trout,trove,truce,truck,truly,trump,trunk,truss,trust,truth,tuber,tulip,tumor,tuner,tunic,turbo,tutor,twang,tweak,tweed,tweet,twice,twine,twirl,twist,tying,udder,ulcer,ultra,umbra,uncle,uncut,under,undid,undue,unfit,fungi,unify,union,unite,unity,unlit,unmet,upper,upset,urban,usage,usher,usual,utter,uvula,vague,valid,valor,valve,vapor,vault,vaunt,vegan,venue,verge,verse,vicar,video,vigor,vinyl,viola,viper,viral,virus,visit,visor,vista,vital,vivid,vixen,vocal,vodka,vogue,voice,voila,vomit,voter,vouch,vowel,vulva,wacky,wafer,wager,wagon,waist,waltz,wardy,waste,watch,water,waver,waxen,weary,weave,wedge,weedy,weigh,weird,welch,whack,whale,wheat,wheel,where,which,while,whiff,whine,whiny,whirl,whisk,white,whole,whose,widen,wider,widow,width,wield,winch,windy,wiper,wired,witty,woken,woman,women,woody,woozy,world,worry,worse,worst,worth,would,wound,wrack,wrath,wreak,wreck,wrest,wring,wrist,write,wrong,wrote,wrung,yacht,yearn,yeast,yield,young,youth,zebra,zesty,zilch,zippy,zonal'.split(','); var filtered = words.filter(function(w) { if (w.length !== 5) return false; var wu = w.toUpperCase(); if (guessed.indexOf(wu) >= 0) return false; for (var c = 0; c < 5; c++) { if (absentSet[wu[c]]) return false; if (correctPos[c] && wu[c] !== correctPos[c]) return false; } var ok = true; Object.keys(present).forEach(function(l) { if (wu.indexOf(l) < 0) ok = false; }); return ok; }); var candidates = filtered.slice(0, 10); if (candidates.length < 3) { var relaxed = words.filter(function(w) { if (w.length !== 5) return false; var wu = w.toUpperCase(); if (guessed.indexOf(wu) >= 0) return false; for (var c = 0; c < 5; c++) { if (absentSet[wu[c]]) return false; if (correctPos[c] && wu[c] !== correctPos[c]) return false; } return true; }); candidates = relaxed.slice(0, 10); } var summary = feedback.join('\\n'); summary += '\\nBANNED letters: ' + Object.keys(absentSet).join(', '); summary += '\\nMUST contain: ' + Object.keys(present).join(', '); summary += '\\nCandidates: ' + (candidates.length > 0 ? candidates.join(', ') : 'ivory, glyph, nymph'); summary += '\\nDo NOT repeat: ' + guessed.join(', '); return summary;",
+          "storeKey": "feedback"
+        }
+      },
+      "position": { "x": 400, "y": 1360 }
+    },
+    {
+      "id": "23",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "23",
+          "type": "codeExecute",
+          "description": "Check if game is won and set flag variable",
+          "code": "var ga = document.querySelector('game-app'); if (ga && ga.gameStatus === 'WIN') return 'true'; return 'false';",
+          "storeKey": "gameWon"
+        }
+      },
+      "position": { "x": 400, "y": 1470 }
+    },
+    {
+      "id": "12",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "12",
+          "type": "screenshot",
+          "description": "Screenshot the board after guess",
+          "savePath": "wordle_board.png"
+        }
+      },
+      "position": { "x": 400, "y": 1570 }
+    },
+    {
+      "id": "13",
+      "type": "variableConditional",
+      "data": {
+        "step": {
+          "id": "13",
+          "type": "variableConditional",
+          "description": "Did we win?",
+          "variableConditionType": "variableEquals",
+          "variableName": "gameWon",
+          "expectedValue": "true"
+        }
+      },
+      "position": { "x": 400, "y": 1670 }
+    },
+    {
+      "id": "14",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "14",
+          "type": "screenshot",
+          "description": "Victory screenshot!",
+          "savePath": "wordle_victory.png"
+        }
+      },
+      "position": { "x": 700, "y": 1670 }
+    },
+    {
+      "id": "18",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "18",
+          "type": "twitterUploadMedia",
+          "description": "Upload victory screenshot to Twitter",
+          "filePath": "wordle_victory.png",
+          "credentialId": "a0eea767388d22c0bddc87a583a1b344",
+          "storeKey": "twitterMediaId"
+        }
+      },
+      "position": { "x": 700, "y": 1790 }
+    },
+    {
+      "id": "19",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "19",
+          "type": "twitterCreateTweet",
+          "description": "Tweet the Wordle victory",
+          "text": "Just beat Wordle with an AI agent powered by @LoopiBrowser! 🤖🟩\n\nLocal LLM (llama3.2) + browser automation = unstoppable.\n\n#Wordle #AI #Automation #Loopi",
+          "credentialId": "a0eea767388d22c0bddc87a583a1b344",
+          "mediaId": "{{twitterMediaId}}",
+          "storeKey": "tweetResult"
+        }
+      },
+      "position": { "x": 700, "y": 1910 }
+    },
+    {
+      "id": "15",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "15",
+          "type": "modifyVariable",
+          "description": "Increment guess counter",
+          "variableName": "guessIndex",
+          "operation": "increment",
+          "value": "1"
+        }
+      },
+      "position": { "x": 200, "y": 1790 }
+    },
+    {
+      "id": "16",
+      "type": "variableConditional",
+      "data": {
+        "step": {
+          "id": "16",
+          "type": "variableConditional",
+          "description": "More guesses left?",
+          "variableConditionType": "variableLessThan",
+          "variableName": "guessIndex",
+          "expectedValue": "{{maxGuesses}}",
+          "parseAsNumber": true
+        }
+      },
+      "position": { "x": 200, "y": 1910 }
+    },
+    {
+      "id": "17",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "17",
+          "type": "screenshot",
+          "description": "Game over — out of guesses",
+          "savePath": "wordle_gameover.png"
+        }
+      },
+      "position": { "x": 200, "y": 2030 }
+    }
+  ],
+  "edges": [
+    { "id": "e1-2", "source": "1", "target": "2" },
+    { "id": "e2-3", "source": "2", "target": "3" },
+    { "id": "e3-4", "source": "3", "target": "4" },
+    { "id": "e4-20", "source": "4", "target": "20" },
+    { "id": "e20-21", "source": "20", "target": "21" },
+    { "id": "e21-5", "source": "21", "target": "5" },
+    { "id": "e5-6", "source": "5", "target": "6" },
+    { "id": "e6-7", "source": "6", "target": "7" },
+    { "id": "e7-22", "source": "7", "target": "22" },
+    { "id": "e22-8", "source": "22", "target": "8" },
+    { "id": "e8-9", "source": "8", "target": "9" },
+    { "id": "e9-10", "source": "9", "target": "10" },
+    { "id": "e10-11", "source": "10", "target": "11" },
+    { "id": "e11-23", "source": "11", "target": "23" },
+    { "id": "e23-12", "source": "23", "target": "12" },
+    { "id": "e12-13", "source": "12", "target": "13" },
+    { "id": "e13-14", "source": "13", "target": "14", "sourceHandle": "if" },
+    { "id": "e14-18", "source": "14", "target": "18" },
+    { "id": "e18-19", "source": "18", "target": "19" },
+    { "id": "e13-15", "source": "13", "target": "15", "sourceHandle": "else" },
+    { "id": "e15-16", "source": "15", "target": "16" },
+    { "id": "e16-8", "source": "16", "target": "8", "sourceHandle": "if" },
+    { "id": "e16-17", "source": "16", "target": "17", "sourceHandle": "else" },
+    { "id": "e17-1", "source": "17", "target": "1" }
+  ]
+}
