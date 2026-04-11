@@ -676,6 +676,7 @@ export interface StepAIOllama extends StepBase {
   topP?: number;
   baseUrl?: string;
   timeoutMs?: number;
+  think?: boolean;
   storeKey?: string;
 }
 
@@ -843,6 +844,17 @@ export interface StepTwitterSearchUser extends StepBase {
   storeKey?: string;
 }
 
+export interface StepTwitterUploadMedia extends StepBase {
+  type: "twitterUploadMedia";
+  filePath: string;
+  credentialId?: string;
+  apiKey?: string;
+  apiSecret?: string;
+  accessToken?: string;
+  accessSecret?: string;
+  storeKey?: string;
+}
+
 // Discord Integration Steps
 export interface StepDiscordSendMessage extends StepBase {
   type: "discordSendMessage";
@@ -930,6 +942,7 @@ export type AutomationStep =
   | StepTwitterSearchTweets
   | StepTwitterSendDM
   | StepTwitterSearchUser
+  | StepTwitterUploadMedia
   | StepDiscordSendMessage
   | StepDiscordSendWebhook
   | StepDiscordReactMessage
@@ -1523,6 +1536,12 @@ export const twitterSteps: StepTypeOption[] = [
     label: "Search User",
     icon: Twitter,
     description: "Search for a user on Twitter/X",
+  },
+  {
+    value: "twitterUploadMedia",
+    label: "Upload Media",
+    icon: Twitter,
+    description: "Upload an image/video to Twitter for use in tweets",
   },
 ];
 

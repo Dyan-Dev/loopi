@@ -1,0 +1,243 @@
+{
+  "id": "game-typing-speed",
+  "name": "Typing Speed Test — Superhuman Mode",
+  "description": "Goes to a typing speed test website, reads the words to type, and types them at superhuman speed. Extracts the final WPM score. Visually impressive for demos — viewers see characters appearing instantly.",
+  "nodes": [
+    {
+      "id": "1",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "1",
+          "type": "navigate",
+          "description": "Open typing test",
+          "value": "https://10fastfingers.com/typing-test/english"
+        }
+      },
+      "position": { "x": 400, "y": 50 }
+    },
+    {
+      "id": "2",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "2",
+          "type": "wait",
+          "description": "Wait for page to load",
+          "value": "4"
+        }
+      },
+      "position": { "x": 400, "y": 150 }
+    },
+    {
+      "id": "3",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "3",
+          "type": "codeExecute",
+          "description": "Accept cookies if prompted",
+          "code": "try { document.querySelector('#CybotCookiebotDialogBodyLevelButtonLevelOptinAllowAll, .cookie-accept, [id*=\"accept\"]')?.click(); } catch(e) {} return 'done';"
+        }
+      },
+      "position": { "x": 400, "y": 250 }
+    },
+    {
+      "id": "4",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "4",
+          "type": "wait",
+          "description": "Settle after cookie dialog",
+          "value": "2"
+        }
+      },
+      "position": { "x": 400, "y": 350 }
+    },
+    {
+      "id": "5",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "5",
+          "type": "screenshot",
+          "description": "Screenshot — before typing starts",
+          "savePath": "typing_test_start.png"
+        }
+      },
+      "position": { "x": 400, "y": 450 }
+    },
+    {
+      "id": "6",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "6",
+          "type": "codeExecute",
+          "description": "Read all the words from the test",
+          "code": "const wordSpans = document.querySelectorAll('#wordlist span, .word-highlight span, [class*=\"word\"]'); const words = Array.from(wordSpans).map(s => s.textContent.trim()).filter(w => w.length > 0); return JSON.stringify(words.slice(0, 60));",
+          "storeKey": "wordList"
+        }
+      },
+      "position": { "x": 400, "y": 550 }
+    },
+    {
+      "id": "7",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "7",
+          "type": "codeExecute",
+          "description": "Focus the input field",
+          "code": "const input = document.querySelector('#inputfield, input[type=\"text\"], .typing-input'); if (input) { input.focus(); input.click(); return 'Input focused'; } return 'No input field found';"
+        }
+      },
+      "position": { "x": 400, "y": 650 }
+    },
+    {
+      "id": "8",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "8",
+          "type": "setVariable",
+          "description": "Word index counter",
+          "variableName": "wordIdx",
+          "value": "0"
+        }
+      },
+      "position": { "x": 400, "y": 750 }
+    },
+    {
+      "id": "9",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "9",
+          "type": "setVariable",
+          "description": "Number of words to type",
+          "variableName": "wordsToType",
+          "value": "40"
+        }
+      },
+      "position": { "x": 400, "y": 850 }
+    },
+    {
+      "id": "10",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "10",
+          "type": "codeExecute",
+          "description": "Type the next word at blazing speed + space",
+          "code": "const words = JSON.parse('{{wordList}}'); const idx = {{wordIdx}}; const input = document.querySelector('#inputfield, input[type=\"text\"], .typing-input'); if (input && idx < words.length) { const word = words[idx]; for (const ch of word) { input.value += ch; input.dispatchEvent(new Event('input', { bubbles: true })); } input.value += ' '; input.dispatchEvent(new Event('input', { bubbles: true })); const enterEvent = new KeyboardEvent('keydown', { key: ' ', keyCode: 32, bubbles: true }); input.dispatchEvent(enterEvent); return 'Typed: ' + word; } return 'Done or no input';",
+          "storeKey": "lastTyped"
+        }
+      },
+      "position": { "x": 400, "y": 970 }
+    },
+    {
+      "id": "11",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "11",
+          "type": "wait",
+          "description": "Tiny delay to look more natural",
+          "value": "0.3"
+        }
+      },
+      "position": { "x": 400, "y": 1070 }
+    },
+    {
+      "id": "12",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "12",
+          "type": "modifyVariable",
+          "description": "Next word",
+          "variableName": "wordIdx",
+          "operation": "increment",
+          "value": "1"
+        }
+      },
+      "position": { "x": 400, "y": 1170 }
+    },
+    {
+      "id": "13",
+      "type": "variableConditional",
+      "data": {
+        "step": {
+          "id": "13",
+          "type": "variableConditional",
+          "description": "More words to type?",
+          "variableConditionType": "variableLessThan",
+          "variableName": "wordIdx",
+          "comparisonValue": "{{wordsToType}}",
+          "parseAsNumber": true
+        }
+      },
+      "position": { "x": 400, "y": 1270 }
+    },
+    {
+      "id": "14",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "14",
+          "type": "wait",
+          "description": "Wait for results to calculate",
+          "value": "5"
+        }
+      },
+      "position": { "x": 700, "y": 1270 }
+    },
+    {
+      "id": "15",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "15",
+          "type": "screenshot",
+          "description": "Screenshot — typing results & WPM score",
+          "savePath": "typing_test_result.png"
+        }
+      },
+      "position": { "x": 700, "y": 1370 }
+    },
+    {
+      "id": "16",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "16",
+          "type": "codeExecute",
+          "description": "Extract WPM score",
+          "code": "const wpm = document.querySelector('#wpm, .wpm-value, [class*=\"speed\"], [class*=\"wpm\"]'); return wpm ? wpm.textContent.trim() : 'Check screenshot for results';",
+          "storeKey": "wpmScore"
+        }
+      },
+      "position": { "x": 700, "y": 1470 }
+    }
+  ],
+  "edges": [
+    { "id": "e1-2", "source": "1", "target": "2" },
+    { "id": "e2-3", "source": "2", "target": "3" },
+    { "id": "e3-4", "source": "3", "target": "4" },
+    { "id": "e4-5", "source": "4", "target": "5" },
+    { "id": "e5-6", "source": "5", "target": "6" },
+    { "id": "e6-7", "source": "6", "target": "7" },
+    { "id": "e7-8", "source": "7", "target": "8" },
+    { "id": "e8-9", "source": "8", "target": "9" },
+    { "id": "e9-10", "source": "9", "target": "10" },
+    { "id": "e10-11", "source": "10", "target": "11" },
+    { "id": "e11-12", "source": "11", "target": "12" },
+    { "id": "e12-13", "source": "12", "target": "13" },
+    { "id": "e13-10", "source": "13", "target": "10", "sourceHandle": "if" },
+    { "id": "e13-14", "source": "13", "target": "14", "sourceHandle": "else" },
+    { "id": "e14-15", "source": "14", "target": "15" },
+    { "id": "e15-16", "source": "15", "target": "16" }
+  ]
+}

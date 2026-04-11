@@ -87,7 +87,8 @@ export const EXAMPLES: ExampleMeta[] = [
   {
     id: "stripe-payment-monitor",
     name: "Stripe Payment Monitor",
-    description: "Monitors Stripe payments and triggers automated actions based on transaction status",
+    description:
+      "Monitors Stripe payments and triggers automated actions based on transaction status",
     fileName: "stripe_payment_monitor.json",
     category: "api",
   },

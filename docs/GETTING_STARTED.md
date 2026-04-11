@@ -222,6 +222,82 @@ Step 6: Screenshot
 2. Select JSON file
 3. Automation loads in editor
 
+## Running Workflows from the Command Line
+
+You can also run and manage workflows from your terminal while the desktop app is running.
+
+### Using `loopi-cli` (Installed App)
+
+When Loopi is installed as a desktop app, the `loopi-cli` command is automatically available in your terminal:
+
+```bash
+# Check the desktop app is running
+loopi-cli ping
+
+# List all your saved workflows
+loopi-cli list
+
+# Run a workflow from a JSON file
+loopi-cli run ./docs/examples/github_issue_tracker.json
+
+# Run a saved workflow by its ID
+loopi-cli run --id <workflow-id>
+```
+
+```bash
+# Import a workflow JSON into the app
+loopi-cli create ./my-workflow.json
+
+# Export a workflow to a file
+loopi-cli get <id> > exported.json
+
+# Update an existing workflow
+loopi-cli update <id> ./updated-workflow.json
+
+# Delete a workflow
+loopi-cli delete <id>
+```
+
+### Using `pnpm run:workflow` (Development)
+
+If you're running Loopi from source in development mode, use `pnpm run:workflow` instead:
+
+```bash
+# Check the desktop app is running
+pnpm run:workflow ping
+
+# List all your saved workflows
+pnpm run:workflow list
+
+# Run a workflow from a JSON file
+pnpm run:workflow run ./docs/examples/github_issue_tracker.json
+
+# Run a saved workflow by its ID
+pnpm run:workflow run --id <workflow-id>
+```
+
+```bash
+# Import a workflow JSON into the app
+pnpm run:workflow create ./my-workflow.json
+
+# Export a workflow to a file
+pnpm run:workflow get <id> > exported.json
+
+# Update an existing workflow
+pnpm run:workflow update <id> ./updated-workflow.json
+
+# Delete a workflow
+pnpm run:workflow delete <id>
+```
+
+### Options
+
+- `--port <port>` — Use a specific port (default: auto-discovered)
+- `--no-headless` — Show the browser window during execution
+- `--headless` — Run browser steps in the background (default)
+
+For the full CLI reference, see [CLI.md](./CLI.md).
+
 ## Troubleshooting
 
 **Selector not working:**

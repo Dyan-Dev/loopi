@@ -276,6 +276,17 @@ const FIELD_DEFS: Record<string, FieldDef[]> = {
     { key: "accessToken", label: "Access Token", placeholder: "Access token" },
     { key: "accessSecret", label: "Access Secret", placeholder: "Access secret" },
   ],
+  twitterUploadMedia: [
+    {
+      key: "filePath",
+      label: "File Path",
+      placeholder: "Path to image/video file (e.g. screenshot.png)",
+    },
+    { key: "apiKey", label: "API Key", placeholder: "API key" },
+    { key: "apiSecret", label: "API Secret", placeholder: "API secret" },
+    { key: "accessToken", label: "Access Token", placeholder: "Access token" },
+    { key: "accessSecret", label: "Access Secret", placeholder: "Access secret" },
+  ],
 
   // ─── Telegram ───────────────────────────────────────────────────
   telegramSendMessage: [
@@ -1264,6 +1275,7 @@ const LEGACY_INTEGRATION_TYPES = [
   "twitterSearchTweets",
   "twitterSendDM",
   "twitterSearchUser",
+  "twitterUploadMedia",
   // Telegram
   "telegramSendMessage",
   "telegramSendPhoto",

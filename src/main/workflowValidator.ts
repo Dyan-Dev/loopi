@@ -66,10 +66,31 @@ export function validateWorkflow(nodes: ValidatorNode[], edges: ValidatorEdge[])
   }
 
   // 4. Circular reference detection via DFS coloring
-  // Exclude forEach "loop" edges (they are intentional back-edges)
-  const forwardEdges = edges.filter(
-    (e) => !(e.sourceHandle === "loop" && isForEachNode(nodes, e.source))
+  // Exclude forEach "loop" edges and conditional "if"/"else" back-edges
+  // (loops via variableConditional/browserConditional are intentional)
+  const conditionalNodeIds = new Set(
+    nodes
+      .filter((n) => {
+        const t = n.data?.step?.type || n.type;
+        return t === "variableConditional" || t === "browserConditional";
+      })
+      .map((n) => n.id)
   );
+  const forwardEdges = edges.filter((e) => {
+    // forEach "loop" handle → intentional back-edge
+    if (e.sourceHandle === "loop" && isForEachNode(nodes, e.source)) return false;
+    // Conditional "if"/"else" edges that point to an earlier node → intentional loop
+    if (
+      conditionalNodeIds.has(e.source) &&
+      (e.sourceHandle === "if" || e.sourceHandle === "else")
+    ) {
+      // Only exclude if it actually creates a back-edge (target appears before source)
+      const sourceIdx = nodes.findIndex((n) => n.id === e.source);
+      const targetIdx = nodes.findIndex((n) => n.id === e.target);
+      if (targetIdx < sourceIdx) return false;
+    }
+    return true;
+  });
 
   const adj = new Map<string, string[]>();
   for (const node of nodes) {

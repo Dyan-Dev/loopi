@@ -1,6 +1,7 @@
 import type { ExecutionRecord, ExecutionStepRecord } from "@app-types/automation";
 import type { Edge, Node } from "@app-types/flow";
 import { createLogger } from "@utils/logger";
+import axios from "axios";
 import { dialog, ipcMain } from "electron";
 import { mkdirSync, writeFileSync } from "fs";
 import { dirname } from "path";
@@ -29,9 +30,8 @@ import {
   saveAutomation,
 } from "./treeStore";
 import { WindowManager } from "./windowManager";
-import { validateWorkflow } from "./workflowValidator";
 import { WorkflowGenerator } from "./workflowGenerator";
-import axios from "axios";
+import { validateWorkflow } from "./workflowValidator";
 
 const logger = createLogger("IPCHandlers");
 

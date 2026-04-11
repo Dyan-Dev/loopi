@@ -1,0 +1,28 @@
+#!/usr/bin/env node
+
+/**
+ * Loopi CLI entry point.
+ *
+ * When installed via the packaged Electron app, this script lives next to
+ * the bundled loopi-cli.js.  When run from the repo root during development,
+ * it falls back to the tsx-based workflow runner.
+ */
+
+const path = require("path");
+const fs = require("fs");
+
+// Resolve the bundled CLI (next to this script, or in dist/)
+const candidates = [
+  path.join(__dirname, "loopi-cli.js"),          // packaged layout
+  path.join(__dirname, "..", "dist", "loopi-cli.js"), // repo layout
+];
+
+for (const candidate of candidates) {
+  if (fs.existsSync(candidate)) {
+    require(candidate);
+    return;
+  }
+}
+
+console.error("Error: Could not find loopi-cli.js. Run 'pnpm build:cli' first.");
+process.exit(1);

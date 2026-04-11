@@ -1,0 +1,186 @@
+{
+  "id": "game-dino-runner",
+  "name": "Chrome Dino Game Auto-Player",
+  "description": "Plays the Chrome T-Rex dinosaur runner game by hooking into the game's update loop to detect obstacles and trigger jumps. The bot patches Runner.instance_.update to react every frame with perfect timing. Auto-restarts on crash.",
+  "nodes": [
+    {
+      "id": "1",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "1",
+          "type": "navigate",
+          "description": "Open Chrome Dino game",
+          "value": "https://trex-runner.com/"
+        }
+      },
+      "position": { "x": 400, "y": 50 }
+    },
+    {
+      "id": "2",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "2",
+          "type": "wait",
+          "description": "Wait for page to fully load",
+          "value": "5"
+        }
+      },
+      "position": { "x": 400, "y": 150 }
+    },
+    {
+      "id": "3",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "3",
+          "type": "codeExecute",
+          "description": "Start the game and install the auto-play bot into the game loop",
+          "code": "window.__jumpCount = 0; window.__bestScore = 0; var r = Runner.instance_; var origUpdate = r.update; r.update = function(dt, on) { var result = origUpdate.call(this, dt, on); try { var active = this.playing || this.activated; if (active && !this.crashed && this.horizon) { var obs = this.horizon.obstacles; if (obs && obs.length > 0) { var ob = obs[0]; var tRex = this.tRex; var speed = this.currentSpeed || 6; var obRight = ob.xPos + (ob.width || 25); var dist = ob.xPos - tRex.xPos - 44; var safeEnd = obRight - tRex.xPos; if (dist < 250 && safeEnd > -10) { var isPterodactyl = ob.typeConfig && ob.typeConfig.type === 'PTERODACTYL'; if (isPterodactyl && ob.yPos < 75) { if (!tRex.ducking) tRex.setDuck(true); } else if (!tRex.jumping && !tRex.ducking) { tRex.startJump(speed); window.__jumpCount++; } } if (tRex.ducking && safeEnd < -20) { tRex.setDuck(false); } } } if (this.crashed) { var score = parseInt(this.distanceMeter.digits.join('')) || 0; if (score > window.__bestScore) window.__bestScore = score; this.restart(); } } catch(e) {} return result; }; r.playIntro(); r.startGame(); return 'Game started with auto-play bot';",
+          "storeKey": "botStatus"
+        }
+      },
+      "position": { "x": 400, "y": 250 }
+    },
+    {
+      "id": "4",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "4",
+          "type": "setVariable",
+          "description": "Play session counter",
+          "variableName": "session",
+          "value": "0"
+        }
+      },
+      "position": { "x": 400, "y": 370 }
+    },
+    {
+      "id": "5",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "5",
+          "type": "setVariable",
+          "description": "Play for 20 intervals of 3s = 60 seconds",
+          "variableName": "maxSessions",
+          "value": "20"
+        }
+      },
+      "position": { "x": 400, "y": 470 }
+    },
+    {
+      "id": "6",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "6",
+          "type": "wait",
+          "description": "Let the bot play for 3 seconds",
+          "value": "3"
+        }
+      },
+      "position": { "x": 400, "y": 590 }
+    },
+    {
+      "id": "7",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "7",
+          "type": "codeExecute",
+          "description": "Read current score and game state",
+          "code": "try { var r = Runner.instance_; if (r && r.distanceMeter) { var score = r.distanceMeter.digits.join(''); var speed = (r.currentSpeed || 0).toFixed(1); var crashed = r.crashed || false; return JSON.stringify({score: score, speed: speed, crashed: crashed, jumps: window.__jumpCount, bestScore: window.__bestScore}); } } catch(e) { return JSON.stringify({error: e.message}); } return JSON.stringify({score: '0', speed: '0', crashed: false});",
+          "storeKey": "gameState"
+        }
+      },
+      "position": { "x": 400, "y": 710 }
+    },
+    {
+      "id": "8",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "8",
+          "type": "screenshot",
+          "description": "Screenshot the dino running"
+        }
+      },
+      "position": { "x": 400, "y": 830 }
+    },
+    {
+      "id": "9",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "9",
+          "type": "modifyVariable",
+          "description": "Increment session counter",
+          "variableName": "session",
+          "operation": "increment",
+          "value": "1"
+        }
+      },
+      "position": { "x": 400, "y": 950 }
+    },
+    {
+      "id": "10",
+      "type": "variableConditional",
+      "data": {
+        "step": {
+          "id": "10",
+          "type": "variableConditional",
+          "description": "Keep playing?",
+          "variableConditionType": "variableLessThan",
+          "variableName": "session",
+          "comparisonValue": "{{maxSessions}}",
+          "parseAsNumber": true
+        }
+      },
+      "position": { "x": 400, "y": 1070 }
+    },
+    {
+      "id": "11",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "11",
+          "type": "codeExecute",
+          "description": "Stop the bot and get final score",
+          "code": "var r = Runner.instance_; r.update = Runner.prototype.update; try { if (r && r.distanceMeter) return 'Final score: ' + r.distanceMeter.digits.join('') + ' | Best: ' + window.__bestScore + ' | Total jumps: ' + window.__jumpCount; } catch(e) {} return 'Bot stopped';",
+          "storeKey": "finalResult"
+        }
+      },
+      "position": { "x": 700, "y": 1070 }
+    },
+    {
+      "id": "12",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "12",
+          "type": "screenshot",
+          "description": "Final screenshot",
+          "savePath": "dino_final.png"
+        }
+      },
+      "position": { "x": 700, "y": 1190 }
+    }
+  ],
+  "edges": [
+    { "id": "e1-2", "source": "1", "target": "2" },
+    { "id": "e2-3", "source": "2", "target": "3" },
+    { "id": "e3-4", "source": "3", "target": "4" },
+    { "id": "e4-5", "source": "4", "target": "5" },
+    { "id": "e5-6", "source": "5", "target": "6" },
+    { "id": "e6-7", "source": "6", "target": "7" },
+    { "id": "e7-8", "source": "7", "target": "8" },
+    { "id": "e8-9", "source": "8", "target": "9" },
+    { "id": "e9-10", "source": "9", "target": "10" },
+    { "id": "e10-6", "source": "10", "target": "6", "sourceHandle": "if" },
+    { "id": "e10-11", "source": "10", "target": "11", "sourceHandle": "else" },
+    { "id": "e11-12", "source": "11", "target": "12" }
+  ]
+}
