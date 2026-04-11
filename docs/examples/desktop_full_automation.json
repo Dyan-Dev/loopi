@@ -1,0 +1,280 @@
+{
+  "id": "desktop-full-automation",
+  "name": "Desktop Full Automation (All Steps Combined)",
+  "description": "End-to-end test: installs ydotool for Wayland, then combines system commands, mouse control, keyboard input, and screenshots with variable piping.",
+  "nodes": [
+    {
+      "id": "setup-1",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "setup-1",
+          "type": "systemCommand",
+          "description": "Install ydotool if not present",
+          "command": "which ydotool > /dev/null 2>&1 && echo 'already installed' || pkexec apt install -y ydotool",
+          "shell": "/bin/bash",
+          "storeKey": "installResult",
+          "failOnNonZero": false,
+          "timeout": 60000
+        }
+      },
+      "position": { "x": 300, "y": 50 }
+    },
+    {
+      "id": "setup-2",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "setup-2",
+          "type": "systemCommand",
+          "description": "Start ydotoold daemon if not running",
+          "command": "pgrep ydotoold > /dev/null 2>&1 && echo 'daemon already running' || (pkexec ydotoold &) && sleep 1 && echo 'daemon started'",
+          "shell": "/bin/bash",
+          "storeKey": "daemonResult",
+          "failOnNonZero": false,
+          "timeout": 30000
+        }
+      },
+      "position": { "x": 300, "y": 180 }
+    },
+    {
+      "id": "1",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "1",
+          "type": "systemCommand",
+          "description": "Get current date and username",
+          "command": "echo \"User: $(whoami) | Date: $(date '+%Y-%m-%d %H:%M:%S')\"",
+          "shell": "/bin/bash",
+          "storeKey": "userInfo",
+          "failOnNonZero": true
+        }
+      },
+      "position": { "x": 300, "y": 330 }
+    },
+    {
+      "id": "2",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "2",
+          "type": "systemCommand",
+          "description": "Get screen resolution via xrandr (Linux)",
+          "command": "xrandr 2>/dev/null | grep '\\*' | head -1 | awk '{print $1}' || echo '1920x1080'",
+          "shell": "/bin/bash",
+          "storeKey": "resolution",
+          "failOnNonZero": false
+        }
+      },
+      "position": { "x": 300, "y": 460 }
+    },
+    {
+      "id": "3",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "3",
+          "type": "desktopScreenshot",
+          "description": "Screenshot before any mouse interaction",
+          "savePath": "/tmp/loopi_auto_before.png",
+          "storeKey": "beforeShot"
+        }
+      },
+      "position": { "x": 300, "y": 590 }
+    },
+    {
+      "id": "4",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "4",
+          "type": "desktopMouseMove",
+          "description": "Move cursor to top-left corner",
+          "x": "100",
+          "y": "100",
+          "speed": "2000"
+        }
+      },
+      "position": { "x": 300, "y": 720 }
+    },
+    {
+      "id": "5",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "5",
+          "type": "desktopMouseMove",
+          "description": "Move cursor to screen center",
+          "x": "960",
+          "y": "540",
+          "speed": "1500"
+        }
+      },
+      "position": { "x": 300, "y": 850 }
+    },
+    {
+      "id": "6",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "6",
+          "type": "desktopMouseClick",
+          "description": "Click at center",
+          "button": "left",
+          "clickType": "single"
+        }
+      },
+      "position": { "x": 300, "y": 980 }
+    },
+    {
+      "id": "7",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "7",
+          "type": "desktopMouseScroll",
+          "description": "Scroll down",
+          "direction": "down",
+          "amount": "3"
+        }
+      },
+      "position": { "x": 300, "y": 1110 }
+    },
+    {
+      "id": "8",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "8",
+          "type": "wait",
+          "description": "Brief pause",
+          "value": "1"
+        }
+      },
+      "position": { "x": 300, "y": 1240 }
+    },
+    {
+      "id": "9",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "9",
+          "type": "desktopMouseScroll",
+          "description": "Scroll back up",
+          "direction": "up",
+          "amount": "3"
+        }
+      },
+      "position": { "x": 300, "y": 1370 }
+    },
+    {
+      "id": "10",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "10",
+          "type": "desktopMouseDrag",
+          "description": "Drag selection across an area",
+          "startX": "400",
+          "startY": "300",
+          "endX": "800",
+          "endY": "600",
+          "speed": "800"
+        }
+      },
+      "position": { "x": 300, "y": 1500 }
+    },
+    {
+      "id": "11",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "11",
+          "type": "desktopKeyboard",
+          "description": "Press Escape (deselect / cancel)",
+          "action": "press",
+          "key": "Escape"
+        }
+      },
+      "position": { "x": 300, "y": 1630 }
+    },
+    {
+      "id": "12",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "12",
+          "type": "desktopScreenshot",
+          "description": "Screenshot after mouse interactions",
+          "savePath": "/tmp/loopi_auto_after.png",
+          "storeKey": "afterShot"
+        }
+      },
+      "position": { "x": 300, "y": 1760 }
+    },
+    {
+      "id": "13",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "13",
+          "type": "systemCommand",
+          "description": "Compare screenshot file sizes",
+          "command": "echo \"Before: $(du -h /tmp/loopi_auto_before.png | cut -f1) | After: $(du -h /tmp/loopi_auto_after.png | cut -f1)\"",
+          "shell": "/bin/bash",
+          "storeKey": "screenshotSizes",
+          "failOnNonZero": false
+        }
+      },
+      "position": { "x": 300, "y": 1890 }
+    },
+    {
+      "id": "14",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "14",
+          "type": "setVariable",
+          "description": "Build final test report",
+          "variableName": "testReport",
+          "value": "=== Desktop Automation Test Report ===\n{{userInfo}}\nResolution: {{resolution}}\nScreenshot sizes: {{screenshotSizes}}\nBefore: {{beforeShot}}\nAfter: {{afterShot}}\nStatus: ALL STEPS COMPLETED"
+        }
+      },
+      "position": { "x": 300, "y": 2020 }
+    },
+    {
+      "id": "15",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "15",
+          "type": "systemCommand",
+          "description": "Echo final report to console",
+          "command": "echo \"{{testReport}}\"",
+          "storeKey": "finalOutput",
+          "failOnNonZero": true
+        }
+      },
+      "position": { "x": 300, "y": 2150 }
+    }
+  ],
+  "edges": [
+    { "id": "e-s1-s2", "source": "setup-1", "target": "setup-2" },
+    { "id": "e-s2-1", "source": "setup-2", "target": "1" },
+    { "id": "e1-2", "source": "1", "target": "2" },
+    { "id": "e2-3", "source": "2", "target": "3" },
+    { "id": "e3-4", "source": "3", "target": "4" },
+    { "id": "e4-5", "source": "4", "target": "5" },
+    { "id": "e5-6", "source": "5", "target": "6" },
+    { "id": "e6-7", "source": "6", "target": "7" },
+    { "id": "e7-8", "source": "7", "target": "8" },
+    { "id": "e8-9", "source": "8", "target": "9" },
+    { "id": "e9-10", "source": "9", "target": "10" },
+    { "id": "e10-11", "source": "10", "target": "11" },
+    { "id": "e11-12", "source": "11", "target": "12" },
+    { "id": "e12-13", "source": "12", "target": "13" },
+    { "id": "e13-14", "source": "13", "target": "14" },
+    { "id": "e14-15", "source": "14", "target": "15" }
+  ]
+}

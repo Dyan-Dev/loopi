@@ -19,6 +19,9 @@ export const mainConfig: Configuration = {
       "@utils": __dirname + "/src/utils",
     },
   },
+  externals: {
+    "@nut-tree-fork/nut-js": "commonjs2 @nut-tree-fork/nut-js",
+  },
   plugins: [
     // These are optional runtime dependencies loaded via dynamic import().
     // Ignore them at build time so webpack doesn't fail when they're not installed.

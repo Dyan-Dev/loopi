@@ -1,0 +1,188 @@
+{
+  "id": "desktop-keyboard-typing",
+  "name": "Desktop Keyboard & Typing Demo",
+  "description": "Demonstrates all desktop keyboard actions: type text, press individual keys, and execute hotkey combos. Opens a text editor via system command, types into it, and uses keyboard shortcuts.",
+  "nodes": [
+    {
+      "id": "1",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "1",
+          "type": "systemCommand",
+          "description": "Open a simple text editor (xdg-open or notepad)",
+          "command": "if [ \"$(uname)\" = \"Linux\" ]; then xdg-open /tmp/loopi_test.txt 2>/dev/null || gedit /tmp/loopi_test.txt &; elif [ \"$(uname)\" = \"Darwin\" ]; then open -a TextEdit /tmp/loopi_test.txt; fi",
+          "shell": "/bin/bash",
+          "failOnNonZero": false,
+          "timeout": 5000
+        }
+      },
+      "position": { "x": 300, "y": 50 }
+    },
+    {
+      "id": "2",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "2",
+          "type": "wait",
+          "description": "Wait for editor to open",
+          "value": "3"
+        }
+      },
+      "position": { "x": 300, "y": 180 }
+    },
+    {
+      "id": "3",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "3",
+          "type": "desktopKeyboard",
+          "description": "Type a greeting message",
+          "action": "type",
+          "text": "Hello from Loopi Desktop Automation!"
+        }
+      },
+      "position": { "x": 300, "y": 310 }
+    },
+    {
+      "id": "4",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "4",
+          "type": "desktopKeyboard",
+          "description": "Press Enter for new line",
+          "action": "press",
+          "key": "Return"
+        }
+      },
+      "position": { "x": 300, "y": 440 }
+    },
+    {
+      "id": "5",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "5",
+          "type": "desktopKeyboard",
+          "description": "Type second line",
+          "action": "type",
+          "text": "This text was typed by the desktop keyboard step."
+        }
+      },
+      "position": { "x": 300, "y": 570 }
+    },
+    {
+      "id": "6",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "6",
+          "type": "desktopKeyboard",
+          "description": "Press Enter again",
+          "action": "press",
+          "key": "Return"
+        }
+      },
+      "position": { "x": 300, "y": 700 }
+    },
+    {
+      "id": "7",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "7",
+          "type": "setVariable",
+          "description": "Set a dynamic message",
+          "variableName": "timestamp",
+          "value": "Typed at runtime via Loopi v1.8.0"
+        }
+      },
+      "position": { "x": 300, "y": 830 }
+    },
+    {
+      "id": "8",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "8",
+          "type": "desktopKeyboard",
+          "description": "Type dynamic variable content",
+          "action": "type",
+          "text": "{{timestamp}}"
+        }
+      },
+      "position": { "x": 300, "y": 960 }
+    },
+    {
+      "id": "9",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "9",
+          "type": "desktopKeyboard",
+          "description": "Select all text with Ctrl+A",
+          "action": "hotkey",
+          "keys": "LeftControl+A"
+        }
+      },
+      "position": { "x": 300, "y": 1090 }
+    },
+    {
+      "id": "10",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "10",
+          "type": "wait",
+          "description": "Pause to see selection",
+          "value": "2"
+        }
+      },
+      "position": { "x": 300, "y": 1220 }
+    },
+    {
+      "id": "11",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "11",
+          "type": "desktopKeyboard",
+          "description": "Copy selected text with Ctrl+C",
+          "action": "hotkey",
+          "keys": "LeftControl+C"
+        }
+      },
+      "position": { "x": 300, "y": 1350 }
+    },
+    {
+      "id": "12",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "12",
+          "type": "desktopScreenshot",
+          "description": "Screenshot the typed text",
+          "savePath": "/tmp/loopi_keyboard_test.png",
+          "storeKey": "screenshotPath"
+        }
+      },
+      "position": { "x": 300, "y": 1480 }
+    }
+  ],
+  "edges": [
+    { "id": "e1-2", "source": "1", "target": "2" },
+    { "id": "e2-3", "source": "2", "target": "3" },
+    { "id": "e3-4", "source": "3", "target": "4" },
+    { "id": "e4-5", "source": "4", "target": "5" },
+    { "id": "e5-6", "source": "5", "target": "6" },
+    { "id": "e6-7", "source": "6", "target": "7" },
+    { "id": "e7-8", "source": "7", "target": "8" },
+    { "id": "e8-9", "source": "8", "target": "9" },
+    { "id": "e9-10", "source": "9", "target": "10" },
+    { "id": "e10-11", "source": "10", "target": "11" },
+    { "id": "e11-12", "source": "11", "target": "12" }
+  ]
+}

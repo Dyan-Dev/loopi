@@ -184,7 +184,33 @@ export function validateWorkflow(nodes: ValidatorNode[], edges: ValidatorEdge[])
     }
   }
 
-  // 8. ForEach nodes without loop branch
+  // 8. System command security warning
+  for (const node of nodes) {
+    if (node.data?.step?.type === "systemCommand") {
+      warnings.push(
+        `Node "${node.id}": systemCommand step executes shell commands with full system access.`
+      );
+      break;
+    }
+  }
+
+  // 9. Desktop steps — require OS-level permissions (macOS Accessibility)
+  const desktopTypes = new Set([
+    "desktopMouseMove",
+    "desktopMouseClick",
+    "desktopMouseDrag",
+    "desktopMouseScroll",
+    "desktopScreenshot",
+    "desktopKeyboard",
+  ]);
+  const hasDesktopSteps = nodes.some((n) => desktopTypes.has(n.data?.step?.type ?? ""));
+  if (hasDesktopSteps) {
+    warnings.push(
+      "Workflow uses desktop control steps. On macOS, Accessibility permission must be granted in System Settings > Privacy & Security > Accessibility."
+    );
+  }
+
+  // 10. ForEach nodes without loop branch
   for (const node of nodes) {
     const stepType = node.data?.step?.type || node.type;
     if (stepType === "forEach") {

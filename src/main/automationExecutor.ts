@@ -6,6 +6,7 @@ import {
   BrowserStepHandler,
   ConditionalEvaluator,
   DataTransformHandler,
+  DesktopHandler,
   DiscordStepHandler,
   GithubHandler,
   GoogleSheetsHandler,
@@ -15,6 +16,7 @@ import {
   SendGridHandler,
   SlackStepHandler,
   StripeHandler,
+  SystemCommandHandler,
   TelegramHandler,
   TwitterStepHandler,
   VariableManager,
@@ -45,6 +47,8 @@ export class AutomationExecutor {
   private stripeHandler: StripeHandler;
   private postgresHandler: PostgresHandler;
   private googleSheetsHandler: GoogleSheetsHandler;
+  private systemCommandHandler: SystemCommandHandler;
+  private desktopHandler: DesktopHandler;
 
   constructor() {
     this.variableManager = new VariableManager();
@@ -64,6 +68,8 @@ export class AutomationExecutor {
     this.stripeHandler = new StripeHandler();
     this.postgresHandler = new PostgresHandler();
     this.googleSheetsHandler = new GoogleSheetsHandler();
+    this.systemCommandHandler = new SystemCommandHandler();
+    this.desktopHandler = new DesktopHandler();
   }
 
   /**
@@ -174,13 +180,20 @@ export class AutomationExecutor {
           break;
 
         case "wait":
-          result = await this.browserHandler.executeWait(
-            browserWindow,
-            headless,
-            headlessExecutor,
-            step,
-            this.substituteVariables.bind(this)
-          );
+          if (headless && headlessExecutor) {
+            result = await this.browserHandler.executeWait(
+              browserWindow,
+              headless,
+              headlessExecutor,
+              step,
+              this.substituteVariables.bind(this)
+            );
+          } else {
+            const waitStr = this.substituteVariables(step.value);
+            const ms = parseInt(waitStr) * 1000;
+            debugLogger.debug("Wait", `Waiting for ${waitStr} seconds`);
+            await new Promise((r) => setTimeout(r, isNaN(ms) ? 0 : ms));
+          }
           break;
 
         case "screenshot":
@@ -645,7 +658,9 @@ export class AutomationExecutor {
         case "codeExecute": {
           const code = this.substituteVariables(step.code);
           const wrapCode = (c: string) =>
-            c.includes("return") ? `(async () => { ${c} })()` : `(async () => { return (${c}); })()`;
+            c.includes("return")
+              ? `(async () => { ${c} })()`
+              : `(async () => { return (${c}); })()`;
 
           if (
             browserWindow?.webContents &&
@@ -666,6 +681,39 @@ export class AutomationExecutor {
           }
           break;
         }
+
+        // Desktop steps
+        case "desktopMouseMove":
+          await this.desktopHandler.executeMouseMove(step, this.substituteVariables.bind(this));
+          break;
+        case "desktopMouseClick":
+          await this.desktopHandler.executeMouseClick(step, this.substituteVariables.bind(this));
+          break;
+        case "desktopMouseDrag":
+          await this.desktopHandler.executeMouseDrag(step, this.substituteVariables.bind(this));
+          break;
+        case "desktopMouseScroll":
+          await this.desktopHandler.executeMouseScroll(step, this.substituteVariables.bind(this));
+          break;
+        case "desktopScreenshot":
+          result = await this.desktopHandler.executeDesktopScreenshot(
+            step,
+            this.substituteVariables.bind(this),
+            variables
+          );
+          break;
+        case "desktopKeyboard":
+          await this.desktopHandler.executeKeyboard(step, this.substituteVariables.bind(this));
+          break;
+
+        // System steps
+        case "systemCommand":
+          result = await this.systemCommandHandler.executeCommand(
+            step,
+            this.substituteVariables.bind(this),
+            variables
+          );
+          break;
 
         // Telegram steps
         case "telegramSendMessage":

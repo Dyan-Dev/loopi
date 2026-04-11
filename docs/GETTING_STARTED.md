@@ -199,6 +199,76 @@ Step 6: Screenshot
 4. If invalid: alert/screenshot
 ```
 
+## Desktop Control
+
+Loopi can control your system cursor and keyboard — not just the browser.
+
+### Moving the Mouse
+
+1. Add "Desktop Mouse Move" step
+2. Set X and Y coordinates (screen position)
+3. Optionally set speed (pixels/sec)
+
+### Clicking
+
+1. Add "Desktop Mouse Click" step
+2. Choose button: left, right, or middle
+3. Choose click type: single or double
+4. Optionally set X/Y to move before clicking
+
+### Typing on Desktop
+
+1. Add "Desktop Keyboard" step
+2. Action "type" — types a string of text
+3. Action "press" — presses a single key (Enter, Escape, Tab, etc.)
+4. Action "hotkey" — key combination like `LeftControl+C` or `LeftAlt+Tab`
+
+### Desktop Screenshots
+
+1. Add "Desktop Screenshot" step
+2. Optionally set save path and region (X, Y, Width, Height)
+3. Store the file path in a variable for later use
+
+### Wayland (Linux) Setup
+
+On Linux with Wayland, desktop control requires `ydotool`:
+```bash
+sudo apt install ydotool
+```
+
+The example workflows handle setup automatically via `pkexec` (GUI auth prompt). After adding yourself to the `input` group and logging out/in, no auth is needed.
+
+## System Commands
+
+Run any shell command from your workflows.
+
+### Basic Usage
+
+1. Add "System Command" step
+2. Enter command: `ls -la` or `git status` or `docker ps`
+3. Set "Store stdout As" to save output to a variable
+
+### Capturing Output
+
+- **Store stdout As** — saves command output to a variable
+- **Store stderr As** — saves error output separately
+- **Store Exit Code As** — saves the exit code (0 = success)
+- **Fail on non-zero** — stop the workflow if the command fails
+
+### Variable Substitution
+
+Commands support `{{variable}}` substitution:
+```
+echo "Hello {{username}}, you have {{count}} items"
+```
+
+### Example: System Info Pipeline
+```
+Step 1: System Command — pwd → store as "cwd"
+Step 2: System Command — hostname → store as "host"
+Step 3: Set Variable — "Running on {{host}} in {{cwd}}"
+```
+
 ## Tips for Success
 
 1. **Test incrementally** - Add steps one at a time and test
@@ -209,6 +279,8 @@ Step 6: Screenshot
 6. **Add screenshots** - Capture key points for verification
 7. **Handle timing** - Add Wait steps between dynamic page changes
 8. **Test conditions** - Use Extract With Logic for robust comparisons
+9. **Desktop + Browser** - Combine browser steps with desktop control for full automation
+10. **System commands** - Use shell commands to interact with git, docker, files, and any CLI tool
 
 ## Exporting & Sharing
 

@@ -9,6 +9,12 @@ import {
   ClickStep,
   CodeExecuteStep,
   DateTimeStep,
+  DesktopKeyboardStep,
+  DesktopMouseClickStep,
+  DesktopMouseDragStep,
+  DesktopMouseMoveStep,
+  DesktopMouseScrollStep,
+  DesktopScreenshotStep,
   ExtractStep,
   FilterArrayStep,
   ForEachStep,
@@ -25,6 +31,7 @@ import {
   SelectOptionStep,
   SetVariableStep,
   StringOperationStep,
+  SystemCommandStep,
   TypeStep,
   WaitStep,
 } from "./stepTypes";
@@ -47,6 +54,8 @@ export default function StepEditor({
 }) {
   const { data, id } = node;
   const { step } = data;
+
+  if (!step) return null;
 
   const renderStepType = () => {
     switch (step.type) {
@@ -125,6 +134,24 @@ export default function StepEditor({
         return <MapArrayStep step={step} id={id} onUpdate={onUpdate} />;
       case "codeExecute":
         return <CodeExecuteStep step={step} id={id} onUpdate={onUpdate} />;
+
+      // ─── Desktop steps ──────────────────────────────────────
+      case "desktopMouseMove":
+        return <DesktopMouseMoveStep step={step} id={id} onUpdate={onUpdate} />;
+      case "desktopMouseClick":
+        return <DesktopMouseClickStep step={step} id={id} onUpdate={onUpdate} />;
+      case "desktopMouseDrag":
+        return <DesktopMouseDragStep step={step} id={id} onUpdate={onUpdate} />;
+      case "desktopMouseScroll":
+        return <DesktopMouseScrollStep step={step} id={id} onUpdate={onUpdate} />;
+      case "desktopScreenshot":
+        return <DesktopScreenshotStep step={step} id={id} onUpdate={onUpdate} />;
+      case "desktopKeyboard":
+        return <DesktopKeyboardStep step={step} id={id} onUpdate={onUpdate} />;
+
+      // ─── System steps ───────────────────────────────────────
+      case "systemCommand":
+        return <SystemCommandStep step={step} id={id} onUpdate={onUpdate} />;
 
       // ─── All integration steps ────────────────────────────────
       default:

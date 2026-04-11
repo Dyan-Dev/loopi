@@ -5,7 +5,7 @@ import { Card, CardDescription, CardHeader, CardTitle } from "@components/ui/car
 import { Plus } from "lucide-react";
 import { useState } from "react";
 
-type ExampleCategory = "all" | "scraping" | "api" | "ai" | "logic" | "integration";
+type ExampleCategory = "all" | "scraping" | "api" | "ai" | "logic" | "integration" | "desktop";
 
 interface ExampleMeta {
   id: string;
@@ -207,6 +207,47 @@ export const EXAMPLES: ExampleMeta[] = [
     fileName: "twitter_post_and_search.json",
     category: "integration",
   },
+  // --- Desktop & System ---
+  {
+    id: "system-command-pipeline",
+    name: "System Command Pipeline",
+    description:
+      "Runs shell commands, captures stdout/stderr/exit codes into variables, and pipes output between steps",
+    fileName: "system_command_pipeline.json",
+    category: "desktop",
+  },
+  {
+    id: "desktop-mouse-control",
+    name: "Desktop Mouse Control",
+    description:
+      "Demonstrates all mouse steps: move, left/right/double click, drag, scroll, with screenshots",
+    fileName: "desktop_mouse_control.json",
+    category: "desktop",
+  },
+  {
+    id: "desktop-keyboard-typing",
+    name: "Desktop Keyboard & Typing",
+    description:
+      "Opens a text editor, types text, uses hotkeys (Ctrl+A, Ctrl+C), and captures a screenshot",
+    fileName: "desktop_keyboard_typing.json",
+    category: "desktop",
+  },
+  {
+    id: "desktop-screenshot-regions",
+    name: "Desktop Screenshot & Regions",
+    description:
+      "Takes full screen and region-based screenshots, stores paths in variables for later use",
+    fileName: "desktop_screenshot_regions.json",
+    category: "desktop",
+  },
+  {
+    id: "desktop-full-automation",
+    name: "Desktop Full Automation",
+    description:
+      "End-to-end test combining system commands, mouse control, keyboard input, and screenshots",
+    fileName: "desktop_full_automation.json",
+    category: "desktop",
+  },
 ];
 
 const CATEGORY_LABELS: Record<ExampleCategory, string> = {
@@ -216,6 +257,7 @@ const CATEGORY_LABELS: Record<ExampleCategory, string> = {
   ai: "AI Processing",
   logic: "Logic & Loops",
   integration: "Social & Messaging",
+  desktop: "Desktop & System",
 };
 
 interface ExamplesComponentProps {
