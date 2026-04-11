@@ -1,0 +1,122 @@
+{
+  "id": "system-command-pipeline",
+  "name": "System Command Pipeline",
+  "description": "Demonstrates system command steps: runs shell commands, captures stdout/stderr/exit codes into variables, uses output in subsequent steps, and handles failure conditions.",
+  "nodes": [
+    {
+      "id": "1",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "1",
+          "type": "systemCommand",
+          "description": "Get current working directory",
+          "command": "pwd",
+          "storeKey": "cwd",
+          "failOnNonZero": true
+        }
+      },
+      "position": { "x": 300, "y": 50 }
+    },
+    {
+      "id": "2",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "2",
+          "type": "systemCommand",
+          "description": "List files in current directory",
+          "command": "ls -la",
+          "storeKey": "fileList",
+          "failOnNonZero": true
+        }
+      },
+      "position": { "x": 300, "y": 180 }
+    },
+    {
+      "id": "3",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "3",
+          "type": "systemCommand",
+          "description": "Get system info (hostname + OS)",
+          "command": "echo \"Host: $(hostname) | OS: $(uname -s) | Arch: $(uname -m)\"",
+          "storeKey": "sysInfo",
+          "failOnNonZero": true
+        }
+      },
+      "position": { "x": 300, "y": 310 }
+    },
+    {
+      "id": "4",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "4",
+          "type": "systemCommand",
+          "description": "Check disk usage",
+          "command": "df -h / | tail -1 | awk '{print $5}'",
+          "storeKey": "diskUsage",
+          "shell": "/bin/bash",
+          "failOnNonZero": true
+        }
+      },
+      "position": { "x": 300, "y": 440 }
+    },
+    {
+      "id": "5",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "5",
+          "type": "systemCommand",
+          "description": "Run a command that intentionally fails (exit code captured)",
+          "command": "ls /nonexistent_path_12345",
+          "storeKey": "failOutput",
+          "storeStderrKey": "failError",
+          "storeExitCodeKey": "failCode",
+          "failOnNonZero": false
+        }
+      },
+      "position": { "x": 300, "y": 570 }
+    },
+    {
+      "id": "6",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "6",
+          "type": "setVariable",
+          "description": "Build summary from all command outputs",
+          "variableName": "summary",
+          "value": "CWD: {{cwd}} | System: {{sysInfo}} | Disk: {{diskUsage}} | Failed cmd exit code: {{failCode}}"
+        }
+      },
+      "position": { "x": 300, "y": 700 }
+    },
+    {
+      "id": "7",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "7",
+          "type": "systemCommand",
+          "description": "Use variable substitution in command",
+          "command": "echo \"Summary: {{summary}}\"",
+          "storeKey": "finalOutput",
+          "failOnNonZero": true
+        }
+      },
+      "position": { "x": 300, "y": 830 }
+    }
+  ],
+  "edges": [
+    { "id": "e1-2", "source": "1", "target": "2" },
+    { "id": "e2-3", "source": "2", "target": "3" },
+    { "id": "e3-4", "source": "3", "target": "4" },
+    { "id": "e4-5", "source": "4", "target": "5" },
+    { "id": "e5-6", "source": "5", "target": "6" },
+    { "id": "e6-7", "source": "6", "target": "7" }
+  ]
+}

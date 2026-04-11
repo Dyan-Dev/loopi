@@ -14,12 +14,15 @@ import {
   GitBranch,
   Globe,
   Hash,
+  Keyboard,
   Link,
   List,
   Lock,
   Mail,
   MessageCircle,
+  Monitor,
   Mouse,
+  Move,
   Phone,
   Repeat,
   Send,
@@ -28,6 +31,7 @@ import {
   ShoppingCart,
   Smile,
   Sparkles,
+  Terminal,
   Twitter,
   Type as TypeIcon,
   Variable,
@@ -914,6 +918,68 @@ export interface StepDiscordDeleteMessage extends StepBase {
   botToken?: string;
 }
 
+// Desktop Steps
+export interface StepDesktopMouseMove extends StepBase {
+  type: "desktopMouseMove";
+  x: string;
+  y: string;
+  speed?: string;
+}
+
+export interface StepDesktopMouseClick extends StepBase {
+  type: "desktopMouseClick";
+  x?: string;
+  y?: string;
+  button?: "left" | "right" | "middle";
+  clickType?: "single" | "double";
+}
+
+export interface StepDesktopMouseDrag extends StepBase {
+  type: "desktopMouseDrag";
+  startX: string;
+  startY: string;
+  endX: string;
+  endY: string;
+  speed?: string;
+}
+
+export interface StepDesktopMouseScroll extends StepBase {
+  type: "desktopMouseScroll";
+  direction: "up" | "down" | "left" | "right";
+  amount: string;
+}
+
+export interface StepDesktopScreenshot extends StepBase {
+  type: "desktopScreenshot";
+  savePath?: string;
+  storeKey?: string;
+  regionX?: string;
+  regionY?: string;
+  regionWidth?: string;
+  regionHeight?: string;
+}
+
+export interface StepDesktopKeyboard extends StepBase {
+  type: "desktopKeyboard";
+  action: "type" | "press" | "hotkey";
+  text?: string;
+  key?: string;
+  keys?: string;
+}
+
+// System Steps
+export interface StepSystemCommand extends StepBase {
+  type: "systemCommand";
+  command: string;
+  cwd?: string;
+  timeout?: number;
+  shell?: string;
+  storeKey?: string;
+  storeStderrKey?: string;
+  storeExitCodeKey?: string;
+  failOnNonZero?: boolean;
+}
+
 // Union of all supported steps used throughout the app
 export type AutomationStep =
   | StepNavigate
@@ -1018,6 +1084,15 @@ export type AutomationStep =
   | SlackListUsersStep
   | SlackAddReactionStep
   | SlackUploadFileStep
+  // Desktop
+  | StepDesktopMouseMove
+  | StepDesktopMouseClick
+  | StepDesktopMouseDrag
+  | StepDesktopMouseScroll
+  | StepDesktopScreenshot
+  | StepDesktopKeyboard
+  // System
+  | StepSystemCommand
   | IntegrationStep;
 
 // UI meta for step type picker - organized by category
@@ -3222,6 +3297,54 @@ export const codaSteps: StepTypeOption[] = [
   },
 ];
 
+export const desktopSteps: StepTypeOption[] = [
+  {
+    value: "desktopMouseMove",
+    label: "Mouse Move",
+    icon: Move,
+    description: "Move cursor to screen coordinates",
+  },
+  {
+    value: "desktopMouseClick",
+    label: "Mouse Click",
+    icon: Mouse,
+    description: "Click at current or specified position",
+  },
+  {
+    value: "desktopMouseDrag",
+    label: "Mouse Drag",
+    icon: Move,
+    description: "Drag from one point to another",
+  },
+  {
+    value: "desktopMouseScroll",
+    label: "Mouse Scroll",
+    icon: Mouse,
+    description: "Scroll at current position",
+  },
+  {
+    value: "desktopScreenshot",
+    label: "Desktop Screenshot",
+    icon: Monitor,
+    description: "Capture the desktop screen",
+  },
+  {
+    value: "desktopKeyboard",
+    label: "Keyboard Input",
+    icon: Keyboard,
+    description: "Type text or press keys on desktop",
+  },
+];
+
+export const systemSteps: StepTypeOption[] = [
+  {
+    value: "systemCommand",
+    label: "Run Command",
+    icon: Terminal,
+    description: "Execute a shell/terminal command",
+  },
+];
+
 export const stepCategories: StepCategory[] = [
   {
     category: "Browser",
@@ -3247,6 +3370,16 @@ export const stepCategories: StepCategory[] = [
     category: "Integration",
     icon: Code,
     steps: integrationSteps,
+  },
+  {
+    category: "Desktop",
+    icon: Monitor,
+    steps: desktopSteps,
+  },
+  {
+    category: "System",
+    icon: Terminal,
+    steps: systemSteps,
   },
   {
     category: "Discord",
@@ -3440,4 +3573,6 @@ export const stepTypes = [
   ...ghostSteps,
   ...webflowSteps,
   ...codaSteps,
+  ...desktopSteps,
+  ...systemSteps,
 ] as const;

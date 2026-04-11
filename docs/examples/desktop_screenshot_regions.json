@@ -1,0 +1,92 @@
+{
+  "id": "desktop-screenshot-regions",
+  "name": "Desktop Screenshot & Region Capture",
+  "description": "Demonstrates desktop screenshot step with full screen and region capture. Takes multiple screenshots of different screen areas and stores paths in variables.",
+  "nodes": [
+    {
+      "id": "1",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "1",
+          "type": "desktopScreenshot",
+          "description": "Full screen screenshot",
+          "savePath": "/tmp/loopi_fullscreen.png",
+          "storeKey": "fullPath"
+        }
+      },
+      "position": { "x": 300, "y": 50 }
+    },
+    {
+      "id": "2",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "2",
+          "type": "desktopScreenshot",
+          "description": "Capture top-left corner (400x300 region)",
+          "savePath": "/tmp/loopi_topleft.png",
+          "storeKey": "topLeftPath",
+          "regionX": "0",
+          "regionY": "0",
+          "regionWidth": "400",
+          "regionHeight": "300"
+        }
+      },
+      "position": { "x": 300, "y": 200 }
+    },
+    {
+      "id": "3",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "3",
+          "type": "desktopScreenshot",
+          "description": "Capture center region (800x600)",
+          "savePath": "/tmp/loopi_center.png",
+          "storeKey": "centerPath",
+          "regionX": "560",
+          "regionY": "240",
+          "regionWidth": "800",
+          "regionHeight": "600"
+        }
+      },
+      "position": { "x": 300, "y": 350 }
+    },
+    {
+      "id": "4",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "4",
+          "type": "systemCommand",
+          "description": "List all captured screenshots",
+          "command": "ls -lh /tmp/loopi_*.png",
+          "storeKey": "fileList",
+          "failOnNonZero": true
+        }
+      },
+      "position": { "x": 300, "y": 500 }
+    },
+    {
+      "id": "5",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "5",
+          "type": "setVariable",
+          "description": "Build report of all screenshots taken",
+          "variableName": "report",
+          "value": "Screenshots saved:\n1. Full: {{fullPath}}\n2. Top-left: {{topLeftPath}}\n3. Center: {{centerPath}}"
+        }
+      },
+      "position": { "x": 300, "y": 650 }
+    }
+  ],
+  "edges": [
+    { "id": "e1-2", "source": "1", "target": "2" },
+    { "id": "e2-3", "source": "2", "target": "3" },
+    { "id": "e3-4", "source": "3", "target": "4" },
+    { "id": "e4-5", "source": "4", "target": "5" }
+  ]
+}

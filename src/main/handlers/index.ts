@@ -8,6 +8,7 @@ export { getHandler, hasHandler, registerHandler } from "./base/handlerRegistry"
 export { BrowserStepHandler } from "./browserStepHandler";
 export { ConditionalEvaluator } from "./conditionalEvaluator";
 export { DataTransformHandler } from "./dataTransformHandler";
+export { DesktopHandler } from "./desktopHandler";
 export { DiscordStepHandler } from "./discordStepHandler";
 export { GithubHandler } from "./githubHandler";
 export { GoogleSheetsHandler } from "./googleSheetsHandler";
@@ -16,6 +17,7 @@ export { PostgresHandler } from "./postgresHandler";
 export { SendGridHandler } from "./sendgridHandler";
 export { SlackStepHandler } from "./slackStepHandler";
 export { StripeHandler } from "./stripeHandler";
+export { SystemCommandHandler } from "./systemCommandHandler";
 export { TelegramHandler } from "./telegramHandler";
 export { TwitterStepHandler } from "./twitterStepHandler";
 export { VariableManager } from "./variableManager";

@@ -16,6 +16,13 @@ import { JsonStringifyStep } from "./data/JsonStringifyStep";
 import { MapArrayStep } from "./data/MapArrayStep";
 import { MathOperationStep } from "./data/MathOperationStep";
 import { StringOperationStep } from "./data/StringOperationStep";
+// Desktop steps
+import { DesktopKeyboardStep } from "./desktop/DesktopKeyboardStep";
+import { DesktopMouseClickStep } from "./desktop/DesktopMouseClickStep";
+import { DesktopMouseDragStep } from "./desktop/DesktopMouseDragStep";
+import { DesktopMouseMoveStep } from "./desktop/DesktopMouseMoveStep";
+import { DesktopMouseScrollStep } from "./desktop/DesktopMouseScrollStep";
+import { DesktopScreenshotStep } from "./desktop/DesktopScreenshotStep";
 // AI / API steps
 import { AiAnthropicStep } from "./integration/AiAnthropicStep";
 import { AiOllamaStep } from "./integration/AiOllamaStep";
@@ -25,6 +32,8 @@ import { ApiCallStep } from "./integration/ApiCallStep";
 import { ForEachStep } from "./logic/ForEachStep";
 // Integration step editor (handles ALL integration steps)
 import { IntegrationStepEditor, isIntegrationStep } from "./shared/IntegrationStepEditor";
+// System steps
+import { SystemCommandStep } from "./system/SystemCommandStep";
 // Variable steps
 import { ModifyVariableStep } from "./variable/ModifyVariableStep";
 import { SetVariableStep } from "./variable/SetVariableStep";
@@ -58,6 +67,15 @@ export {
   // Variable
   ModifyVariableStep,
   SetVariableStep,
+  // Desktop
+  DesktopMouseMoveStep,
+  DesktopMouseClickStep,
+  DesktopMouseDragStep,
+  DesktopMouseScrollStep,
+  DesktopScreenshotStep,
+  DesktopKeyboardStep,
+  // System
+  SystemCommandStep,
   // Integration (unified)
   IntegrationStepEditor,
   isIntegrationStep,

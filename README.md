@@ -1,12 +1,8 @@
 # Loopi
 
-**The open-source desktop automation platform that combines a visual builder, real browser control, AI agents, and 80+ API integrations — all running locally on your machine.**
+**The open-source desktop automation platform — visual workflow builder, real browser control, desktop cursor/keyboard automation, shell command execution, AI agents, and 80+ API integrations. All running locally on your machine.**
 
 [![License: O'Saasy](https://img.shields.io/badge/license-O%27Saasy-blue.svg)](LICENSE)
-
-## Demo
-
-[![Loopi Demo](https://img.youtube.com/vi/QLP-VOGVHBc/maxresdefault.jpg)](https://youtu.be/QLP-VOGVHBc?si=FczG6_QU04WFDJCP)
 
 ## Install
 
@@ -28,11 +24,31 @@ pnpm start
 
 ---
 
+## What Can Loopi Do?
+
+Loopi automates anything on your computer — not just the browser.
+
+**Browser Automation** — Navigate, click, type, extract data, upload files, take screenshots in a real Chromium window.
+
+**Desktop Control** — Move the mouse cursor, click, drag, scroll, type text, press keys, and execute hotkey combos anywhere on your desktop. Works on Linux (X11 & Wayland), macOS, and Windows.
+
+**System Commands** — Run any shell command, capture stdout/stderr/exit codes into workflow variables, pipe outputs between steps. Automate git, docker, scripts, or any CLI tool.
+
+**AI Agents** — Connect OpenAI, Anthropic, or Ollama (100% local) to build agentic workflows that browse, extract, decide, and act.
+
+**80+ Integrations** — Slack, Discord, GitHub, Notion, Stripe, Postgres, Google Sheets, Telegram, Twitter, and many more — all built-in.
+
+**Visual Workflow Builder** — Drag-and-drop node editor. Build complex multi-step automations without writing code.
+
+**CLI Support** — Run and manage workflows from your terminal. List, create, update, delete, and execute — all from the command line.
+
+---
+
 ## AI-Powered Automation — Local or Cloud, Your Choice
 
-> **Build agentic workflows that connect AI to real browser actions and 80+ APIs — without sending your data to the cloud.**
+> **Build agentic workflows that connect AI to real browser actions, desktop control, system commands, and 80+ APIs — without sending your data to the cloud.**
 
-Loopi gives AI models the ability to **act**: browse the web, call APIs, query databases, send messages, and process data — all orchestrated visually. Think of it as giving your AI hands and eyes.
+Loopi gives AI models the ability to **act**: browse the web, move the cursor, run commands, call APIs, query databases, send messages, and process data — all orchestrated visually.
 
 **Connect any LLM:**
 - **OpenAI** (GPT-4o, GPT-4o-mini) — cloud
@@ -41,12 +57,10 @@ Loopi gives AI models the ability to **act**: browse the web, call APIs, query d
 
 **What you can build:**
 - AI agents that browse websites, extract data, and make decisions
-- Workflows that use LLMs to summarize, classify, or generate content — then act on the results
+- Desktop automation bots that move the mouse, click, type, and interact with any application
+- System administration workflows that run shell commands and process outputs
 - Chains that call an API, feed the response to an AI model, and post the output to Slack/Discord/Notion
 - Local-first AI pipelines with Ollama — no API keys, no cloud, no cost
-- AI copilot that generates, explains, and auto-fixes your workflows
-
-**Why this matters:** Most AI agent frameworks are code-only. Most no-code tools are cloud-only. Loopi is both visual and local-first, with the option to go cloud when you want to. You own your data, your models, and your workflows.
 
 ---
 
@@ -56,6 +70,8 @@ Loopi gives AI models the ability to **act**: browse the web, call APIs, query d
 |---|---|---|---|---|---|---|
 | Visual builder | Yes | Yes | Yes | No | Partial | Yes |
 | Real browser control | Yes | No | No | Yes | Yes | Yes |
+| Desktop cursor/keyboard | Yes | No | No | No | No | Yes |
+| System command execution | Yes | No | No | No | No | Varies |
 | API integrations | 80+ | Yes | Yes | No | No | Varies |
 | Local + cloud AI | Yes | Cloud only | Cloud only | No | No | Cloud only |
 | Agentic workflows | Yes | Partial | No | No | No | No |
@@ -65,13 +81,19 @@ Loopi gives AI models the ability to **act**: browse the web, call APIs, query d
 | Typed variables | Yes | No | No | N/A | No | No |
 | Free | Yes | Limits | No | Yes | Yes | No |
 
-**Loopi is the only tool that gives you visual workflows + real browser automation + 80+ API integrations + local & cloud AI + typed variables, all local-first and open source.**
+**Loopi is the only open-source tool that gives you visual workflows + browser automation + desktop control + system commands + 80+ API integrations + AI agents, all local-first.**
 
 ## Key Features
 
 **Visual Workflow Builder** — Drag-and-drop node editor powered by ReactFlow. Build complex automations without writing code.
 
 **Real Browser Automation** — Navigate, click, type, extract data, upload files, take screenshots — all in a real Chromium window you can watch.
+
+**Desktop Cursor & Keyboard Control** — Move the mouse to any screen position, click (left/right/double), drag, scroll, type text, press individual keys, and execute hotkey combinations (Ctrl+C, Alt+Tab, etc.). Full support for Linux Wayland via ydotool, X11 via nut-js, and native support on macOS and Windows.
+
+**System Command Execution** — Run any shell command from your workflows. Capture stdout, stderr, and exit codes into separate variables. Set working directory, timeout, and shell. Pipe command output into subsequent steps via variable substitution.
+
+**Desktop Screenshots** — Capture the full screen or specific regions. Works on Wayland (via Electron desktopCapturer), X11 (via nut-js), and all platforms. Save to custom paths and store file paths in variables.
 
 **80+ Integrations** — Connect to services out of the box:
 
@@ -101,13 +123,13 @@ Loopi gives AI models the ability to **act**: browse the web, call APIs, query d
 
 **Scheduling** — Run automations on intervals, cron expressions, or one-time schedules.
 
-**Import/Export** — Save and share automations as JSON. Includes example workflows to get started.
+**Import/Export** — Save and share automations as JSON. Includes 30+ example workflows to get started.
 
 **CLI Support** — Run and manage workflows from your terminal while the desktop app is running. List, create, update, delete, and execute workflows — all from the command line.
 
 ## Tech Stack
 
-Electron, React 19, TypeScript, ReactFlow, Tailwind CSS, Radix UI, Biome
+Electron, React 19, TypeScript, ReactFlow, Tailwind CSS, Radix UI, Biome, nut-js (desktop control), ydotool (Wayland support)
 
 ## Documentation
 
@@ -123,7 +145,7 @@ Electron, React 19, TypeScript, ReactFlow, Tailwind CSS, Radix UI, Biome
 
 ## Contributing
 
-We welcome contributions — especially around AI agent capabilities, new integrations, and workflow templates.
+We welcome contributions — especially around AI agent capabilities, new integrations, desktop automation, and workflow templates.
 
 ```bash
 pnpm install        # Install dependencies
@@ -137,6 +159,7 @@ pnpm run make       # Build for current platform
 - Add new AI model providers (Gemini, Cohere, local GGUF models)
 - Build agentic workflow templates (research agents, monitoring agents, content pipelines)
 - Add new service integrations
+- Improve desktop automation (OCR, image matching, window management)
 - Improve the AI copilot (auto-generate workflows from natural language)
 - Add tool-use / function-calling support for connected LLMs
 

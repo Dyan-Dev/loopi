@@ -1,0 +1,256 @@
+{
+  "id": "desktop-mouse-control",
+  "name": "Desktop Mouse Control Demo",
+  "description": "Sets up ydotool permissions for Wayland, then demonstrates all desktop mouse steps: move, click, drag, scroll with visible cursor movement.",
+  "nodes": [
+    {
+      "id": "setup-1",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "setup-1",
+          "type": "systemCommand",
+          "description": "Install ydotool and set up uinput permissions (one-time setup, needs GUI auth)",
+          "command": "if which ydotool > /dev/null 2>&1; then echo 'ydotool already installed'; else pkexec apt install -y ydotool && echo 'ydotool installed'; fi && if [ ! -f /etc/udev/rules.d/80-uinput.rules ]; then pkexec bash -c 'echo KERNEL==\"uinput\", MODE=\"0660\", GROUP=\"input\" > /etc/udev/rules.d/80-uinput.rules && udevadm control --reload-rules && udevadm trigger' && echo 'udev rule created'; else echo 'udev rule exists'; fi && if id -nG | grep -qw input; then echo 'user in input group'; else pkexec usermod -aG input $USER && echo 'added user to input group - LOG OUT AND BACK IN for group to take effect'; fi",
+          "shell": "/bin/bash",
+          "storeKey": "setupResult",
+          "failOnNonZero": false,
+          "timeout": 60000
+        }
+      },
+      "position": { "x": 300, "y": 50 }
+    },
+    {
+      "id": "setup-2",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "setup-2",
+          "type": "systemCommand",
+          "description": "Test ydotool (try direct, fallback to pkexec)",
+          "command": "ydotool mousemove -- -1 -1 2>/dev/null && echo 'ydotool works directly' || (pkexec ydotool mousemove -- -1 -1 2>/dev/null && echo 'ydotool works via pkexec')",
+          "shell": "/bin/bash",
+          "storeKey": "ydotoolMode",
+          "failOnNonZero": false,
+          "timeout": 15000
+        }
+      },
+      "position": { "x": 300, "y": 180 }
+    },
+    {
+      "id": "1",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "1",
+          "type": "desktopScreenshot",
+          "description": "Take initial desktop screenshot",
+          "storeKey": "initialScreenshot"
+        }
+      },
+      "position": { "x": 300, "y": 330 }
+    },
+    {
+      "id": "2",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "2",
+          "type": "desktopMouseMove",
+          "description": "Move cursor to center of screen",
+          "x": "960",
+          "y": "540"
+        }
+      },
+      "position": { "x": 300, "y": 460 }
+    },
+    {
+      "id": "3",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "3",
+          "type": "wait",
+          "description": "Brief pause to see cursor move",
+          "value": "1"
+        }
+      },
+      "position": { "x": 300, "y": 590 }
+    },
+    {
+      "id": "4",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "4",
+          "type": "desktopMouseClick",
+          "description": "Single left click at current position",
+          "button": "left",
+          "clickType": "single"
+        }
+      },
+      "position": { "x": 300, "y": 720 }
+    },
+    {
+      "id": "5",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "5",
+          "type": "desktopMouseClick",
+          "description": "Right click at specific position",
+          "x": "500",
+          "y": "400",
+          "button": "right",
+          "clickType": "single"
+        }
+      },
+      "position": { "x": 300, "y": 850 }
+    },
+    {
+      "id": "6",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "6",
+          "type": "wait",
+          "description": "Pause before closing context menu",
+          "value": "1"
+        }
+      },
+      "position": { "x": 300, "y": 980 }
+    },
+    {
+      "id": "7",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "7",
+          "type": "desktopKeyboard",
+          "description": "Press Escape to close any context menu",
+          "action": "press",
+          "key": "Escape"
+        }
+      },
+      "position": { "x": 300, "y": 1110 }
+    },
+    {
+      "id": "8",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "8",
+          "type": "desktopMouseMove",
+          "description": "Move to top-left for drag start",
+          "x": "200",
+          "y": "200"
+        }
+      },
+      "position": { "x": 300, "y": 1240 }
+    },
+    {
+      "id": "9",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "9",
+          "type": "desktopMouseDrag",
+          "description": "Drag from top-left to bottom-right",
+          "startX": "200",
+          "startY": "200",
+          "endX": "600",
+          "endY": "500"
+        }
+      },
+      "position": { "x": 300, "y": 1370 }
+    },
+    {
+      "id": "10",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "10",
+          "type": "desktopMouseScroll",
+          "description": "Scroll down 5 units",
+          "direction": "down",
+          "amount": "5"
+        }
+      },
+      "position": { "x": 300, "y": 1500 }
+    },
+    {
+      "id": "11",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "11",
+          "type": "wait",
+          "description": "Pause after scroll",
+          "value": "1"
+        }
+      },
+      "position": { "x": 300, "y": 1630 }
+    },
+    {
+      "id": "12",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "12",
+          "type": "desktopMouseScroll",
+          "description": "Scroll back up 5 units",
+          "direction": "up",
+          "amount": "5"
+        }
+      },
+      "position": { "x": 300, "y": 1760 }
+    },
+    {
+      "id": "13",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "13",
+          "type": "desktopMouseClick",
+          "description": "Double click at center",
+          "x": "960",
+          "y": "540",
+          "button": "left",
+          "clickType": "double"
+        }
+      },
+      "position": { "x": 300, "y": 1890 }
+    },
+    {
+      "id": "14",
+      "type": "automationStep",
+      "data": {
+        "step": {
+          "id": "14",
+          "type": "desktopScreenshot",
+          "description": "Final desktop screenshot",
+          "savePath": "/tmp/loopi_mouse_test_final.png",
+          "storeKey": "finalScreenshot"
+        }
+      },
+      "position": { "x": 300, "y": 2020 }
+    }
+  ],
+  "edges": [
+    { "id": "e-s1-s2", "source": "setup-1", "target": "setup-2" },
+    { "id": "e-s2-1", "source": "setup-2", "target": "1" },
+    { "id": "e1-2", "source": "1", "target": "2" },
+    { "id": "e2-3", "source": "2", "target": "3" },
+    { "id": "e3-4", "source": "3", "target": "4" },
+    { "id": "e4-5", "source": "4", "target": "5" },
+    { "id": "e5-6", "source": "5", "target": "6" },
+    { "id": "e6-7", "source": "6", "target": "7" },
+    { "id": "e7-8", "source": "7", "target": "8" },
+    { "id": "e8-9", "source": "8", "target": "9" },
+    { "id": "e9-10", "source": "9", "target": "10" },
+    { "id": "e10-11", "source": "10", "target": "11" },
+    { "id": "e11-12", "source": "11", "target": "12" },
+    { "id": "e12-13", "source": "12", "target": "13" },
+    { "id": "e13-14", "source": "13", "target": "14" }
+  ]
+}

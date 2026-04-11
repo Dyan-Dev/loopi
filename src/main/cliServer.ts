@@ -95,7 +95,10 @@ async function executeWorkflowStream(
   sendNdjson(res, { type: "info", message: "Validation passed. Starting execution..." });
 
   const hasBrowserSteps = nodes.some(
-    (node) => node.type === "automationStep" && node.data.step && BROWSER_STEP_TYPES.has(node.data.step.type)
+    (node) =>
+      node.type === "automationStep" &&
+      node.data.step &&
+      BROWSER_STEP_TYPES.has(node.data.step.type)
   );
 
   let browserWindow = null;
