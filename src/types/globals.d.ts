@@ -1,5 +1,12 @@
 import { Automation, ExecutionRecord, StoredAutomation, ScheduleType } from "./automation";
 import { AutomationStep } from "./steps";
+import type {
+  Agent,
+  AgentCapability,
+  AgentLogEntry,
+  AgentModelConfig,
+  AgentSchedule,
+} from "./agent";
 import type { LogEntry } from "@main/debugLogger";
 import type { ConditionalConfig, ConditionalResult } from "./conditions";
 
@@ -182,6 +189,19 @@ export interface ElectronAPI {
   };
   saveFile: (data: { filePath: string; content: string }) => Promise<boolean>;
   ai: {
+    detectEnvKeys: () => Promise<Record<string, boolean>>;
+    chat: (params: {
+      messages: Array<{ role: "user" | "assistant" | "system"; content: string }>;
+      provider: "openai" | "anthropic" | "ollama" | "claude-code";
+      credentialId?: string;
+      apiKey?: string;
+      model?: string;
+      baseUrl?: string;
+    }) => Promise<{
+      success: boolean;
+      response?: string;
+      error?: string;
+    }>;
     generateWorkflow: (params: {
       prompt: string;
       provider: "openai" | "anthropic" | "ollama";
@@ -229,6 +249,73 @@ export interface ElectronAPI {
     deleteRecord: (automationId: string, recordId: string) => Promise<boolean>;
     deleteByAutomation: (automationId: string) => Promise<boolean>;
     clearAll: () => Promise<boolean>;
+  };
+  system: {
+    exec: (params: { command: string; cwd?: string; timeout?: number }) => Promise<{
+      success: boolean;
+      stdout: string;
+      stderr: string;
+      exitCode: number;
+    }>;
+  };
+  chat: {
+    save: (
+      messages: Array<{
+        id: string;
+        role: "user" | "assistant";
+        content: string;
+        timestamp: string;
+      }>,
+      provider?: string,
+      model?: string
+    ) => Promise<boolean>;
+    load: () => Promise<{
+      messages: Array<{
+        id: string;
+        role: "user" | "assistant";
+        content: string;
+        timestamp: string;
+      }>;
+      provider?: string;
+      model?: string;
+      updatedAt: string;
+    } | null>;
+    clear: () => Promise<boolean>;
+  };
+  agents: {
+    list: () => Promise<Agent[]>;
+    get: (id: string) => Promise<Agent | null>;
+    create: (config: {
+      name: string;
+      role: string;
+      description: string;
+      capabilities: AgentCapability[];
+      model: AgentModelConfig;
+      tasks?: Array<{ description: string; workflowId?: string }>;
+      schedule?: AgentSchedule;
+      credentialIds?: string[];
+      createdBy?: "user" | "loopi";
+    }) => Promise<Agent>;
+    update: (id: string, updates: Partial<Agent>) => Promise<Agent | null>;
+    delete: (id: string) => Promise<boolean>;
+    start: (id: string) => Promise<Agent>;
+    stop: (id: string) => Promise<Agent>;
+    getLogs: (id: string) => Promise<AgentLogEntry[]>;
+    addTask: (
+      agentId: string,
+      task: { description: string; workflowId?: string }
+    ) => Promise<Agent>;
+    validateModel: (
+      provider: string,
+      model: string
+    ) => Promise<{ valid: boolean; reason?: string; suggestions?: string[] }>;
+    getInstructions: (id: string) => Promise<string | null>;
+    saveInstructions: (id: string, content: string) => Promise<boolean>;
+    listFiles: (id: string) => Promise<Array<{ name: string; size: number; modifiedAt: string }>>;
+    readFile: (id: string, filename: string) => Promise<string>;
+    writeFile: (id: string, filename: string, content: string) => Promise<boolean>;
+    deleteFile: (id: string, filename: string) => Promise<boolean>;
+    getDir: (id: string) => Promise<string>;
   };
 }
 

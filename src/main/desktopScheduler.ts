@@ -399,6 +399,52 @@ export class DesktopScheduler {
   }
 
   /**
+   * Schedule an arbitrary callback on interval/cron/once.
+   * Used by AgentManager to schedule agent wake-ups.
+   */
+  scheduleCallback(
+    id: string,
+    schedule:
+      | { type: "interval"; intervalMinutes: number }
+      | { type: "cron"; expression: string }
+      | { type: "once"; datetime: string },
+    callback: () => Promise<void>
+  ): void {
+    this.unscheduleAutomation(id);
+
+    const task: ScheduledTask = {
+      scheduleId: id,
+      automationId: id,
+      schedule,
+      enabled: true,
+    };
+
+    if (schedule.type === "interval") {
+      task.intervalId = setInterval(callback, schedule.intervalMinutes * 60 * 1000);
+    } else if (schedule.type === "cron") {
+      try {
+        // biome-ignore lint/style/noCommonJs: Dynamic require for optional dep
+        const cron = require("node-cron");
+        if (cron.validate(schedule.expression)) {
+          task.cronTask = cron.schedule(schedule.expression, callback);
+        }
+      } catch (error) {
+        logger.error("Failed to schedule cron callback", error);
+      }
+    } else if (schedule.type === "once") {
+      const delay = new Date(schedule.datetime).getTime() - Date.now();
+      if (delay <= 0) {
+        callback();
+        return;
+      }
+      task.intervalId = setTimeout(callback, delay);
+    }
+
+    this.tasks.set(id, task);
+    logger.info(`Scheduled callback ${id}: ${schedule.type}`);
+  }
+
+  /**
    * Cleanup all scheduled tasks
    */
   cleanup(): void {

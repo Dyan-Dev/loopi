@@ -127,10 +127,15 @@ export class AiStepHandler {
     if (systemPrompt) payload.system = systemPrompt;
     if (topPValue !== undefined) payload.top_p = topPValue;
 
+    // OAuth tokens (sk-ant-oat*) use Bearer auth; standard API keys use x-api-key
+    const isOAuthToken = apiKey.startsWith("sk-ant-oat");
+    const authHeaders: Record<string, string> = isOAuthToken
+      ? { Authorization: `Bearer ${apiKey}` }
+      : { "x-api-key": apiKey };
+
     const response = await axios.post(url, payload, {
       headers: {
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
+        ...authHeaders,
         "Content-Type": "application/json",
       },
       timeout: timeoutMs,

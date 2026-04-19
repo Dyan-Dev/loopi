@@ -7,20 +7,57 @@ import { debugLogger } from "@main/debugLogger";
 export class DataTransformHandler {
   // ── JSON Parse ──────────────────────────────────────────────────────
   executeJsonParse(
-    step: { sourceVariable: string; storeKey?: string },
+    step: { sourceVariable?: string; input?: string; path?: string; storeKey?: string },
     substituteVariables: (input?: string) => string,
     variables: Record<string, unknown>
   ): unknown {
-    const varName = substituteVariables(step.sourceVariable);
-    const raw = this.resolveVariable(varName, variables);
-    if (raw === undefined) {
-      throw new Error(`Variable "${varName}" not found`);
+    let raw: unknown;
+    let varLabel: string;
+    if (step.sourceVariable) {
+      varLabel = substituteVariables(step.sourceVariable);
+      raw = this.resolveVariable(varLabel, variables);
+    } else if (step.input !== undefined && step.input !== "") {
+      const trimmed = step.input.trim();
+      const refMatch = trimmed.match(/^\{\{\s*([^}]+)\s*\}\}$/);
+      if (refMatch) {
+        varLabel = refMatch[1].trim();
+        raw = this.resolveVariable(varLabel, variables);
+      } else {
+        varLabel = "input";
+        raw = substituteVariables(step.input);
+      }
+    } else {
+      throw new Error('jsonParse: requires "sourceVariable" or "input" field');
     }
-    const str = typeof raw === "string" ? raw : JSON.stringify(raw);
-    const parsed = JSON.parse(str);
-    if (step.storeKey) variables[step.storeKey] = parsed;
-    debugLogger.debug("JSON Parse", `Parsed variable "${varName}"`, { storeKey: step.storeKey });
-    return parsed;
+    if (raw === undefined) {
+      throw new Error(`Variable "${varLabel}" not found`);
+    }
+    const parsed = typeof raw === "string" ? JSON.parse(raw) : raw;
+    const result = step.path ? this.getValueByPath(parsed, step.path) : parsed;
+    if (step.storeKey) variables[step.storeKey] = result;
+    debugLogger.debug("JSON Parse", `Parsed variable "${varLabel}"`, {
+      path: step.path,
+      storeKey: step.storeKey,
+    });
+    return result;
+  }
+
+  private getValueByPath(obj: unknown, path: string): unknown {
+    const normalized = path.replace(/\[['"]?([^'"\]]*)['"]?\]/g, ".$1");
+    const parts = normalized.split(".").filter(Boolean);
+    let current: unknown = obj;
+    for (const part of parts) {
+      if (current === null || current === undefined) return undefined;
+      if (Array.isArray(current)) {
+        const idx = Number(part);
+        current = Number.isNaN(idx) ? undefined : current[idx];
+      } else if (typeof current === "object") {
+        current = (current as Record<string, unknown>)[part];
+      } else {
+        return undefined;
+      }
+    }
+    return current;
   }
 
   // ── JSON Stringify ──────────────────────────────────────────────────

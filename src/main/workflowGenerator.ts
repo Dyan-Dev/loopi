@@ -71,6 +71,8 @@ const VALID_STEP_TYPES = new Set([
   "filterArray",
   "mapArray",
   "codeExecute",
+  "systemCommand",
+  "desktopControl",
   "discordSendMessage",
   "discordSendWebhook",
   "discordReactMessage",
@@ -202,15 +204,21 @@ Given a user's description, generate a JSON workflow with nodes and edges.
 
 ### Logic Steps
 - browserConditional: { type: "browserConditional", browserConditionType: "elementExists"|"valueMatches", selector: "css", expectedValue?: "val", condition?: "equals"|"contains"|"greaterThan"|"lessThan" }
-  Node type: "browserConditional". Has TWO output handles: "if" and "else"
+  Node type: "browserConditional". Has TWO output handles: "if" and "else". Body = separate nodes connected by edges with sourceHandle "if"/"else".
 - variableConditional: { type: "variableConditional", variableConditionType: "variableEquals"|"variableContains"|"variableGreaterThan"|"variableLessThan"|"variableExists", variableName: "name", expectedValue?: "val" }
-  Node type: "variableConditional". Has TWO output handles: "if" and "else"
-- forEach: { type: "forEach", arrayVariable: "items", itemVariable: "currentItem", indexVariable: "loopIndex" }
+  Node type: "variableConditional". Has TWO output handles: "if" and "else". Fields are EXACTLY \`variableName\` and \`expectedValue\` — NEVER \`variable\`, \`operator\`, or \`value\`.
+- forEach: { type: "forEach", arrayVariable: "stories", itemVariable: "story", indexVariable: "i" }
   Node type: "forEach". Has TWO output handles: "loop" (body) and "done" (after completion).
-  Use {{currentItem}} and {{loopIndex}} in loop body nodes.
+  Fields are EXACTLY \`arrayVariable\`/\`itemVariable\`/\`indexVariable\` — NEVER \`items\`, \`array\`, \`list\`, \`itemVar\`, \`item\`. \`arrayVariable\` takes a NAME (e.g. "stories"), not a template like "{{stories}}".
+  Use {{story}} and {{i}} in loop body nodes.
 
 ### Integration Steps
-- apiCall: { type: "apiCall", method: "GET"|"POST", url: "https://...", headers: {}, body: "", storeKey: "response" }
+- apiCall: { type: "apiCall", method: "GET"|"POST", url: "https://...", headers: {}, body: "", storeKey: "response" } - Use for ALL HTTP/HTTPS requests
+- jsonParse: { type: "jsonParse", input: "{{varName}}", path: "data.items[0].title", storeKey: "parsed" } - Extract fields from JSON
+- jsonStringify: { type: "jsonStringify", input: "{{obj}}", storeKey: "jsonStr" }
+- systemCommand: { type: "systemCommand", command: "notify-send 'Title' 'Body'", storeKey: "output" } - Run LOCAL shell commands only (open app, notify, mkdir)
+- desktopControl: { type: "desktopControl", action: "click"|"type"|"keyPress"|"screenshot", ... } - Mouse/keyboard control
+- codeExecute: { type: "codeExecute", code: "return a + b", storeKey: "result" } - SANDBOXED JS only; NO require/fetch/Node APIs
 
 ### AI Steps
 - aiOpenAI: { type: "aiOpenAI", model: "gpt-4o-mini", prompt: "...", systemPrompt: "...", storeKey: "aiResponse" }
@@ -251,12 +259,95 @@ Return ONLY valid JSON (no markdown fences, no explanation):
 1. Node "type" must be "automationStep" for most steps. Use "browserConditional", "variableConditional", or "forEach" for those specific types.
 2. Each step.id must match the node.id
 3. Edges from conditional nodes MUST have sourceHandle: "if" or "else"
-4. Edges from forEach nodes MUST have sourceHandle: "loop" or "done"
+4. Edges from forEach nodes MUST have sourceHandle: "loop" (body) or "done" (after loop)
 5. Regular nodes have at most 1 outgoing edge (no sourceHandle needed)
 6. Variable references use {{variableName}} syntax
 7. Use storeKey to save results for later use
 8. Use realistic CSS selectors when possible
-9. Keep workflows practical and focused`;
+9. Keep workflows practical and focused
+
+## 🚨 FORBIDDEN — nested \`steps\` arrays inside nodes
+Loopi is GRAPH-BASED. Control flow is expressed via edges with sourceHandle, NEVER by nesting child steps inside a parent node. The following shapes are INVALID and will be REJECTED:
+  { "step": { "type": "forEach", "steps": [...] } }                  ← WRONG
+  { "step": { "type": "variableConditional", "steps": [...] } }      ← WRONG
+  { "step": { "type": "browserConditional", "steps": [...] } }       ← WRONG
+Instead, put every child operation in its OWN top-level node, and connect them with edges:
+  - forEach body: edge from forEach node → first body node with \`sourceHandle: "loop"\`. After the loop body ends, edge from forEach node → post-loop node with \`sourceHandle: "done"\`.
+  - if/else body: two edges out of the conditional node with \`sourceHandle: "if"\` and \`sourceHandle: "else"\`.
+
+## Exact field-name rules for commonly-miswritten steps
+- setVariable → \`variableName\` (NOT \`key\` or \`name\`), \`value\`
+- modifyVariable → \`variableName\`, \`operation\`, \`value\`
+- stringOperation → \`operation\`, \`value\` (source string — NOT \`input\`), \`param1\`, \`param2\`, \`storeKey\`
+- variableConditional → \`variableConditionType\` (NOT \`operator\`), \`variableName\` (NOT \`variable\`), \`expectedValue\` (NOT \`value\`)
+- forEach → \`arrayVariable\` (variable NAME, not \`{{...}}\`), \`itemVariable\`, \`indexVariable\`
+- jsonParse → \`input\` ({{var}} reference is fine), \`path\` (dot/bracket notation), \`storeKey\`
+
+## 🚫 BANNED inside systemCommand — these MUST be separate Loopi steps:
+- **curl / wget / http / httpie** → FORBIDDEN. HTTP requests go in an \`apiCall\` step.
+- **jq / grep on JSON / sed on JSON / python -c "import json..."** → FORBIDDEN. JSON extraction goes in a \`jsonParse\` step.
+- **python3 / python / node / bash running a script file** → FORBIDDEN. Build logic as multiple Loopi steps.
+- **pip install / npm install / apt install** → FORBIDDEN as workflow logic.
+- **Long one-liners chained with &&** that fetch-then-parse → FORBIDDEN. Each phase is its own Loopi step.
+- **Hardcoded paths to \`~\`, \`~/.config/\`, \`~/.config/loopi/\`, \`/tmp\`, \`/home/...\`** → FORBIDDEN. For per-agent persistent files use the variable \`{{agentDataDir}}\` which Loopi auto-injects at runtime (agent-scoped folder, visible in the UI).
+
+## Per-agent persistence — \`{{agentDataDir}}\`:
+When a workflow runs as part of an agent, the variable \`agentDataDir\` is set to that agent's private folder.
+- Dedup tracking: \`touch '{{agentDataDir}}/seen.txt' && cat '{{agentDataDir}}/seen.txt'\`
+- Append: \`echo '{{id}}' >> '{{agentDataDir}}/seen.txt'\`
+NEVER write to \`~/.config/loopi\` or any other hand-picked path — users inspect these files via the agent detail UI.
+
+If the user asks to fetch data from an API and do something with it, you MUST produce:
+  1. An \`apiCall\` step that stores the response (e.g., storeKey: "data")
+  2. One or more \`jsonParse\` steps to extract fields (e.g., path: "items[0].title")
+  3. A \`systemCommand\` / \`notify-send\` / integration step that acts on the extracted data
+NEVER collapse these into a single \`systemCommand\` with curl/jq.
+
+## Example — CORRECT (fetch HN top story and notify):
+{
+  "nodes": [
+    { "id": "1", "type": "automationStep", "data": { "step": { "id": "1", "type": "apiCall", "method": "GET", "url": "https://hn.algolia.com/api/v1/search?tags=story", "storeKey": "hn", "description": "Fetch HN stories" } }, "position": { "x": 250, "y": 0 } },
+    { "id": "2", "type": "automationStep", "data": { "step": { "id": "2", "type": "jsonParse", "input": "{{hn}}", "path": "hits[0].title", "storeKey": "title", "description": "Extract title" } }, "position": { "x": 250, "y": 120 } },
+    { "id": "3", "type": "automationStep", "data": { "step": { "id": "3", "type": "jsonParse", "input": "{{hn}}", "path": "hits[0].url", "storeKey": "url", "description": "Extract URL" } }, "position": { "x": 250, "y": 240 } },
+    { "id": "4", "type": "automationStep", "data": { "step": { "id": "4", "type": "systemCommand", "command": "notify-send 'Tech News' '{{title}} — {{url}}'", "description": "Notify" } }, "position": { "x": 250, "y": 360 } }
+  ],
+  "edges": [
+    { "id": "e1-2", "source": "1", "target": "2" },
+    { "id": "e2-3", "source": "2", "target": "3" },
+    { "id": "e3-4", "source": "3", "target": "4" }
+  ]
+}
+
+## Example — CORRECT (forEach + variableConditional with GRAPH edges, no nested steps):
+{
+  "nodes": [
+    { "id": "1", "type": "automationStep", "data": { "step": { "id": "1", "type": "apiCall", "method": "GET", "url": "https://hn.algolia.com/api/v1/search_by_date?tags=story", "storeKey": "hn", "description": "Fetch HN" } }, "position": { "x": 250, "y": 0 } },
+    { "id": "2", "type": "automationStep", "data": { "step": { "id": "2", "type": "jsonParse", "input": "{{hn}}", "path": "hits", "storeKey": "stories", "description": "Extract stories" } }, "position": { "x": 250, "y": 120 } },
+    { "id": "3", "type": "forEach", "data": { "step": { "id": "3", "type": "forEach", "arrayVariable": "stories", "itemVariable": "story", "indexVariable": "i", "description": "Loop stories" } }, "position": { "x": 250, "y": 240 } },
+    { "id": "4", "type": "automationStep", "data": { "step": { "id": "4", "type": "jsonParse", "input": "{{story}}", "path": "title", "storeKey": "title", "description": "Title" } }, "position": { "x": 100, "y": 360 } },
+    { "id": "5", "type": "variableConditional", "data": { "step": { "id": "5", "type": "variableConditional", "variableConditionType": "variableExists", "variableName": "title", "description": "Title exists" } }, "position": { "x": 100, "y": 480 } },
+    { "id": "6", "type": "automationStep", "data": { "step": { "id": "6", "type": "systemCommand", "command": "notify-send 'HN' '{{title}}'", "description": "Notify" } }, "position": { "x": 0, "y": 600 } },
+    { "id": "7", "type": "automationStep", "data": { "step": { "id": "7", "type": "systemCommand", "command": "echo done", "description": "After loop" } }, "position": { "x": 400, "y": 360 } }
+  ],
+  "edges": [
+    { "id": "e1-2", "source": "1", "target": "2" },
+    { "id": "e2-3", "source": "2", "target": "3" },
+    { "id": "e3-4", "source": "3", "target": "4", "sourceHandle": "loop" },
+    { "id": "e3-7", "source": "3", "target": "7", "sourceHandle": "done" },
+    { "id": "e4-5", "source": "4", "target": "5" },
+    { "id": "e5-6", "source": "5", "target": "6", "sourceHandle": "if" }
+  ]
+}
+Notice: the forEach node has NO "steps" array. Its body (node 4 and beyond) is reached via a separate edge with sourceHandle "loop". The variableConditional node also has no "steps" — node 6 is wired via an edge with sourceHandle "if".
+
+## Example — WRONG (do NOT do any of these):
+- { "type": "systemCommand", "command": "curl -s https://... | jq -r .foo" } — use apiCall + jsonParse
+- { "type": "systemCommand", "command": "python3 ~/my_script.py" } — no external scripts
+- { "type": "codeExecute", "code": "require('https').get(...)" } — sandbox blocks require
+- { "type": "forEach", "items": "{{stories}}", "itemVar": "story", "steps": [ {...} ] } — WRONG: fields are arrayVariable/itemVariable, and NEVER use nested \`steps\` — body goes in sibling nodes wired by a "loop" edge
+- { "type": "variableConditional", "variable": "x", "operator": "equals", "value": "y", "steps": [...] } — WRONG: use variableConditionType/variableName/expectedValue; branches go in sibling nodes wired by "if"/"else" edges
+- { "type": "setVariable", "key": "x", "value": "y" } — WRONG: field is \`variableName\` not \`key\`
+- { "type": "stringOperation", "operation": "trim", "input": "  hi  " } — WRONG: field is \`value\` not \`input\``;
   }
 
   private async callAI(params: GenerateParams, systemPrompt: string): Promise<string> {
@@ -404,8 +495,18 @@ Return ONLY valid JSON (no markdown fences, no explanation):
 
     const name = (parsed.name as string) || "AI Generated Workflow";
     const description = (parsed.description as string) || "";
-    const rawNodes = (parsed.nodes as GeneratedNode[]) || [];
+    let rawNodes = (parsed.nodes as GeneratedNode[]) || [];
     const rawEdges = (parsed.edges as GeneratedEdge[]) || [];
+
+    // Flatten any nested `steps` arrays the LLM mistakenly produced inside
+    // forEach / conditional nodes. Preserve ordering so autoFixMissingEdges
+    // can wire them sequentially.
+    rawNodes = this.flattenNestedStepArrays(rawNodes);
+
+    // Repair common field-name mistakes the LLM makes (items→arrayVariable etc.)
+    for (const node of rawNodes) {
+      this.remapLegacyFieldNames(node.data?.step);
+    }
 
     // Validate and filter nodes
     const validNodeIds = new Set<string>();
@@ -512,6 +613,105 @@ Return ONLY valid JSON (no markdown fences, no explanation):
     }
 
     return { nodes, edges, name, description, warnings };
+  }
+
+  /**
+   * Flatten a node tree where the LLM wrongly nested child steps inside
+   * forEach / conditional nodes via a `steps: [...]` array. Nested steps
+   * become top-level sibling nodes (keeps overall order).
+   */
+  private flattenNestedStepArrays(nodes: GeneratedNode[]): GeneratedNode[] {
+    const flat: GeneratedNode[] = [];
+    const walk = (list: GeneratedNode[]) => {
+      for (const node of list) {
+        const step = node.data?.step as (Record<string, unknown> & { steps?: unknown }) | undefined;
+        if (!step) {
+          flat.push(node);
+          continue;
+        }
+        const nested = step.steps;
+        delete step.steps;
+        flat.push(node);
+        if (Array.isArray(nested)) {
+          const nestedNodes: GeneratedNode[] = (nested as Array<Record<string, unknown>>).map(
+            (childStep, i) => ({
+              id: `${node.id}-${i + 1}`,
+              type: "automationStep",
+              data: { step: childStep },
+              position: { x: 0, y: 0 },
+            })
+          );
+          walk(nestedNodes);
+        }
+      }
+    };
+    walk(nodes);
+    return flat;
+  }
+
+  /**
+   * Repair common LLM field-name mistakes. Mutates the step in place.
+   */
+  private remapLegacyFieldNames(step?: Record<string, unknown>): void {
+    if (!step || typeof step !== "object") return;
+    const stripBraces = (s: unknown): string | undefined =>
+      typeof s === "string" ? s.replace(/^\{\{|\}\}$/g, "") : undefined;
+
+    if (step.type === "forEach") {
+      if (!step.arrayVariable) {
+        step.arrayVariable =
+          stripBraces(step.items) ?? stripBraces(step.array) ?? stripBraces(step.list);
+      } else if (typeof step.arrayVariable === "string") {
+        step.arrayVariable = stripBraces(step.arrayVariable);
+      }
+      if (!step.itemVariable) {
+        step.itemVariable = (step.itemVar as string) ?? (step.item as string);
+      }
+      if (!step.indexVariable && typeof step.index === "string") {
+        step.indexVariable = step.index;
+      }
+    }
+
+    if (step.type === "variableConditional") {
+      if (!step.variableName && typeof step.variable === "string") {
+        step.variableName = stripBraces(step.variable);
+      }
+      if (!step.variableConditionType && typeof step.operator === "string") {
+        const map: Record<string, string> = {
+          equals: "variableEquals",
+          notEquals: "variableEquals",
+          contains: "variableContains",
+          greaterThan: "variableGreaterThan",
+          lessThan: "variableLessThan",
+          exists: "variableExists",
+        };
+        step.variableConditionType = map[step.operator as string] || "variableEquals";
+      }
+      if (!step.expectedValue && step.value !== undefined) {
+        step.expectedValue = step.value;
+      }
+    }
+
+    if (step.type === "setVariable") {
+      if (!step.variableName && typeof step.key === "string") {
+        step.variableName = step.key;
+      }
+      if (!step.variableName && typeof step.name === "string") {
+        step.variableName = step.name;
+      }
+    }
+
+    if (step.type === "modifyVariable") {
+      if (!step.variableName && typeof step.key === "string") {
+        step.variableName = step.key;
+      }
+    }
+
+    if (step.type === "stringOperation") {
+      if (step.value === undefined && step.input !== undefined) {
+        step.value = step.input;
+      }
+    }
   }
 
   /**
