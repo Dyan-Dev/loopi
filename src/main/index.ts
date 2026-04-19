@@ -1,5 +1,7 @@
 import { app, BrowserWindow } from "electron";
 import squirrelStartup from "electron-squirrel-startup";
+import { AgentManager } from "./agentManager";
+import { AgentStore } from "./agentStore";
 import { AutomationExecutor } from "./automationExecutor";
 import { installCli } from "./cliInstaller";
 import { startCliServer, stopCliServer } from "./cliServer";
@@ -32,12 +34,14 @@ const windowManager = new WindowManager();
 const executor = new AutomationExecutor();
 const picker = new SelectorPicker();
 const scheduler = new DesktopScheduler();
+const agentStore = new AgentStore();
+const agentManager = new AgentManager(agentStore, scheduler);
 
 // Give scheduler access to window manager
 scheduler.setWindowManager(windowManager);
 
 // Register all IPC communication handlers
-registerIPCHandlers(windowManager, executor, picker, scheduler);
+registerIPCHandlers(windowManager, executor, picker, scheduler, agentManager);
 
 /**
  * Application ready - create main window
@@ -58,6 +62,11 @@ app.on("ready", async () => {
   // Load and activate schedules
   scheduler.loadAndActivateSchedules().catch((error) => {
     console.error("Failed to load schedules:", error);
+  });
+
+  // Load and activate scheduled agents
+  agentManager.loadAndActivateScheduledAgents().catch((error) => {
+    console.error("Failed to load agent schedules:", error);
   });
 
   // Close browser window when main window is closed

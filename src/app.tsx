@@ -1,14 +1,17 @@
+import { AgentsPanel } from "@components/AgentsPanel";
 import { AutomationBuilder } from "@components/AutomationBuilder";
+import { Chat } from "@components/Chat";
 import { Dashboard } from "@components/Dashboard";
 import { Settings } from "@components/Settings";
 import { Button } from "@components/ui/button";
 import { Toaster } from "@components/ui/sonner";
 import { Tabs, TabsList, TabsTrigger } from "@components/ui/tabs";
 import { WorkflowScheduler } from "@components/WorkflowScheduler";
-import { Bot, Grid, Settings as SettingsIcon } from "lucide-react";
+import { Bot, Grid, MessageSquare, Settings as SettingsIcon, Users } from "lucide-react";
 import { useEffect, useState } from "react";
 import * as ReactDOM from "react-dom/client";
 import { toast } from "sonner";
+import loopLogo from "../assets/logo.png";
 import "./index.css";
 import type { StoredAutomation } from "@app-types";
 
@@ -22,8 +25,8 @@ import type { StoredAutomation } from "@app-types";
  */
 export default function App() {
   const [currentView, setCurrentView] = useState<
-    "dashboard" | "builder" | "scheduler" | "settings"
-  >("dashboard");
+    "chat" | "agents" | "dashboard" | "builder" | "scheduler" | "settings"
+  >("chat");
   const [automations, setAutomations] = useState<StoredAutomation[]>([]);
   const [selectedAutomation, setSelectedAutomation] = useState<StoredAutomation | null>(null);
 
@@ -51,13 +54,13 @@ export default function App() {
 
   useEffect(() => {
     const loadSavedTrees = async () => {
-      const savedAutomations = await window.electronAPI.tree.list();
+      const savedAutomations = await window.electronAPI?.tree.list();
       if (savedAutomations && savedAutomations.length > 0)
         savedAutomations.sort(
           (a: StoredAutomation, b: StoredAutomation) =>
             new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
         );
-      setAutomations(savedAutomations);
+      setAutomations(savedAutomations || []);
     };
 
     try {
@@ -97,7 +100,7 @@ export default function App() {
       setAutomations((prev) => [...prev, automation]);
     }
     try {
-      const id = await window.electronAPI.tree.save(automation);
+      const id = await window.electronAPI?.tree.save(automation);
       if (!id) throw new Error("Failed to retrieve saved file id");
 
       setSelectedAutomation(null);
@@ -114,8 +117,8 @@ export default function App() {
       <header className="border-b border-border bg-card">
         <div className="flex h-16 items-center justify-between px-6">
           <div className="flex items-center space-x-2">
-            <Bot className="h-8 w-8 text-primary" />
-            <h1 className="text-xl font-semibold">Automation Platform</h1>
+            <img src={loopLogo} alt="Loopi" className="h-8 w-8" />
+            <h1 className="text-xl font-semibold">Loopi</h1>
           </div>
 
           <div className="flex items-center space-x-4">
@@ -123,16 +126,28 @@ export default function App() {
               value={currentView}
               onValueChange={(value: string) => {
                 if (
+                  value === "chat" ||
+                  value === "agents" ||
                   value === "dashboard" ||
                   value === "builder" ||
                   value === "scheduler" ||
                   value === "settings"
                 ) {
-                  setCurrentView(value as "dashboard" | "builder" | "scheduler" | "settings");
+                  setCurrentView(
+                    value as "chat" | "agents" | "dashboard" | "builder" | "scheduler" | "settings"
+                  );
                 }
               }}
             >
               <TabsList>
+                <TabsTrigger value="chat">
+                  <MessageSquare className="h-4 w-4 mr-1" />
+                  Chat
+                </TabsTrigger>
+                <TabsTrigger value="agents">
+                  <Users className="h-4 w-4 mr-1" />
+                  Agents
+                </TabsTrigger>
                 <TabsTrigger value="dashboard">
                   <Grid className="h-4 w-4 mr-1" />
                   Dashboard
@@ -163,6 +178,10 @@ export default function App() {
 
       {/* Main Content */}
       <main className="flex-1">
+        {currentView === "chat" && <Chat />}
+
+        {currentView === "agents" && <AgentsPanel onOpenWorkflow={handleEditAutomation} />}
+
         {currentView === "dashboard" && (
           <Dashboard
             automations={automations}
@@ -174,7 +193,7 @@ export default function App() {
 
         {currentView === "builder" && (
           <AutomationBuilder
-            automation={selectedAutomation}
+            automation={selectedAutomation ?? undefined}
             onSave={handleSaveAutomation}
             onCancel={() => setCurrentView("dashboard")}
           />
@@ -190,7 +209,7 @@ export default function App() {
 }
 
 function render() {
-  const root = ReactDOM.createRoot(document.getElementById("app"));
+  const root = ReactDOM.createRoot(document.getElementById("app")!);
   root.render(<App />);
 }
 

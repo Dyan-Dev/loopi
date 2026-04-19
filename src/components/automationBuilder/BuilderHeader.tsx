@@ -94,7 +94,9 @@ export const BuilderHeader: React.FC<BuilderHeaderProps> = ({
           </Button>
           <div>
             <h1 className="text-xl font-semibold">Create Automation</h1>
-            <p className="text-sm text-muted-foreground">Design and test your browser automation</p>
+            <p className="text-sm text-muted-foreground">
+              Design and test your automation workflow
+            </p>
           </div>
         </div>
         <div className="flex items-center gap-2">

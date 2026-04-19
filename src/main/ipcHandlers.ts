@@ -2,10 +2,14 @@ import type { ExecutionRecord, ExecutionStepRecord } from "@app-types/automation
 import type { Edge, Node } from "@app-types/flow";
 import { createLogger } from "@utils/logger";
 import axios from "axios";
-import { dialog, ipcMain } from "electron";
-import { mkdirSync, writeFileSync } from "fs";
-import { dirname } from "path";
+import { execSync } from "child_process";
+import { app, dialog, ipcMain } from "electron";
+import { existsSync, mkdirSync, writeFileSync } from "fs";
+import { dirname, join as joinPath } from "path";
+import type { AgentManager } from "./agentManager";
+import { validateModelForAgents } from "./agentModelValidator";
 import { AutomationExecutor } from "./automationExecutor";
+import { ChatStore } from "./chatStore";
 import {
   addCredential,
   deleteCredential,
@@ -18,6 +22,7 @@ import { DesktopScheduler } from "./desktopScheduler";
 import { setupDownloadHandler } from "./downloadManager";
 import { ExecutionHistoryStore } from "./executionHistoryStore";
 import { executeAutomationGraph } from "./graphExecutor";
+import { callLLM } from "./llmClient";
 import { SelectorPicker } from "./selectorPicker";
 import { loadSettings, saveSettings } from "./settingsStore";
 import {
@@ -88,7 +93,8 @@ export function registerIPCHandlers(
   windowManager: WindowManager,
   executor: AutomationExecutor,
   picker: SelectorPicker,
-  scheduler: DesktopScheduler
+  scheduler: DesktopScheduler,
+  agentManager: AgentManager
 ): void {
   /**
    * Opens the browser automation window
@@ -192,6 +198,13 @@ export function registerIPCHandlers(
       // Create cancellation signal for this execution
       currentCancelSignal = { cancelled: false };
       const cancelSignal = currentCancelSignal;
+
+      // Ensure {{agentDataDir}} always resolves — use a shared scratch folder
+      // when running directly (not via an agent). Agent runs create their own
+      // executor and set agentDataDir to the agent-specific folder.
+      const scratchDir = joinPath(app.getPath("userData"), "scratch");
+      if (!existsSync(scratchDir)) mkdirSync(scratchDir, { recursive: true });
+      executor.initVariables({ agentDataDir: scratchDir });
 
       // Execute using shared graph executor
       await executeAutomationGraph({
@@ -568,6 +581,52 @@ export function registerIPCHandlers(
   });
 
   /**
+   * AI: Detect available API keys from environment variables
+   */
+  ipcMain.handle("ai:detectEnvKeys", async () => {
+    const anthropicKey = process.env.ANTHROPIC_API_KEY || "";
+    // Claude Code OAuth tokens (sk-ant-oat*) can't be used for direct API calls
+    const isUsableAnthropicKey = !!anthropicKey && !anthropicKey.startsWith("sk-ant-oat");
+
+    // Check if claude CLI is installed
+    let hasClaudeCli = false;
+    try {
+      execSync("which claude", { stdio: "ignore", timeout: 3000 });
+      hasClaudeCli = true;
+    } catch {
+      // not installed
+    }
+
+    const keys: Record<string, boolean> = {
+      anthropic: isUsableAnthropicKey,
+      anthropicOAuth: !!anthropicKey && anthropicKey.startsWith("sk-ant-oat"),
+      openai: !!process.env.OPENAI_API_KEY,
+      claudeCode: hasClaudeCli,
+    };
+    return keys;
+  });
+
+  /**
+   * AI Chat: Send messages to the configured LLM provider
+   */
+  ipcMain.handle(
+    "ai:chat",
+    async (
+      _event,
+      params: {
+        messages: Array<{ role: "user" | "assistant" | "system"; content: string }>;
+        provider: "openai" | "anthropic" | "ollama" | "claude-code";
+        credentialId?: string;
+        apiKey?: string;
+        model?: string;
+        baseUrl?: string;
+      }
+    ) => {
+      return callLLM(params);
+    }
+  );
+
+  /**
    * AI: Generate workflow from natural language description
    */
   ipcMain.handle("ai:generateWorkflow", async (_event, params) => {
@@ -673,6 +732,10 @@ export function registerIPCHandlers(
         } else if (params.provider === "anthropic") {
           const baseUrl = callParams.baseUrl || "https://api.anthropic.com";
           const model = callParams.model || "claude-sonnet-4-5-20250929";
+          const isOAuth = apiKey.startsWith("sk-ant-oat");
+          const authHdrs: Record<string, string> = isOAuth
+            ? { Authorization: `Bearer ${apiKey}` }
+            : { "x-api-key": apiKey };
           const res = await axios.post(
             `${baseUrl}/v1/messages`,
             {
@@ -684,8 +747,7 @@ export function registerIPCHandlers(
             },
             {
               headers: {
-                "x-api-key": apiKey,
-                "anthropic-version": "2023-06-01",
+                ...authHdrs,
                 "Content-Type": "application/json",
               },
               timeout: 30000,
@@ -770,4 +832,130 @@ export function registerIPCHandlers(
       );
     }
   );
+
+  // ─── Agent System ──────────────────────────────────────────────
+
+  ipcMain.handle("agents:list", async () => {
+    return agentManager.listAgents();
+  });
+
+  ipcMain.handle("agents:get", async (_event, id: string) => {
+    return agentManager.getAgent(id);
+  });
+
+  ipcMain.handle("agents:create", async (_event, config: unknown) => {
+    return agentManager.createAgent(config as Parameters<typeof agentManager.createAgent>[0]);
+  });
+
+  ipcMain.handle("agents:update", async (_event, id: string, updates: unknown) => {
+    return agentManager.updateAgent(id, updates as Record<string, unknown>);
+  });
+
+  ipcMain.handle("agents:delete", async (_event, id: string) => {
+    return agentManager.deleteAgent(id);
+  });
+
+  ipcMain.handle("agents:start", async (_event, id: string) => {
+    return agentManager.startAgent(id);
+  });
+
+  ipcMain.handle("agents:stop", async (_event, id: string) => {
+    return agentManager.stopAgent(id);
+  });
+
+  ipcMain.handle("agents:getLogs", async (_event, id: string) => {
+    return agentManager.getAgentLogs(id);
+  });
+
+  ipcMain.handle("agents:addTask", async (_event, agentId: string, task: unknown) => {
+    return agentManager.addTask(agentId, task as { description: string; workflowId?: string });
+  });
+
+  ipcMain.handle("agents:validateModel", async (_event, provider: string, model: string) => {
+    return validateModelForAgents(provider, model);
+  });
+
+  ipcMain.handle("agents:getInstructions", async (_event, id: string) => {
+    return agentManager.getInstructions(id);
+  });
+
+  ipcMain.handle("agents:saveInstructions", async (_event, id: string, content: string) => {
+    return agentManager.saveInstructions(id, content);
+  });
+
+  ipcMain.handle("agents:listFiles", async (_event, id: string) => {
+    return agentManager.listFiles(id);
+  });
+
+  ipcMain.handle("agents:readFile", async (_event, id: string, filename: string) => {
+    return agentManager.readFile(id, filename);
+  });
+
+  ipcMain.handle(
+    "agents:writeFile",
+    async (_event, id: string, filename: string, content: string) => {
+      return agentManager.writeFile(id, filename, content);
+    }
+  );
+
+  ipcMain.handle("agents:deleteFile", async (_event, id: string, filename: string) => {
+    return agentManager.deleteFile(id, filename);
+  });
+
+  ipcMain.handle("agents:getDir", async (_event, id: string) => {
+    return agentManager.getAgentDir(id);
+  });
+
+  // ─── System command execution from chat ───
+  ipcMain.handle(
+    "system:exec",
+    async (_event, params: { command: string; cwd?: string; timeout?: number }) => {
+      const { exec: execCmd } = await import("child_process");
+      const timeout = Math.min(Math.max(1000, params.timeout || 30000), 300000);
+      return new Promise((resolve) => {
+        execCmd(
+          params.command,
+          { cwd: params.cwd, timeout, shell: "/bin/bash" },
+          (error, stdout, stderr) => {
+            const exitCode = error ? ((error as unknown as { code?: number }).code ?? 1) : 0;
+            resolve({
+              success: !error,
+              stdout: stdout?.toString() || "",
+              stderr: stderr?.toString() || "",
+              exitCode,
+            });
+          }
+        );
+      });
+    }
+  );
+
+  // ─── Chat persistence ───
+  const chatStore = new ChatStore();
+
+  ipcMain.handle(
+    "chat:save",
+    async (_event, messages: unknown[], provider?: string, model?: string) => {
+      chatStore.save(
+        messages as Array<{
+          id: string;
+          role: "user" | "assistant";
+          content: string;
+          timestamp: string;
+        }>,
+        provider,
+        model
+      );
+      return true;
+    }
+  );
+
+  ipcMain.handle("chat:load", async () => {
+    return chatStore.load();
+  });
+
+  ipcMain.handle("chat:clear", async () => {
+    chatStore.clear();
+    return true;
+  });
 }

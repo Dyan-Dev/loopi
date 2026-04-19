@@ -29,7 +29,7 @@ export function Dashboard({
   const handleImportAutomation = async () => {
     try {
       const automation = await importAutomation();
-      const id = await window.electronAPI.tree.save(automation);
+      const id = await window.electronAPI!.tree.save(automation);
       if (id) {
         onUpdateAutomations([...automations, automation]);
       }
@@ -42,7 +42,7 @@ export function Dashboard({
   const handleLoadExample = async (example: (typeof EXAMPLES)[0]) => {
     try {
       // Load example from docs/examples folder via IPC
-      const exampleData = await window.electronAPI.tree.loadExample(example.fileName);
+      const exampleData = await window.electronAPI!.tree.loadExample(example.fileName);
 
       const automationToLoad = {
         ...exampleData,
@@ -50,7 +50,7 @@ export function Dashboard({
         updatedAt: new Date().toLocaleString(),
       };
 
-      const id = await window.electronAPI.tree.save(automationToLoad);
+      const id = await window.electronAPI!.tree.save(automationToLoad);
       if (id) {
         onUpdateAutomations([...automations, automationToLoad]);
         setActiveTab("your-automations");
@@ -64,7 +64,7 @@ export function Dashboard({
   const handleDeleteAutomation = async (automationId: string) => {
     try {
       // Delete from file system via IPC
-      await window.electronAPI.tree.delete(automationId);
+      await window.electronAPI!.tree.delete(automationId);
 
       // Update local state
       const updatedAutomations = automations.filter((a) => a.id !== automationId);
@@ -92,7 +92,7 @@ export function Dashboard({
         steps: [],
       };
 
-      const id = await window.electronAPI.tree.save(newAutomation);
+      const id = await window.electronAPI!.tree.save(newAutomation);
       if (id) {
         onUpdateAutomations([...automations, newAutomation]);
         onEditAutomation(newAutomation);

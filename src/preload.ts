@@ -71,6 +71,15 @@ contextBridge.exposeInMainWorld("electronAPI", {
   sendSelector: (selector: string) => ipcRenderer.send("selector-picked", selector),
   cancelSelector: () => ipcRenderer.send("selector-cancel"),
   ai: {
+    detectEnvKeys: () => ipcRenderer.invoke("ai:detectEnvKeys") as Promise<Record<string, boolean>>,
+    chat: (params: {
+      messages: Array<{ role: "user" | "assistant" | "system"; content: string }>;
+      provider: "openai" | "anthropic" | "ollama" | "claude-code";
+      credentialId?: string;
+      apiKey?: string;
+      model?: string;
+      baseUrl?: string;
+    }) => ipcRenderer.invoke("ai:chat", params),
     generateWorkflow: (params: {
       prompt: string;
       provider: "openai" | "anthropic" | "ollama";
@@ -105,5 +114,39 @@ contextBridge.exposeInMainWorld("electronAPI", {
     deleteByAutomation: (automationId: string) =>
       ipcRenderer.invoke("history:deleteByAutomation", automationId),
     clearAll: () => ipcRenderer.invoke("history:clearAll"),
+  },
+  system: {
+    exec: (params: { command: string; cwd?: string; timeout?: number }) =>
+      ipcRenderer.invoke("system:exec", params),
+  },
+  chat: {
+    save: (messages: unknown[], provider?: string, model?: string) =>
+      ipcRenderer.invoke("chat:save", messages, provider, model),
+    load: () => ipcRenderer.invoke("chat:load"),
+    clear: () => ipcRenderer.invoke("chat:clear"),
+  },
+  agents: {
+    list: () => ipcRenderer.invoke("agents:list"),
+    get: (id: string) => ipcRenderer.invoke("agents:get", id),
+    create: (config: unknown) => ipcRenderer.invoke("agents:create", config),
+    update: (id: string, updates: unknown) => ipcRenderer.invoke("agents:update", id, updates),
+    delete: (id: string) => ipcRenderer.invoke("agents:delete", id),
+    start: (id: string) => ipcRenderer.invoke("agents:start", id),
+    stop: (id: string) => ipcRenderer.invoke("agents:stop", id),
+    getLogs: (id: string) => ipcRenderer.invoke("agents:getLogs", id),
+    addTask: (agentId: string, task: unknown) =>
+      ipcRenderer.invoke("agents:addTask", agentId, task),
+    validateModel: (provider: string, model: string) =>
+      ipcRenderer.invoke("agents:validateModel", provider, model),
+    getInstructions: (id: string) => ipcRenderer.invoke("agents:getInstructions", id),
+    saveInstructions: (id: string, content: string) =>
+      ipcRenderer.invoke("agents:saveInstructions", id, content),
+    listFiles: (id: string) => ipcRenderer.invoke("agents:listFiles", id),
+    readFile: (id: string, filename: string) => ipcRenderer.invoke("agents:readFile", id, filename),
+    writeFile: (id: string, filename: string, content: string) =>
+      ipcRenderer.invoke("agents:writeFile", id, filename, content),
+    deleteFile: (id: string, filename: string) =>
+      ipcRenderer.invoke("agents:deleteFile", id, filename),
+    getDir: (id: string) => ipcRenderer.invoke("agents:getDir", id),
   },
 });

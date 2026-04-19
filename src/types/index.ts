@@ -1,3 +1,4 @@
+export * from "./agent";
 export * from "./automation";
 export * from "./conditions";
 export * from "./flow";

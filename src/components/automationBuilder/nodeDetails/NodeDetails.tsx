@@ -43,7 +43,7 @@ export default function NodeDetails({
 
     try {
       const urlToOpen = recentUrl || "https://";
-      const selector = await window.electronAPI.pickSelector(urlToOpen, { strategy });
+      const selector = await window.electronAPI!.pickSelector(urlToOpen, { strategy });
 
       if (selector) {
         // Parse select element data: "selector||optionIndex||optionValue"

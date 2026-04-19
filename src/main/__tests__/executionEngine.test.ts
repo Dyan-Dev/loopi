@@ -152,7 +152,7 @@ describe("executeAutomationGraph - ForEach Loop", () => {
     });
 
     const loopBodyRuns = onNodeStatus.mock.calls.filter(
-      ([id, status]: [string, string]) => id === "loopBody" && status === "running"
+      ([id, status]) => id === "loopBody" && status === "running"
     );
     expect(loopBodyRuns).toHaveLength(3);
   });
@@ -246,10 +246,10 @@ describe("executeAutomationGraph - ForEach Loop", () => {
     });
 
     const step1Runs = onNodeStatus.mock.calls.filter(
-      ([id, status]: [string, string]) => id === "step1" && status === "running"
+      ([id, status]) => id === "step1" && status === "running"
     );
     const step2Runs = onNodeStatus.mock.calls.filter(
-      ([id, status]: [string, string]) => id === "step2" && status === "running"
+      ([id, status]) => id === "step2" && status === "running"
     );
     expect(step1Runs).toHaveLength(3);
     expect(step2Runs).toHaveLength(3);
@@ -660,7 +660,7 @@ describe("executeAutomationGraph - Edge Cases", () => {
     });
 
     const bRuns = onNodeStatus.mock.calls.filter(
-      ([id, status]: [string, string]) => id === "B" && status === "running"
+      ([id, status]) => id === "B" && status === "running"
     );
     expect(bRuns).toHaveLength(1);
   });
