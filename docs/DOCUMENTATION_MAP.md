@@ -11,6 +11,7 @@ Quick reference guide to all Loopi documentation files and how to use them.
 | [VARIABLES.md](./VARIABLES.md) | Learn variable system, syntax, type detection | After first steps |
 | [STEPS_REFERENCE.md](./STEPS_REFERENCE.md) | Look up any step type with examples | When building automations |
 | [DEBUG_MODE.md](./DEBUG_MODE.md) | Debug logging, troubleshooting, performance monitoring | When debugging |
+| [AGENTS.md](./AGENTS.md) | Agents tab, goals, reflection loop, self-patching workflows | When building autonomous agents |
 | [examples/](./examples/) | Real-world automation examples to learn from | For inspiration |
 
 #### 👨‍💻 Developers (Want to modify Loopi)
@@ -193,6 +194,7 @@ DOCUMENTATION_GUIDE.md
 | Step type examples | [STEPS_REFERENCE.md](./STEPS_REFERENCE.md) |
 | How to build automation | [GETTING_STARTED.md](./GETTING_STARTED.md) |
 | Debug automation issues | [DEBUG_MODE.md](./DEBUG_MODE.md) |
+| Agents, goals, reflection loop | [AGENTS.md](./AGENTS.md) |
 | System architecture | [ARCHITECTURE.md](./ARCHITECTURE.md) |
 | Adding new step type | [NEW_STEP_TEMPLATE.md](./NEW_STEP_TEMPLATE.md) |
 | Modifying components | [COMPONENT_GUIDE.md](./COMPONENT_GUIDE.md) |

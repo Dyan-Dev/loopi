@@ -34,7 +34,7 @@ Loopi automates anything on your computer — not just the browser.
 
 **System Commands** — Run any shell command, capture stdout/stderr/exit codes into workflow variables, pipe outputs between steps. Automate git, docker, scripts, or any CLI tool.
 
-**AI Agents** — Connect OpenAI, Anthropic, or Ollama (100% local) to build agentic workflows that browse, extract, decide, and act.
+**AI Agents** — Goal-driven agents that run your workflows on a schedule, reflect on every run, and self-patch broken workflows. Powered by OpenAI, Anthropic, Claude Code, or Ollama (100% local).
 
 **80+ Integrations** — Slack, Discord, GitHub, Notion, Stripe, Postgres, Google Sheets, Telegram, Twitter, and many more — all built-in.
 
@@ -51,9 +51,10 @@ Loopi automates anything on your computer — not just the browser.
 Loopi gives AI models the ability to **act**: browse the web, move the cursor, run commands, call APIs, query databases, send messages, and process data — all orchestrated visually.
 
 **Connect any LLM:**
-- **OpenAI** (GPT-4o, GPT-4o-mini) — cloud
-- **Anthropic** (Claude) — cloud
-- **Ollama** (Llama, Mistral, Gemma, Phi, etc.) — runs 100% locally, your data never leaves your machine
+- **OpenAI** (GPT-4o, GPT-4o-mini, GPT-4-turbo) — cloud
+- **Anthropic** (Claude Sonnet 4.5, Opus 4) — cloud
+- **Claude Code** — uses the local Claude Code CLI, no API key needed
+- **Ollama** (Llama, Mistral, Mixtral, Qwen, DeepSeek, etc.) — runs 100% locally, your data never leaves your machine
 
 **What you can build:**
 - AI agents that browse websites, extract data, and make decisions
@@ -123,6 +124,8 @@ Loopi gives AI models the ability to **act**: browse the web, move the cursor, r
 
 **Scheduling** — Run automations on intervals, cron expressions, or one-time schedules.
 
+**Agents** — Build autonomous agents with a goal, a set of workflows, and a schedule. After every run the reflection engine judges progress against the goal and can rewrite the workflow graph in place to fix itself. See [AGENTS.md](./docs/AGENTS.md).
+
 **Import/Export** — Save and share automations as JSON. Includes 30+ example workflows to get started.
 
 **CLI Support** — Run and manage workflows from your terminal while the desktop app is running. List, create, update, delete, and execute workflows — all from the command line.
@@ -138,6 +141,7 @@ Electron, React 19, TypeScript, ReactFlow, Tailwind CSS, Radix UI, Biome, nut-js
 - [Steps Reference](./docs/STEPS_REFERENCE.md) — All step types and their fields
 - [Variables](./docs/VARIABLES.md) — Variable system and access patterns
 - [Credentials](./docs/CREDENTIALS.md) — Managing API credentials
+- [Agents](./docs/AGENTS.md) — Goal-driven agents with reflection and self-patching workflows
 - [Architecture](./docs/ARCHITECTURE.md) — System design and data flow
 - [Component Guide](./docs/COMPONENT_GUIDE.md) — React component structure
 - [Adding New Steps](./docs/NEW_STEP_TEMPLATE.md) — How to add step types
