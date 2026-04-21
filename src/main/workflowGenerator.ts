@@ -213,10 +213,11 @@ Given a user's description, generate a JSON workflow with nodes and edges.
   Use {{story}} and {{i}} in loop body nodes.
 
 ### Integration Steps
-- apiCall: { type: "apiCall", method: "GET"|"POST", url: "https://...", headers: {}, body: "", storeKey: "response" } - Use for ALL HTTP/HTTPS requests
-- jsonParse: { type: "jsonParse", input: "{{varName}}", path: "data.items[0].title", storeKey: "parsed" } - Extract fields from JSON
+- apiCall: { type: "apiCall", method: "GET"|"POST", url: "https://...", headers: {}, body: "", storeKey: "response" } - Use for ALL HTTP/HTTPS requests.
+  ⚠️ apiCall stores the variable as \`{ data: <body>, status: <number>, headers: <obj> }\`. The actual response body is at \`.data\`. So when extracting fields with jsonParse, prefix the path with \`data.\` (e.g. path: "data.hits", path: "data.items[0].title").
+- jsonParse: { type: "jsonParse", sourceVariable: "varName", path: "data.items[0].title", storeKey: "parsed" } - Extract fields from JSON. \`sourceVariable\` is the plain variable NAME (no \`{{}}\` wrapping). For apiCall outputs, paths must start with \`data.\` because that's where the body lives.
 - jsonStringify: { type: "jsonStringify", input: "{{obj}}", storeKey: "jsonStr" }
-- systemCommand: { type: "systemCommand", command: "notify-send 'Title' 'Body'", storeKey: "output" } - Run LOCAL shell commands only (open app, notify, mkdir)
+- systemCommand: { type: "systemCommand", command: "notify-send \"Title\" \"Body\"", storeKey: "output" } - Run LOCAL shell commands only (open app, notify, mkdir). NEVER wrap {{var}} in single quotes — use double quotes.
 - desktopControl: { type: "desktopControl", action: "click"|"type"|"keyPress"|"screenshot", ... } - Mouse/keyboard control
 - codeExecute: { type: "codeExecute", code: "return a + b", storeKey: "result" } - SANDBOXED JS only; NO require/fetch/Node APIs
 
@@ -281,7 +282,7 @@ Instead, put every child operation in its OWN top-level node, and connect them w
 - stringOperation → \`operation\`, \`value\` (source string — NOT \`input\`), \`param1\`, \`param2\`, \`storeKey\`
 - variableConditional → \`variableConditionType\` (NOT \`operator\`), \`variableName\` (NOT \`variable\`), \`expectedValue\` (NOT \`value\`)
 - forEach → \`arrayVariable\` (variable NAME, not \`{{...}}\`), \`itemVariable\`, \`indexVariable\`
-- jsonParse → \`input\` ({{var}} reference is fine), \`path\` (dot/bracket notation), \`storeKey\`
+- jsonParse → \`sourceVariable\` (variable NAME, NOT \`input\`, NOT wrapped in \`{{}}\`), \`path\` (dot/bracket notation), \`storeKey\`. Same field name for jsonStringify, filterArray, mapArray, codeExecute.
 
 ## 🚫 BANNED inside systemCommand — these MUST be separate Loopi steps:
 - **curl / wget / http / httpie** → FORBIDDEN. HTTP requests go in an \`apiCall\` step.
@@ -291,10 +292,27 @@ Instead, put every child operation in its OWN top-level node, and connect them w
 - **Long one-liners chained with &&** that fetch-then-parse → FORBIDDEN. Each phase is its own Loopi step.
 - **Hardcoded paths to \`~\`, \`~/.config/\`, \`~/.config/loopi/\`, \`/tmp\`, \`/home/...\`** → FORBIDDEN. For per-agent persistent files use the variable \`{{agentDataDir}}\` which Loopi auto-injects at runtime (agent-scoped folder, visible in the UI).
 
+## 📦 JSON-level quoting — CRITICAL:
+The workflow JSON you emit must parse as strict JSON. The most common failure mode is un-escaped double quotes inside a JSON string value. Every \`"\` that appears inside a JSON string value MUST be written as \`\\"\`.
+- Literal shell command: \`notify-send "Title" "{{body}}"\`
+- Correct JSON field:   \`"command": "notify-send \\"Title\\" \\"{{body}}\\""\`
+- WRONG (breaks parser): \`"command": "notify-send "Title" "{{body}}""\` — the second \`"\` ends the string and the parser fails.
+If the block won't parse, it's silently dropped and the workflow is never saved.
+
+## 🛡️ Shell safety in systemCommand — CRITICAL:
+Variable substitutions ({{var}}) can contain apostrophes, quotes, backticks, \`$\`, newlines, ampersands — especially news titles, user-generated content, and non-Latin text (Telugu, Hindi, Arabic, etc.). A single apostrophe inside single-quoted shell text breaks the whole command, the step throws, and the workflow aborts mid-run.
+
+**RULES:**
+1. **NEVER wrap {{var}} in single quotes** inside a shell command. \`'{{title}}'\` WILL break on any title with an apostrophe.
+2. **Always use double quotes** around substitutions, and prefer tools that read from stdin (printf, tee) over shell-string concatenation.
+3. For \`notify-send\`, pass the title/body as separate double-quoted args: \`notify-send "Tech News" "{{title}}"\`.
+4. For appending to files, use \`printf '%s\\n' "{{title}}" >> "{{agentDataDir}}/seen.txt"\` — \`printf %s\` is literal and safe; avoid \`echo '{{title}}'\`.
+5. Single-quote literals that contain NO variables (e.g. \`'తెలుగు వార్తలు'\`) are fine.
+
 ## Per-agent persistence — \`{{agentDataDir}}\`:
 When a workflow runs as part of an agent, the variable \`agentDataDir\` is set to that agent's private folder.
-- Dedup tracking: \`touch '{{agentDataDir}}/seen.txt' && cat '{{agentDataDir}}/seen.txt'\`
-- Append: \`echo '{{id}}' >> '{{agentDataDir}}/seen.txt'\`
+- Dedup tracking: \`touch "{{agentDataDir}}/seen.txt" && cat "{{agentDataDir}}/seen.txt"\`
+- Append: \`printf '%s\\n' "{{id}}" >> "{{agentDataDir}}/seen.txt"\`
 NEVER write to \`~/.config/loopi\` or any other hand-picked path — users inspect these files via the agent detail UI.
 
 If the user asks to fetch data from an API and do something with it, you MUST produce:
@@ -303,13 +321,13 @@ If the user asks to fetch data from an API and do something with it, you MUST pr
   3. A \`systemCommand\` / \`notify-send\` / integration step that acts on the extracted data
 NEVER collapse these into a single \`systemCommand\` with curl/jq.
 
-## Example — CORRECT (fetch HN top story and notify):
+## Example — CORRECT (fetch HN top story and notify — note the \`data.\` prefix in jsonParse paths):
 {
   "nodes": [
     { "id": "1", "type": "automationStep", "data": { "step": { "id": "1", "type": "apiCall", "method": "GET", "url": "https://hn.algolia.com/api/v1/search?tags=story", "storeKey": "hn", "description": "Fetch HN stories" } }, "position": { "x": 250, "y": 0 } },
-    { "id": "2", "type": "automationStep", "data": { "step": { "id": "2", "type": "jsonParse", "input": "{{hn}}", "path": "hits[0].title", "storeKey": "title", "description": "Extract title" } }, "position": { "x": 250, "y": 120 } },
-    { "id": "3", "type": "automationStep", "data": { "step": { "id": "3", "type": "jsonParse", "input": "{{hn}}", "path": "hits[0].url", "storeKey": "url", "description": "Extract URL" } }, "position": { "x": 250, "y": 240 } },
-    { "id": "4", "type": "automationStep", "data": { "step": { "id": "4", "type": "systemCommand", "command": "notify-send 'Tech News' '{{title}} — {{url}}'", "description": "Notify" } }, "position": { "x": 250, "y": 360 } }
+    { "id": "2", "type": "automationStep", "data": { "step": { "id": "2", "type": "jsonParse", "sourceVariable": "hn", "path": "data.hits[0].title", "storeKey": "title", "description": "Extract title" } }, "position": { "x": 250, "y": 120 } },
+    { "id": "3", "type": "automationStep", "data": { "step": { "id": "3", "type": "jsonParse", "sourceVariable": "hn", "path": "data.hits[0].url", "storeKey": "url", "description": "Extract URL" } }, "position": { "x": 250, "y": 240 } },
+    { "id": "4", "type": "automationStep", "data": { "step": { "id": "4", "type": "systemCommand", "command": "notify-send \"Tech News\" \"{{title}} — {{url}}\"", "description": "Notify" } }, "position": { "x": 250, "y": 360 } }
   ],
   "edges": [
     { "id": "e1-2", "source": "1", "target": "2" },
@@ -322,11 +340,11 @@ NEVER collapse these into a single \`systemCommand\` with curl/jq.
 {
   "nodes": [
     { "id": "1", "type": "automationStep", "data": { "step": { "id": "1", "type": "apiCall", "method": "GET", "url": "https://hn.algolia.com/api/v1/search_by_date?tags=story", "storeKey": "hn", "description": "Fetch HN" } }, "position": { "x": 250, "y": 0 } },
-    { "id": "2", "type": "automationStep", "data": { "step": { "id": "2", "type": "jsonParse", "input": "{{hn}}", "path": "hits", "storeKey": "stories", "description": "Extract stories" } }, "position": { "x": 250, "y": 120 } },
+    { "id": "2", "type": "automationStep", "data": { "step": { "id": "2", "type": "jsonParse", "sourceVariable": "hn", "path": "data.hits", "storeKey": "stories", "description": "Extract stories — note data. prefix because apiCall wraps the response" } }, "position": { "x": 250, "y": 120 } },
     { "id": "3", "type": "forEach", "data": { "step": { "id": "3", "type": "forEach", "arrayVariable": "stories", "itemVariable": "story", "indexVariable": "i", "description": "Loop stories" } }, "position": { "x": 250, "y": 240 } },
-    { "id": "4", "type": "automationStep", "data": { "step": { "id": "4", "type": "jsonParse", "input": "{{story}}", "path": "title", "storeKey": "title", "description": "Title" } }, "position": { "x": 100, "y": 360 } },
+    { "id": "4", "type": "automationStep", "data": { "step": { "id": "4", "type": "jsonParse", "sourceVariable": "story", "path": "title", "storeKey": "title", "description": "Title — story is already an element so no data. prefix here" } }, "position": { "x": 100, "y": 360 } },
     { "id": "5", "type": "variableConditional", "data": { "step": { "id": "5", "type": "variableConditional", "variableConditionType": "variableExists", "variableName": "title", "description": "Title exists" } }, "position": { "x": 100, "y": 480 } },
-    { "id": "6", "type": "automationStep", "data": { "step": { "id": "6", "type": "systemCommand", "command": "notify-send 'HN' '{{title}}'", "description": "Notify" } }, "position": { "x": 0, "y": 600 } },
+    { "id": "6", "type": "automationStep", "data": { "step": { "id": "6", "type": "systemCommand", "command": "notify-send \"HN\" \"{{title}}\"", "description": "Notify" } }, "position": { "x": 0, "y": 600 } },
     { "id": "7", "type": "automationStep", "data": { "step": { "id": "7", "type": "systemCommand", "command": "echo done", "description": "After loop" } }, "position": { "x": 400, "y": 360 } }
   ],
   "edges": [
@@ -338,7 +356,7 @@ NEVER collapse these into a single \`systemCommand\` with curl/jq.
     { "id": "e5-6", "source": "5", "target": "6", "sourceHandle": "if" }
   ]
 }
-Notice: the forEach node has NO "steps" array. Its body (node 4 and beyond) is reached via a separate edge with sourceHandle "loop". The variableConditional node also has no "steps" — node 6 is wired via an edge with sourceHandle "if".
+Notice: the forEach node has NO "steps" array. Its body (node 4 and beyond) is reached via a separate edge with sourceHandle "loop". The variableConditional node also has no "steps" — node 6 is wired via an edge with sourceHandle "if". And every jsonParse against an apiCall variable starts its path with \`data.\`.
 
 ## Example — WRONG (do NOT do any of these):
 - { "type": "systemCommand", "command": "curl -s https://... | jq -r .foo" } — use apiCall + jsonParse
@@ -347,7 +365,9 @@ Notice: the forEach node has NO "steps" array. Its body (node 4 and beyond) is r
 - { "type": "forEach", "items": "{{stories}}", "itemVar": "story", "steps": [ {...} ] } — WRONG: fields are arrayVariable/itemVariable, and NEVER use nested \`steps\` — body goes in sibling nodes wired by a "loop" edge
 - { "type": "variableConditional", "variable": "x", "operator": "equals", "value": "y", "steps": [...] } — WRONG: use variableConditionType/variableName/expectedValue; branches go in sibling nodes wired by "if"/"else" edges
 - { "type": "setVariable", "key": "x", "value": "y" } — WRONG: field is \`variableName\` not \`key\`
-- { "type": "stringOperation", "operation": "trim", "input": "  hi  " } — WRONG: field is \`value\` not \`input\``;
+- { "type": "stringOperation", "operation": "trim", "input": "  hi  " } — WRONG: field is \`value\` not \`input\`
+- { "type": "jsonParse", "input": "{{apiResponseVar}}", "path": "hits" } — WRONG twice: field is \`sourceVariable\` (plain NAME, not \`input\`, no \`{{}}\`), and when sourceVariable came from apiCall, path must be "data.hits" because apiCall stores \`{ data, status, headers }\`
+- { "type": "jsonParse", "sourceVariable": "{{apiResponseVar}}", "path": "data.hits" } — WRONG: sourceVariable is the plain variable NAME, never wrapped in \`{{}}\``;
   }
 
   private async callAI(params: GenerateParams, systemPrompt: string): Promise<string> {
@@ -367,7 +387,7 @@ Notice: the forEach node has NO "steps" array. Its body (node 4 and beyond) is r
 
   private async resolveApiKey(params: GenerateParams): Promise<string> {
     if (params.credentialId) {
-      const credential = await getCredential(params.credentialId);
+      const credential = getCredential(params.credentialId);
       if (!credential) throw new Error("Credential not found");
       const key =
         credential.data.apiKey ||
@@ -711,6 +731,21 @@ Notice: the forEach node has NO "steps" array. Its body (node 4 and beyond) is r
       if (step.value === undefined && step.input !== undefined) {
         step.value = step.input;
       }
+    }
+
+    if (
+      step.type === "jsonParse" ||
+      step.type === "jsonStringify" ||
+      step.type === "filterArray" ||
+      step.type === "mapArray" ||
+      step.type === "codeExecute"
+    ) {
+      if (!step.sourceVariable && typeof step.input === "string") {
+        step.sourceVariable = stripBraces(step.input);
+      } else if (typeof step.sourceVariable === "string") {
+        step.sourceVariable = stripBraces(step.sourceVariable);
+      }
+      delete step.input;
     }
   }
 

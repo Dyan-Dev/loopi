@@ -29,6 +29,8 @@ interface CreateAgentDialogProps {
     name: string;
     role: string;
     description: string;
+    goal: string;
+    workflowIds: string[];
     capabilities: AgentCapability[];
     model: {
       provider: "openai" | "anthropic" | "ollama" | "claude-code";
@@ -38,6 +40,11 @@ interface CreateAgentDialogProps {
     };
     credentialIds: string[];
   }) => void;
+}
+
+interface WorkflowOption {
+  id: string;
+  name: string;
 }
 
 const CAPABILITIES: { id: AgentCapability; label: string; description: string }[] = [
@@ -73,6 +80,7 @@ export function CreateAgentDialog({ open, onClose, onCreate }: CreateAgentDialog
   const [name, setName] = useState("");
   const [role, setRole] = useState("");
   const [description, setDescription] = useState("");
+  const [goal, setGoal] = useState("");
   const [provider, setProvider] = useState("claude-code");
   const [model, setModel] = useState("claude");
   const [baseUrl, setBaseUrl] = useState("");
@@ -80,6 +88,8 @@ export function CreateAgentDialog({ open, onClose, onCreate }: CreateAgentDialog
   const [credentials, setCredentials] = useState<Credential[]>([]);
   const [selectedCredentialIds, setSelectedCredentialIds] = useState<string[]>([]);
   const [selectedCredentialId, setSelectedCredentialId] = useState<string>("");
+  const [workflows, setWorkflows] = useState<WorkflowOption[]>([]);
+  const [selectedWorkflowIds, setSelectedWorkflowIds] = useState<string[]>([]);
   const [modelValidation, setModelValidation] = useState<{
     valid: boolean;
     reason?: string;
@@ -90,6 +100,16 @@ export function CreateAgentDialog({ open, onClose, onCreate }: CreateAgentDialog
       window.electronAPI?.credentials
         .list()
         .then(setCredentials)
+        .catch(() => {
+          /* ignore */
+        });
+      window.electronAPI?.tree
+        ?.list?.()
+        .then((list) =>
+          setWorkflows(
+            (list || []).map((w: { id: string; name: string }) => ({ id: w.id, name: w.name }))
+          )
+        )
         .catch(() => {
           /* ignore */
         });
@@ -117,12 +137,20 @@ export function CreateAgentDialog({ open, onClose, onCreate }: CreateAgentDialog
     );
   };
 
+  const toggleWorkflow = (id: string) => {
+    setSelectedWorkflowIds((prev) =>
+      prev.includes(id) ? prev.filter((w) => w !== id) : [...prev, id]
+    );
+  };
+
   const handleCreate = () => {
-    if (!name.trim() || !role.trim()) return;
+    if (!name.trim() || !role.trim() || !goal.trim()) return;
     onCreate({
       name: name.trim(),
       role: role.trim(),
       description: description.trim(),
+      goal: goal.trim(),
+      workflowIds: selectedWorkflowIds,
       capabilities,
       model: {
         provider: provider as "openai" | "anthropic" | "ollama" | "claude-code",
@@ -132,10 +160,11 @@ export function CreateAgentDialog({ open, onClose, onCreate }: CreateAgentDialog
       },
       credentialIds: selectedCredentialIds,
     });
-    // Reset form
     setName("");
     setRole("");
     setDescription("");
+    setGoal("");
+    setSelectedWorkflowIds([]);
     setCapabilities(["ai", "workflows"]);
     setSelectedCredentialIds([]);
     setSelectedCredentialId("");
@@ -191,6 +220,46 @@ export function CreateAgentDialog({ open, onClose, onCreate }: CreateAgentDialog
               rows={2}
               className="mt-1"
             />
+          </div>
+
+          {/* Goal */}
+          <div>
+            <Label htmlFor="agent-goal" className="text-xs">
+              Goal
+            </Label>
+            <Textarea
+              id="agent-goal"
+              value={goal}
+              onChange={(e) => setGoal(e.target.value)}
+              placeholder="What outcome should this agent achieve? The reflection engine uses this to decide if the run made progress."
+              rows={3}
+              className="mt-1"
+            />
+          </div>
+
+          {/* Workflows */}
+          <div>
+            <Label className="text-xs mb-2 block">Assigned Workflows</Label>
+            {workflows.length === 0 ? (
+              <p className="text-[11px] text-muted-foreground">
+                No workflows available. Create one in the Dashboard first.
+              </p>
+            ) : (
+              <div className="space-y-1 max-h-40 overflow-y-auto border rounded p-2">
+                {workflows.map((w) => (
+                  <label
+                    key={w.id}
+                    className="flex items-center gap-2 text-xs cursor-pointer p-1 rounded hover:bg-muted"
+                  >
+                    <Checkbox
+                      checked={selectedWorkflowIds.includes(w.id)}
+                      onCheckedChange={() => toggleWorkflow(w.id)}
+                    />
+                    <span className="truncate">{w.name}</span>
+                  </label>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Model Provider */}
@@ -305,7 +374,10 @@ export function CreateAgentDialog({ open, onClose, onCreate }: CreateAgentDialog
           <Button
             onClick={handleCreate}
             disabled={
-              !name.trim() || !role.trim() || (modelValidation !== null && !modelValidation.valid)
+              !name.trim() ||
+              !role.trim() ||
+              !goal.trim() ||
+              (modelValidation !== null && !modelValidation.valid)
             }
           >
             Create Agent

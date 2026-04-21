@@ -134,8 +134,11 @@ contextBridge.exposeInMainWorld("electronAPI", {
     start: (id: string) => ipcRenderer.invoke("agents:start", id),
     stop: (id: string) => ipcRenderer.invoke("agents:stop", id),
     getLogs: (id: string) => ipcRenderer.invoke("agents:getLogs", id),
-    addTask: (agentId: string, task: unknown) =>
-      ipcRenderer.invoke("agents:addTask", agentId, task),
+    addWorkflow: (agentId: string, workflowId: string) =>
+      ipcRenderer.invoke("agents:addWorkflow", agentId, workflowId),
+    removeWorkflow: (agentId: string, workflowId: string) =>
+      ipcRenderer.invoke("agents:removeWorkflow", agentId, workflowId),
+    getReflections: (id: string) => ipcRenderer.invoke("agents:getReflections", id),
     validateModel: (provider: string, model: string) =>
       ipcRenderer.invoke("agents:validateModel", provider, model),
     getInstructions: (id: string) => ipcRenderer.invoke("agents:getInstructions", id),

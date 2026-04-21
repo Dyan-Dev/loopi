@@ -97,7 +97,7 @@
           "type": "setVariable",
           "description": "Set a dynamic message",
           "variableName": "timestamp",
-          "value": "Typed at runtime via Loopi v1.9.0"
+          "value": "Typed at runtime via Loopi v1.9.1"
         }
       },
       "position": { "x": 300, "y": 830 }

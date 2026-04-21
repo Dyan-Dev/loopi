@@ -74,8 +74,9 @@ Available step types: navigate, click, type, wait, screenshot, extract, scroll, 
 
 ### EXACT field names per step type — use these or the step will fail:
 - **apiCall**: { "type": "apiCall", "url": "...", "method": "GET", "storeKey": "result", "description": "..." }
+  ⚠️ apiCall stores the variable as \`{ data: <body>, status: <number>, headers: <obj> }\`. The actual response body lives at \`.data\`. So when extracting fields with jsonParse from an apiCall variable, the path MUST start with \`data.\` (e.g. "data.hits", "data.items[0].title"). A path like just "hits" returns undefined and the next step will fail.
 - **systemCommand**: { "type": "systemCommand", "command": "...", "storeKey": "output", "description": "..." } — LOCAL shell only (open app, notify-send, mkdir, touch/cat/echo to file)
-- **jsonParse**: { "type": "jsonParse", "input": "{{varName}}", "path": "data.items[0].title", "storeKey": "parsed", "description": "..." }
+- **jsonParse**: { "type": "jsonParse", "sourceVariable": "varName", "path": "data.items[0].title", "storeKey": "parsed", "description": "..." } — \`sourceVariable\` is the plain variable NAME (no \`{{}}\`). When sourceVariable came from apiCall, ALWAYS prefix path with \`data.\`.
 - **setVariable**: { "type": "setVariable", "variableName": "foo", "value": "bar", "description": "..." } — field is \`variableName\` NOT \`key\` or \`name\`
 - **modifyVariable**: { "type": "modifyVariable", "variableName": "foo", "operation": "set"|"increment"|"decrement"|"append", "value": "...", "description": "..." }
 - **stringOperation**: { "type": "stringOperation", "operation": "uppercase"|"lowercase"|"trim"|"replace"|"split"|"includes"|"length"|..., "value": "...", "param1": "...", "param2": "...", "storeKey": "result", "description": "..." } — the source string is \`value\` NOT \`input\`
@@ -94,12 +95,29 @@ Correct flat layout example:
 "steps": [
   { "type": "apiCall", "url": "...", "storeKey": "stories", "description": "Fetch" },
   { "type": "forEach", "arrayVariable": "stories", "itemVariable": "story", "description": "Loop stories" },
-  { "type": "jsonParse", "input": "{{story}}", "path": "title", "storeKey": "title", "description": "Title" },
+  { "type": "jsonParse", "sourceVariable": "story", "path": "title", "storeKey": "title", "description": "Title" },
   { "type": "variableConditional", "variableConditionType": "variableExists", "variableName": "title", "description": "If title present" },
-  { "type": "systemCommand", "command": "notify-send '{{title}}'", "description": "Notify" }
+  { "type": "systemCommand", "command": "notify-send \"{{title}}\"", "description": "Notify" }
 ]
 \`\`\`
 Do NOT wrap the body steps inside a \`steps: [...]\` property of the forEach/conditional node.
+
+### 📦 JSON-level quoting (CRITICAL — invalid JSON means the workflow is silently dropped):
+Workflow-create and agent-create blocks MUST be strict, parseable JSON. The most common mistake is un-escaped double quotes inside a JSON string value. Remember:
+- Every \`"\` that appears *inside* a JSON string value must be written as \`\\"\`.
+- This applies to shell commands: the literal shell command \`notify-send "Title" "{{body}}"\` inside a JSON "command" field must be written as: \`"command": "notify-send \\"Title\\" \\"{{body}}\\""\`.
+- NEVER write \`"command": "notify-send "Title" "{{body}}""\` — that's four quotes in a row that terminate the JSON string early and break parsing.
+- If unsure, mentally escape every inner \`"\` as \`\\"\` before emitting the block.
+
+### 🛡️ Shell-safety in systemCommand (CRITICAL — aborts workflows silently if violated):
+Variable substitutions ({{var}}) often contain characters that break shell quoting: apostrophes (\`'\`), backticks, \`$\`, newlines, ampersands, non-Latin scripts (Telugu, Hindi, Arabic). A single apostrophe inside a single-quoted shell string breaks the command, the step throws, and the whole run aborts — which is why "only one notification across many runs" is usually this bug.
+
+**RULES — apply every time you write a systemCommand that contains {{var}}:**
+1. **NEVER wrap {{var}} in single quotes.** \`'{{title}}'\` WILL break on any apostrophe in the title.
+2. **Always use DOUBLE quotes** around \`{{var}}\` substitutions: \`"{{title}}"\`.
+3. For \`notify-send\`, pass title and body as separate double-quoted args: \`notify-send "News" "{{title}}"\`.
+4. For appending to files, prefer \`printf '%s\\n' "{{title}}" >> "{{agentDataDir}}/seen.txt"\` over \`echo '{{title}}' >> ...\`. \`printf %s\` is literal and won't re-interpret escape sequences.
+5. Single-quoted LITERALS (no {{var}}) are fine: \`'Hello'\` or \`'తెలుగు వార్తలు'\`.
 
 ### 🚫 BANNED inside systemCommand — these MUST be separate Loopi steps:
 - **curl / wget / http / httpie** → FORBIDDEN. Use an \`apiCall\` step instead. HTTP requests NEVER go in systemCommand.
@@ -121,21 +139,21 @@ Do NOT wrap the body steps inside a \`steps: [...]\` property of the forEach/con
 1. **NEVER create external scripts** (Python, Bash, etc.) and call them via systemCommand. All logic MUST be built using Loopi's native step types.
 2. **NEVER write files to \`~\`, \`~/.config/\`, \`/tmp\`, or anywhere else on the filesystem as part of workflow logic.** When an agent workflow needs to persist data between runs (dedup tracking, caches, state), use the per-agent folder exposed as \`{{agentDataDir}}\`. Loopi injects this variable at runtime — the folder is created per-agent and visible to the user in the agent detail UI.
 3. **For uniqueness/dedup tracking inside agent workflows**: Use \`{{agentDataDir}}/<filename>\` — e.g. \`{{agentDataDir}}/seen-ids.txt\`. NEVER use \`~/.config/loopi\` or any hand-rolled path.
-4. **For desktop notifications**: Use systemCommand with notify-send directly — e.g. { "type": "systemCommand", "command": "notify-send 'Title' 'Body'" }
+4. **For desktop notifications**: Use systemCommand with notify-send directly — e.g. { "type": "systemCommand", "command": "notify-send \"Title\" \"{{body}}\"" }. Double quotes around \`{{var}}\`, not single.
 5. **Workflows MUST be self-contained** — every step uses Loopi's built-in step types. No external dependencies, no pip install, no script files.
 
 ### Agent working directory — \`{{agentDataDir}}\`:
 When a workflow runs under an agent, Loopi automatically sets the variable \`agentDataDir\` to an agent-specific folder. Use it like this:
-- Read/append a dedup file: \`{ "type": "systemCommand", "command": "touch '{{agentDataDir}}/seen.txt' && cat '{{agentDataDir}}/seen.txt'", "storeKey": "seen" }\`
-- Append to it: \`{ "type": "systemCommand", "command": "echo '{{newId}}' >> '{{agentDataDir}}/seen.txt'" }\`
+- Read/append a dedup file: \`{ "type": "systemCommand", "command": "touch \"{{agentDataDir}}/seen.txt\" && cat \"{{agentDataDir}}/seen.txt\"", "storeKey": "seen" }\`
+- Append to it: \`{ "type": "systemCommand", "command": "printf '%s\\n' \"{{newId}}\" >> \"{{agentDataDir}}/seen.txt\"" }\`
 The user can open the agent detail view to inspect and edit these files. **Never hardcode** \`~/.config/loopi\` or similar — always use \`{{agentDataDir}}\`.
 
 ### Example — Fetch unique tech news and notify (CORRECT — uses native steps):
 \`\`\`
 { "type": "apiCall", "url": "https://hn.algolia.com/api/v1/search_by_date?tags=story&numericFilters=points>20", "method": "GET", "storeKey": "hnData", "description": "Fetch recent HN stories" },
-{ "type": "jsonParse", "input": "{{hnData}}", "path": "hits[0].title", "storeKey": "newsTitle", "description": "Extract first story title" },
-{ "type": "jsonParse", "input": "{{hnData}}", "path": "hits[0].url", "storeKey": "newsUrl", "description": "Extract first story URL" },
-{ "type": "systemCommand", "command": "notify-send -i info 'Tech News' '{{newsTitle}} — {{newsUrl}}'", "description": "Send desktop notification" }
+{ "type": "jsonParse", "sourceVariable": "hnData", "path": "data.hits[0].title", "storeKey": "newsTitle", "description": "Extract first story title (data. prefix because apiCall wraps response)" },
+{ "type": "jsonParse", "sourceVariable": "hnData", "path": "data.hits[0].url", "storeKey": "newsUrl", "description": "Extract first story URL" },
+{ "type": "systemCommand", "command": "notify-send -i info \"Tech News\" \"{{newsTitle}} — {{newsUrl}}\"", "description": "Send desktop notification" }
 \`\`\`
 
 ### Example — WRONG approaches (DO NOT do any of these):
@@ -153,11 +171,12 @@ The user can open the agent detail view to inspect and edit these files. **Never
 \`\`\`
 
 ## Creating Agents
-Agents handle complex, multi-step, or recurring tasks. Agents execute workflows to do real work.
+Agents are goal-driven: you give them a clear outcome to achieve plus a list of workflows that move toward that goal.
+After every run the reflection engine decides whether progress was made and may auto-patch the workflow graph.
 
-**CRITICAL RULE: When creating an agent, you MUST create workflow-create blocks FIRST for each task the agent needs to perform, THEN create the agent-create block. Each agent task MUST reference its workflow by "workflowName" (matching the workflow's "name" field). The system will automatically link them. NEVER use made-up workflowIds — always use workflowName to link to workflows you create in the same response.**
+**CRITICAL RULE: When creating an agent, you MUST create workflow-create blocks FIRST for each workflow the agent will run, THEN create the agent-create block. The agent-create block lists workflows by "workflowNames" (matching each workflow's "name" field). Never invent workflowIds — the system resolves names to IDs at creation time.**
 
-Example — creating an agent with its workflows:
+Example — creating a goal-driven agent with its workflows:
 
 \`\`\`workflow-create
 {
@@ -175,7 +194,7 @@ Example — creating an agent with its workflows:
   "name": "Send News Notification",
   "description": "Send desktop notification with news summary",
   "steps": [
-    { "type": "systemCommand", "command": "notify-send 'News Update' '{{headlines}}'", "description": "Send notification" }
+    { "type": "systemCommand", "command": "notify-send \"News Update\" \"{{headlines}}\"", "description": "Send notification" }
   ]
 }
 \`\`\`
@@ -185,11 +204,9 @@ Example — creating an agent with its workflows:
   "name": "News Monitor",
   "role": "News aggregator",
   "description": "Scrapes headlines and notifies user",
+  "goal": "Every 30 minutes, fetch the latest news headlines and send the user exactly one desktop notification summarising the new stories.",
   "capabilities": ["browser", "desktop", "ai", "workflows"],
-  "tasks": [
-    { "description": "Scrape latest headlines", "workflowName": "Scrape Headlines" },
-    { "description": "Notify user with summary", "workflowName": "Send News Notification" }
-  ],
+  "workflowNames": ["Scrape Headlines", "Send News Notification"],
   "schedule": { "type": "interval", "intervalMinutes": 30 }
 }
 \`\`\`
@@ -576,6 +593,21 @@ export function Chat() {
                     ) {
                       rest.value = rest.input;
                     }
+                    if (
+                      rest.type === "jsonParse" ||
+                      rest.type === "jsonStringify" ||
+                      rest.type === "filterArray" ||
+                      rest.type === "mapArray" ||
+                      rest.type === "codeExecute"
+                    ) {
+                      const strip = (s: string) => s.replace(/^\{\{|\}\}$/g, "");
+                      if (!rest.sourceVariable && typeof rest.input === "string") {
+                        rest.sourceVariable = strip(rest.input);
+                      } else if (typeof rest.sourceVariable === "string") {
+                        rest.sourceVariable = strip(rest.sourceVariable);
+                      }
+                      delete rest.input;
+                    }
                     out.push(rest);
                     if (Array.isArray(nested)) {
                       out.push(...flattenSteps(nested as Array<Record<string, unknown>>));
@@ -634,7 +666,10 @@ export function Chat() {
                 }
               }
             } catch (parseErr) {
-              console.error("Failed to parse workflow-create block:", parseErr);
+              console.error("Failed to parse workflow-create block:", parseErr, block);
+              toast.error(
+                `Couldn't parse workflow JSON (${parseErr instanceof Error ? parseErr.message : "invalid JSON"}). The agent will have no workflow linked — ask Loopi to retry.`
+              );
             }
           }
         }
@@ -650,82 +685,56 @@ export function Chat() {
                 .trim();
               const agentConfig = JSON.parse(jsonStr);
               if (agentConfig.name && agentConfig.role) {
-                // Link tasks to workflows by name, auto-generate for unlinked tasks
-                const rawTasks: Array<{
-                  description: string;
-                  workflowId?: string;
-                  workflowName?: string;
-                }> = agentConfig.tasks || [];
-                const tasks: Array<{ description: string; workflowId?: string }> = [];
+                const goal: string =
+                  typeof agentConfig.goal === "string" && agentConfig.goal.trim().length > 0
+                    ? agentConfig.goal.trim()
+                    : typeof agentConfig.description === "string"
+                      ? agentConfig.description
+                      : "";
 
-                for (const t of rawTasks) {
-                  // Link by workflowName if a matching workflow was created above
-                  if (t.workflowName && createdWorkflowIds[t.workflowName]) {
-                    tasks.push({
-                      description: t.description,
-                      workflowId: createdWorkflowIds[t.workflowName],
-                    });
-                    continue;
+                const workflowIds: string[] = [];
+                const normaliseName = (s: string) => s.trim().toLowerCase();
+                const createdByNormalised = new Map<string, string>();
+                for (const [n, id] of Object.entries(createdWorkflowIds)) {
+                  createdByNormalised.set(normaliseName(n), id);
+                }
+
+                const rawNames: string[] = Array.isArray(agentConfig.workflowNames)
+                  ? agentConfig.workflowNames
+                  : [];
+                // Legacy compat: {tasks: [{workflowName: "..."}]}
+                if (rawNames.length === 0 && Array.isArray(agentConfig.tasks)) {
+                  for (const t of agentConfig.tasks as Array<Record<string, unknown>>) {
+                    if (typeof t.workflowName === "string") rawNames.push(t.workflowName);
                   }
-                  // Already has a real workflowId
-                  if (t.workflowId) {
-                    tasks.push({ description: t.description, workflowId: t.workflowId });
-                    continue;
+                }
+
+                for (const name of rawNames) {
+                  if (typeof name !== "string") continue;
+                  const matched = createdByNormalised.get(normaliseName(name));
+                  if (matched && !workflowIds.includes(matched)) workflowIds.push(matched);
+                }
+                if (Array.isArray(agentConfig.workflowIds)) {
+                  for (const id of agentConfig.workflowIds) {
+                    if (typeof id === "string" && !workflowIds.includes(id)) workflowIds.push(id);
                   }
-                  // No workflow linked — auto-generate one from the task description
-                  try {
-                    const genResult = await window.electronAPI?.ai.generateWorkflow({
-                      prompt: t.description,
-                      provider:
-                        config?.provider === "claude-code"
-                          ? "anthropic"
-                          : ((config?.provider || "anthropic") as
-                              | "openai"
-                              | "anthropic"
-                              | "ollama"),
-                      credentialId: config?.credentialId,
-                      apiKey: config?.apiKey,
-                      model: config?.provider === "claude-code" ? undefined : config?.model,
-                      baseUrl: config?.baseUrl,
-                    });
-                    if (genResult?.success && genResult.data) {
-                      const autoWorkflow = {
-                        id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-                        name: genResult.data.name || t.description.slice(0, 50),
-                        description: genResult.data.description || t.description,
-                        nodes: genResult.data.nodes as unknown[],
-                        edges: genResult.data.edges as unknown[],
-                        steps: (
-                          genResult.data.nodes as Array<{
-                            data?: { step?: Record<string, unknown> };
-                          }>
-                        )
-                          .map((n) => n.data?.step)
-                          .filter(Boolean),
-                        createdAt: new Date().toISOString(),
-                        updatedAt: new Date().toISOString(),
-                        enabled: true,
-                      };
-                      const savedId = await window.electronAPI?.tree.save(autoWorkflow as never);
-                      if (savedId) {
-                        tasks.push({ description: t.description, workflowId: autoWorkflow.id });
-                        toast.success(
-                          `Auto-created workflow "${autoWorkflow.name}" for agent task`
-                        );
-                        continue;
-                      }
-                    }
-                  } catch (genErr) {
-                    console.error("Failed to auto-generate workflow for task:", genErr);
+                }
+
+                // Fallback: if the LLM referenced workflows by name but none matched (or didn't
+                // reference any at all while clearly creating workflows this turn), link every
+                // workflow created in this response so the agent isn't orphaned.
+                if (workflowIds.length === 0 && Object.keys(createdWorkflowIds).length > 0) {
+                  for (const id of Object.values(createdWorkflowIds)) {
+                    if (!workflowIds.includes(id)) workflowIds.push(id);
                   }
-                  // If auto-generation failed, add task without workflow (LLM will handle it)
-                  tasks.push({ description: t.description });
                 }
 
                 const agent = await window.electronAPI?.agents.create({
                   name: agentConfig.name,
                   role: agentConfig.role,
                   description: agentConfig.description || "",
+                  goal,
+                  workflowIds,
                   capabilities: agentConfig.capabilities || ["ai", "workflows"],
                   model: config
                     ? {
@@ -735,7 +744,6 @@ export function Chat() {
                         baseUrl: config.baseUrl,
                       }
                     : { provider: "claude-code", model: "claude" },
-                  tasks,
                   schedule: agentConfig.schedule,
                   credentialIds: [],
                   createdBy: "loopi",
@@ -746,6 +754,9 @@ export function Chat() {
               }
             } catch (parseErr) {
               console.error("Failed to parse agent-create block:", parseErr);
+              toast.error(
+                `Couldn't parse agent JSON (${parseErr instanceof Error ? parseErr.message : "invalid JSON"}). Ask Loopi to retry.`
+              );
             }
           }
         }
@@ -1058,10 +1069,15 @@ export function Chat() {
                   </div>
                   <p className="font-medium text-sm">{agentData.name}</p>
                   <p className="text-xs text-muted-foreground">{agentData.role}</p>
-                  {agentData.tasks?.length > 0 && (
+                  {typeof agentData.goal === "string" && agentData.goal.length > 0 && (
+                    <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                      Goal: {agentData.goal}
+                    </p>
+                  )}
+                  {Array.isArray(agentData.workflowNames) && agentData.workflowNames.length > 0 && (
                     <p className="text-xs text-muted-foreground mt-1">
-                      {agentData.tasks.length} task{agentData.tasks.length !== 1 ? "s" : ""}{" "}
-                      assigned
+                      {agentData.workflowNames.length} workflow
+                      {agentData.workflowNames.length !== 1 ? "s" : ""} assigned
                     </p>
                   )}
                   {agentData.schedule && agentData.schedule.type !== "manual" && (

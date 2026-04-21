@@ -1,4 +1,4 @@
-export type AgentStatus = "idle" | "running" | "completed" | "failed" | "paused";
+export type AgentStatus = "idle" | "running" | "failed";
 
 export type AgentCapability =
   | "browser"
@@ -9,15 +9,17 @@ export type AgentCapability =
   | "credentials"
   | "filesystem";
 
-export interface AgentTask {
-  id: string;
-  description: string;
-  status: "pending" | "running" | "completed" | "failed";
-  workflowId?: string;
-  result?: string;
-  error?: string;
-  startedAt?: string;
-  completedAt?: string;
+export type ReflectionVerdict = "ok" | "modify" | "fail";
+
+export interface AgentReflection {
+  timestamp: string;
+  workflowId: string;
+  workflowName?: string;
+  verdict: ReflectionVerdict;
+  reason: string;
+  patchApplied?: boolean;
+  rolledBack?: boolean;
+  rawResponse?: string;
 }
 
 export interface AgentModelConfig {
@@ -32,7 +34,7 @@ export interface AgentLogEntry {
   timestamp: string;
   level: "info" | "warn" | "error";
   message: string;
-  taskId?: string;
+  workflowId?: string;
 }
 
 export interface AgentSchedule {
@@ -49,7 +51,9 @@ export interface Agent {
   description: string;
   status: AgentStatus;
   capabilities: AgentCapability[];
-  tasks: AgentTask[];
+  goal: string;
+  workflowIds: string[];
+  reflections: AgentReflection[];
   model: AgentModelConfig;
   schedule?: AgentSchedule;
   credentialIds: string[];

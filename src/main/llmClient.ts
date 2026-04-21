@@ -130,17 +130,39 @@ export async function callLLM(params: LLMParams): Promise<LLMResult> {
       }
 
       response = await new Promise<string>((resolve, reject) => {
+        const CLAUDE_CLI_TIMEOUT_MS = 600000;
+        let timedOut = false;
         const proc = spawnProc(claudePath, ["-p"], {
           stdio: ["pipe", "pipe", "pipe"],
-          timeout: 120000,
           env: userShellEnv,
         });
+        const timer = setTimeout(() => {
+          timedOut = true;
+          proc.kill("SIGTERM");
+        }, CLAUDE_CLI_TIMEOUT_MS);
         let stdout = "";
         let stderr = "";
         proc.stdout.on("data", (d: Buffer) => (stdout += d.toString()));
         proc.stderr.on("data", (d: Buffer) => (stderr += d.toString()));
-        proc.on("error", (err) => reject(new Error(err.message)));
+        proc.on("error", (err) => {
+          clearTimeout(timer);
+          reject(new Error(err.message));
+        });
         proc.on("close", (code) => {
+          clearTimeout(timer);
+          if (timedOut) {
+            logger.error("claude CLI timed out", {
+              timeoutMs: CLAUDE_CLI_TIMEOUT_MS,
+              stdout,
+              stderr,
+            });
+            reject(
+              new Error(
+                `Claude CLI did not respond within ${Math.round(CLAUDE_CLI_TIMEOUT_MS / 1000)}s. Try a shorter prompt, or switch providers in Settings.`
+              )
+            );
+            return;
+          }
           if (code !== 0) {
             logger.error("claude CLI failed", { code, stdout, stderr });
             reject(new Error(stderr.trim() || stdout.trim() || `claude exited with code ${code}`));

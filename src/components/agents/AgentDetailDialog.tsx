@@ -8,7 +8,6 @@ import {
   AlertCircle,
   Calendar,
   CheckCircle2,
-  Circle,
   Clock,
   ExternalLink,
   File,
@@ -19,6 +18,7 @@ import {
   Play,
   Plus,
   Save,
+  SlidersHorizontal,
   Square,
   Trash2,
   Workflow,
@@ -36,17 +36,28 @@ interface AgentDetailDialogProps {
   onOpenWorkflow?: (automation: StoredAutomation) => void;
 }
 
-const TASK_ICONS = {
-  pending: <Circle className="h-3.5 w-3.5 text-muted-foreground" />,
-  running: <Loader2 className="h-3.5 w-3.5 text-blue-500 animate-spin" />,
-  completed: <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />,
-  failed: <AlertCircle className="h-3.5 w-3.5 text-red-500" />,
-};
-
 const LOG_COLORS = {
   info: "text-muted-foreground",
   warn: "text-yellow-600 dark:text-yellow-400",
   error: "text-red-600 dark:text-red-400",
+};
+
+const VERDICT_STYLE: Record<string, { icon: React.ReactNode; color: string; label: string }> = {
+  ok: {
+    icon: <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />,
+    color: "text-green-600 dark:text-green-400",
+    label: "ok",
+  },
+  modify: {
+    icon: <SlidersHorizontal className="h-3.5 w-3.5 text-blue-500" />,
+    color: "text-blue-600 dark:text-blue-400",
+    label: "modified",
+  },
+  fail: {
+    icon: <AlertCircle className="h-3.5 w-3.5 text-red-500" />,
+    color: "text-red-600 dark:text-red-400",
+    label: "fail",
+  },
 };
 
 function formatScheduleInfo(
@@ -58,9 +69,10 @@ function formatScheduleInfo(
     case "interval": {
       const mins = agent.schedule.intervalMinutes || 60;
       const label = mins >= 60 ? `Every ${mins / 60}h` : `Every ${mins}m`;
+      const anchor = agent.lastRunAt || agent.createdAt;
       let nextRun: string | undefined;
-      if (agent.lastRunAt) {
-        const next = new Date(new Date(agent.lastRunAt).getTime() + mins * 60 * 1000);
+      if (anchor) {
+        const next = new Date(new Date(anchor).getTime() + mins * 60 * 1000);
         nextRun = next > new Date() ? next.toLocaleString() : "Imminent";
       }
       return { label: "Interval", detail: label, nextRun };
@@ -118,8 +130,7 @@ export function AgentDetailDialog({
         })
         .finally(() => setLoadingInstructions(false));
 
-      // Load workflows linked to this agent's tasks
-      const workflowIds = agent.tasks.map((t) => t.workflowId).filter((id): id is string => !!id);
+      const workflowIds = agent.workflowIds || [];
       if (workflowIds.length > 0) {
         window.electronAPI?.tree
           .list()
@@ -308,9 +319,7 @@ export function AgentDetailDialog({
                   </div>
                 )}
                 {!scheduleInfo.nextRun && agent.status !== "running" && (
-                  <div className="text-muted-foreground">
-                    Start the agent to activate the schedule
-                  </div>
+                  <div className="text-muted-foreground">Schedule active</div>
                 )}
               </div>
             </div>
@@ -324,12 +333,23 @@ export function AgentDetailDialog({
           )}
 
           {/* Linked Workflows */}
-          {workflows.length > 0 && (
-            <div>
-              <h4 className="text-sm font-medium mb-2 flex items-center gap-1.5">
-                <Workflow className="h-3.5 w-3.5" />
-                Workflows ({workflows.length})
-              </h4>
+          <div>
+            <h4 className="text-sm font-medium mb-2 flex items-center gap-1.5">
+              <Workflow className="h-3.5 w-3.5" />
+              Workflows ({agent.workflowIds?.length ?? 0})
+            </h4>
+            {(agent.workflowIds?.length ?? 0) === 0 ? (
+              <p className="text-xs text-muted-foreground rounded-md border bg-muted/30 p-2">
+                No workflows linked to this agent. Ask Loopi to create one or attach an existing
+                workflow.
+              </p>
+            ) : workflows.length === 0 ? (
+              <p className="text-xs text-muted-foreground rounded-md border bg-muted/30 p-2">
+                {agent.workflowIds.length} workflow
+                {agent.workflowIds.length === 1 ? "" : "s"} linked but not found in storage (they
+                may have been deleted).
+              </p>
+            ) : (
               <div className="space-y-1.5">
                 {workflows.map((wf) => (
                   <div
@@ -361,8 +381,8 @@ export function AgentDetailDialog({
                   </div>
                 ))}
               </div>
-            </div>
-          )}
+            )}
+          </div>
 
           {/* Instructions File */}
           <div>
@@ -566,33 +586,68 @@ export function AgentDetailDialog({
             )}
           </div>
 
-          {/* Tasks */}
+          {/* Goal */}
+          <div>
+            <h4 className="text-sm font-medium mb-2">Goal</h4>
+            <div className="rounded border bg-muted/30 p-2 text-xs whitespace-pre-wrap">
+              {agent.goal ? (
+                agent.goal
+              ) : (
+                <span className="text-muted-foreground">No goal defined</span>
+              )}
+            </div>
+          </div>
+
+          {/* Reflections */}
           <div>
             <h4 className="text-sm font-medium mb-2">
-              Tasks ({agent.tasks.filter((t) => t.status === "completed").length}/
-              {agent.tasks.length})
+              Reflections ({agent.reflections?.length ?? 0})
             </h4>
-            <ScrollArea className="h-32 rounded border p-2">
-              {agent.tasks.length === 0 ? (
-                <p className="text-xs text-muted-foreground">No tasks assigned</p>
+            <ScrollArea className="h-40 rounded border p-2">
+              {!agent.reflections || agent.reflections.length === 0 ? (
+                <p className="text-xs text-muted-foreground">
+                  No reflections yet. The agent will reflect after each workflow run.
+                </p>
               ) : (
                 <div className="space-y-2">
-                  {agent.tasks.map((task) => (
-                    <div key={task.id} className="flex items-start gap-2 text-xs">
-                      <div className="mt-0.5">{TASK_ICONS[task.status]}</div>
-                      <div className="flex-1 min-w-0">
-                        <p className="truncate">{task.description}</p>
-                        {task.error && (
-                          <p className="text-red-500 text-[10px] truncate">{task.error}</p>
-                        )}
-                        {task.result && (
-                          <p className="text-muted-foreground text-[10px] truncate">
-                            {task.result}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  ))}
+                  {agent.reflections
+                    .slice()
+                    .reverse()
+                    .map((r, i) => {
+                      const style = VERDICT_STYLE[r.verdict] || VERDICT_STYLE.ok;
+                      return (
+                        <div key={i} className="flex items-start gap-2 text-xs">
+                          <div className="mt-0.5">{style.icon}</div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span className={`font-medium ${style.color}`}>{style.label}</span>
+                              {r.workflowName && (
+                                <span className="text-muted-foreground truncate">
+                                  · {r.workflowName}
+                                </span>
+                              )}
+                              {r.patchApplied && (
+                                <Badge variant="outline" className="text-[9px] py-0 px-1">
+                                  patch applied
+                                </Badge>
+                              )}
+                              {r.rolledBack && (
+                                <Badge
+                                  variant="outline"
+                                  className="text-[9px] py-0 px-1 text-red-500"
+                                >
+                                  rolled back
+                                </Badge>
+                              )}
+                            </div>
+                            <p className="text-[11px] whitespace-pre-wrap">{r.reason}</p>
+                            <p className="text-[9px] text-muted-foreground">
+                              {new Date(r.timestamp).toLocaleString()}
+                            </p>
+                          </div>
+                        </div>
+                      );
+                    })}
                 </div>
               )}
             </ScrollArea>

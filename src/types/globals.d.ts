@@ -5,6 +5,7 @@ import type {
   AgentCapability,
   AgentLogEntry,
   AgentModelConfig,
+  AgentReflection,
   AgentSchedule,
 } from "./agent";
 import type { LogEntry } from "@main/debugLogger";
@@ -291,7 +292,8 @@ export interface ElectronAPI {
       description: string;
       capabilities: AgentCapability[];
       model: AgentModelConfig;
-      tasks?: Array<{ description: string; workflowId?: string }>;
+      goal: string;
+      workflowIds?: string[];
       schedule?: AgentSchedule;
       credentialIds?: string[];
       createdBy?: "user" | "loopi";
@@ -301,10 +303,9 @@ export interface ElectronAPI {
     start: (id: string) => Promise<Agent>;
     stop: (id: string) => Promise<Agent>;
     getLogs: (id: string) => Promise<AgentLogEntry[]>;
-    addTask: (
-      agentId: string,
-      task: { description: string; workflowId?: string }
-    ) => Promise<Agent>;
+    addWorkflow: (agentId: string, workflowId: string) => Promise<Agent>;
+    removeWorkflow: (agentId: string, workflowId: string) => Promise<Agent>;
+    getReflections: (id: string) => Promise<AgentReflection[]>;
     validateModel: (
       provider: string,
       model: string

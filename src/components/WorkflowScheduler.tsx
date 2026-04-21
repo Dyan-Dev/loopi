@@ -216,10 +216,10 @@ export const WorkflowScheduler: React.FC<WorkflowSchedulerProps> = ({ automation
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-16">
             <Calendar className="h-16 w-16 text-muted-foreground mb-4" />
-            <h3 className="text-xl font-semibold mb-2">No Schedules Yet</h3>
+            <h3 className="text-xl font-semibold mb-2">No Workflow Schedules Yet</h3>
             <p className="text-muted-foreground text-center max-w-md mb-6">
-              Create your first schedule to automate workflow execution. You can schedule the same
-              workflow multiple times with different configurations.
+              This tab schedules workflows directly. Agent schedules live on each agent and are
+              managed in the Agents tab — they won't appear here.
             </p>
             <Button onClick={() => setIsDialogOpen(true)}>
               <Plus className="h-4 w-4 mr-2" />

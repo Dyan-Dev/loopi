@@ -3,22 +3,31 @@ import type {
   AgentCapability,
   AgentLogEntry,
   AgentModelConfig,
+  AgentReflection,
   AgentSchedule,
-  AgentTask,
 } from "@app-types/agent";
+import type { StoredAutomation } from "@app-types/automation";
+import type { Edge, Node } from "@app-types/flow";
 import { createLogger } from "@utils/logger";
 import { randomUUID } from "crypto";
 import { Notification } from "electron";
 import { validateModelForAgents } from "./agentModelValidator";
+import {
+  type NodeOutcome,
+  type ReflectionResult,
+  type RunSnapshot,
+  reflectOnRun,
+  toReflectionRecord,
+} from "./agentReflector";
 import { AgentStore } from "./agentStore";
 import { AutomationExecutor } from "./automationExecutor";
 import { DesktopScheduler } from "./desktopScheduler";
 import { executeAutomationGraph } from "./graphExecutor";
-import { callLLM } from "./llmClient";
-import { defaultStorageFolder, listAutomations, loadAutomation } from "./treeStore";
-import type { WindowManager } from "./windowManager";
+import { defaultStorageFolder, listAutomations, loadAutomation, saveAutomation } from "./treeStore";
 
 const logger = createLogger("AgentManager");
+
+const MAX_REFLECTIONS = 50;
 
 export interface CreateAgentConfig {
   name: string;
@@ -26,7 +35,8 @@ export interface CreateAgentConfig {
   description: string;
   capabilities: AgentCapability[];
   model: AgentModelConfig;
-  tasks?: Array<{ description: string; workflowId?: string }>;
+  goal: string;
+  workflowIds?: string[];
   schedule?: AgentSchedule;
   credentialIds?: string[];
   createdBy?: "user" | "loopi";
@@ -58,12 +68,9 @@ export class AgentManager {
       description: config.description,
       status: "idle",
       capabilities: config.capabilities,
-      tasks: (config.tasks || []).map((t) => ({
-        id: randomUUID(),
-        description: t.description,
-        status: "pending" as const,
-        workflowId: t.workflowId,
-      })),
+      goal: config.goal,
+      workflowIds: config.workflowIds ? Array.from(new Set(config.workflowIds)) : [],
+      reflections: [],
       model: config.model,
       schedule: config.schedule,
       credentialIds: config.credentialIds || [],
@@ -75,13 +82,10 @@ export class AgentManager {
     };
 
     this.store.save(agent);
-
-    // Generate instruction file for the agent
     this.store.saveInstructions(agent.id, this.generateInstructions(agent));
 
     logger.info("Agent created", { id: agent.id, name: agent.name, role: agent.role });
 
-    // Auto-schedule if schedule is provided
     if (agent.schedule && agent.schedule.type !== "manual") {
       this.scheduleAgent(agent.id, agent.schedule);
     }
@@ -96,7 +100,7 @@ export class AgentManager {
 
     agent.status = "running";
     agent.lastRunAt = new Date().toISOString();
-    this.addLog(agent, "info", "Agent started");
+    this.addLog(agent, "info", `Agent started — goal: ${agent.goal.slice(0, 120)}`);
     this.store.save(agent);
 
     const cancelSignal = { cancelled: false };
@@ -106,40 +110,24 @@ export class AgentManager {
       },
     });
 
-    // Execute tasks sequentially
     try {
-      for (const task of agent.tasks) {
+      if (agent.workflowIds.length === 0) {
+        this.addLog(agent, "warn", "Agent has no workflows assigned; nothing to run.");
+      }
+
+      for (const workflowId of agent.workflowIds) {
         if (cancelSignal.cancelled) {
-          agent.status = "paused";
-          this.addLog(agent, "info", "Agent paused by user");
+          this.addLog(agent, "info", "Agent run cancelled by user");
           break;
         }
-        if (task.status === "completed") continue;
-
-        task.status = "running";
-        task.startedAt = new Date().toISOString();
+        await this.runAndReflect(agent, workflowId, cancelSignal);
+        // Persist after each workflow so logs/reflections are visible even mid-run
         this.store.save(agent);
-
-        try {
-          const result = await this.executeTask(agent, task, cancelSignal);
-          task.status = "completed";
-          task.result = result;
-          task.completedAt = new Date().toISOString();
-          this.addLog(agent, "info", `Task completed: ${task.description}`, task.id);
-        } catch (err) {
-          task.status = "failed";
-          task.error = err instanceof Error ? err.message : String(err);
-          task.completedAt = new Date().toISOString();
-          this.addLog(agent, "error", `Task failed: ${task.error}`, task.id);
-          agent.status = "failed";
-          this.store.save(agent);
-          break;
-        }
       }
 
       if (agent.status === "running") {
-        agent.status = "completed";
-        this.addLog(agent, "info", "All tasks completed");
+        agent.status = "idle";
+        this.addLog(agent, "info", "Agent run finished");
       }
     } catch (err) {
       agent.status = "failed";
@@ -156,6 +144,177 @@ export class AgentManager {
     return agent;
   }
 
+  private async runAndReflect(
+    agent: Agent,
+    workflowId: string,
+    cancelSignal: { cancelled: boolean }
+  ): Promise<void> {
+    const automation = loadAutomation(workflowId, defaultStorageFolder);
+    if (!automation) {
+      this.addLog(agent, "error", `Workflow ${workflowId} not found`, workflowId);
+      return;
+    }
+
+    const snapshot = await this.executeWorkflow(agent, automation, cancelSignal);
+    this.addLog(
+      agent,
+      snapshot.success ? "info" : "warn",
+      `Workflow "${automation.name}" finished (success=${snapshot.success}, nodes=${snapshot.nodeOutcomes.length})`,
+      workflowId
+    );
+
+    if (cancelSignal.cancelled) return;
+
+    let reflection: ReflectionResult;
+    try {
+      reflection = await reflectOnRun(
+        agent,
+        {
+          id: automation.id,
+          name: automation.name,
+          nodes: automation.nodes,
+          edges: automation.edges || [],
+        },
+        snapshot
+      );
+    } catch (err) {
+      this.addLog(
+        agent,
+        "error",
+        `Reflection failed: ${err instanceof Error ? err.message : String(err)}`,
+        workflowId
+      );
+      return;
+    }
+
+    this.addLog(
+      agent,
+      reflection.verdict === "fail" ? "error" : "info",
+      `Reflection [${reflection.verdict}]: ${reflection.reason}`,
+      workflowId
+    );
+
+    let patchApplied = false;
+    let rolledBack = false;
+    if (reflection.verdict === "modify" && reflection.patch) {
+      const applied = this.applyPatch(agent, automation, reflection.patch);
+      patchApplied = applied.applied;
+      rolledBack = applied.rolledBack;
+    }
+
+    this.recordReflection(
+      agent,
+      toReflectionRecord(snapshot, reflection, patchApplied, rolledBack)
+    );
+  }
+
+  private applyPatch(
+    agent: Agent,
+    automation: StoredAutomation,
+    patch: { nodes: Node[]; edges: Edge[] }
+  ): { applied: boolean; rolledBack: boolean } {
+    const backup: StoredAutomation = {
+      ...automation,
+      nodes: automation.nodes,
+      edges: automation.edges || [],
+    };
+    try {
+      const patched: StoredAutomation = {
+        ...automation,
+        nodes: patch.nodes,
+        edges: patch.edges,
+        updatedAt: new Date().toISOString(),
+      };
+      saveAutomation(patched, defaultStorageFolder);
+      this.addLog(
+        agent,
+        "info",
+        `Auto-applied workflow patch to "${automation.name}" (nodes: ${patch.nodes.length}, edges: ${patch.edges.length})`,
+        automation.id
+      );
+      return { applied: true, rolledBack: false };
+    } catch (err) {
+      logger.error("Failed to apply workflow patch, rolling back", { agentId: agent.id, err });
+      try {
+        saveAutomation(backup, defaultStorageFolder);
+      } catch (rollbackErr) {
+        logger.error("Rollback also failed", { agentId: agent.id, rollbackErr });
+      }
+      this.addLog(
+        agent,
+        "error",
+        `Patch failed and was rolled back: ${err instanceof Error ? err.message : String(err)}`,
+        automation.id
+      );
+      return { applied: false, rolledBack: true };
+    }
+  }
+
+  private async executeWorkflow(
+    agent: Agent,
+    automation: StoredAutomation,
+    cancelSignal: { cancelled: boolean }
+  ): Promise<RunSnapshot> {
+    const executor = new AutomationExecutor();
+    executor.initVariables({
+      agentDataDir: this.store.getAgentDir(agent.id),
+      agentId: agent.id,
+      agentName: agent.name,
+    });
+
+    const outcomes: NodeOutcome[] = [];
+    const nodeTypeById = new Map<string, string>();
+    for (const node of automation.nodes) {
+      const stepType = (node.data as { step?: { type?: string } })?.step?.type || "unknown";
+      nodeTypeById.set(node.id, stepType);
+    }
+
+    const startedAt = Date.now();
+    let success = false;
+    try {
+      const result = await executeAutomationGraph({
+        nodes: automation.nodes,
+        edges: (automation.edges || []) as Edge[],
+        executor,
+        onNodeStatus: (nodeId, status, error) => {
+          if (status === "running") return;
+          outcomes.push({
+            nodeId,
+            stepType: nodeTypeById.get(nodeId) || "unknown",
+            status: status as "success" | "error",
+            error,
+          });
+        },
+        cancelSignal,
+        headless: true,
+      });
+      success = result.success;
+    } catch (err) {
+      this.addLog(
+        agent,
+        "error",
+        `Workflow execution threw: ${err instanceof Error ? err.message : String(err)}`,
+        automation.id
+      );
+    }
+
+    return {
+      workflowId: automation.id,
+      workflowName: automation.name,
+      success,
+      nodeOutcomes: outcomes,
+      finalVariables: executor.getVariables(),
+      durationMs: Date.now() - startedAt,
+    };
+  }
+
+  private recordReflection(agent: Agent, reflection: AgentReflection): void {
+    agent.reflections.push(reflection);
+    if (agent.reflections.length > MAX_REFLECTIONS) {
+      agent.reflections = agent.reflections.slice(-MAX_REFLECTIONS);
+    }
+  }
+
   async stopAgent(agentId: string): Promise<Agent> {
     const running = this.runningAgents.get(agentId);
     if (running) {
@@ -166,20 +325,18 @@ export class AgentManager {
     const agent = this.store.load(agentId);
     if (!agent) throw new Error(`Agent ${agentId} not found`);
 
-    agent.status = "paused";
+    agent.status = "idle";
     this.addLog(agent, "info", "Agent stopped by user");
     this.store.save(agent);
     return agent;
   }
 
   async deleteAgent(agentId: string): Promise<boolean> {
-    // Stop if running
     const running = this.runningAgents.get(agentId);
     if (running) {
       running.cancel();
       this.runningAgents.delete(agentId);
     }
-    // Unschedule
     this.scheduler.unscheduleAutomation(agentId);
     return this.store.delete(agentId);
   }
@@ -192,16 +349,20 @@ export class AgentManager {
     return this.store.list();
   }
 
-  addTask(agentId: string, taskConfig: { description: string; workflowId?: string }): Agent {
+  addWorkflow(agentId: string, workflowId: string): Agent {
     const agent = this.store.load(agentId);
     if (!agent) throw new Error(`Agent ${agentId} not found`);
+    if (!agent.workflowIds.includes(workflowId)) {
+      agent.workflowIds.push(workflowId);
+      this.store.save(agent);
+    }
+    return agent;
+  }
 
-    agent.tasks.push({
-      id: randomUUID(),
-      description: taskConfig.description,
-      status: "pending",
-      workflowId: taskConfig.workflowId,
-    });
+  removeWorkflow(agentId: string, workflowId: string): Agent {
+    const agent = this.store.load(agentId);
+    if (!agent) throw new Error(`Agent ${agentId} not found`);
+    agent.workflowIds = agent.workflowIds.filter((id) => id !== workflowId);
     this.store.save(agent);
     return agent;
   }
@@ -213,6 +374,11 @@ export class AgentManager {
   getAgentLogs(agentId: string): AgentLogEntry[] {
     const agent = this.store.load(agentId);
     return agent?.logs || [];
+  }
+
+  getAgentReflections(agentId: string): AgentReflection[] {
+    const agent = this.store.load(agentId);
+    return agent?.reflections || [];
   }
 
   scheduleAgent(agentId: string, schedule: AgentSchedule): void {
@@ -229,6 +395,11 @@ export class AgentManager {
 
     this.scheduler.scheduleCallback(agentId, scheduleType, async () => {
       try {
+        if (this.runningAgents.has(agentId)) {
+          logger.warn("Skipping scheduled run — previous run still active", { agentId });
+          return;
+        }
+        this.resetAgentForScheduledRun(agentId);
         await this.startAgent(agentId);
       } catch (err) {
         logger.error("Scheduled agent execution failed", { agentId, error: err });
@@ -237,16 +408,21 @@ export class AgentManager {
     logger.info("Agent scheduled", { agentId, schedule });
   }
 
+  private resetAgentForScheduledRun(agentId: string): void {
+    const agent = this.store.load(agentId);
+    if (!agent) return;
+    agent.status = "idle";
+    this.store.save(agent);
+  }
+
   async loadAndActivateScheduledAgents(): Promise<void> {
     const agents = this.store.list();
     let activated = 0;
     for (const agent of agents) {
-      // Reset previously running agents to idle
       if (agent.status === "running") {
         agent.status = "idle";
         this.store.save(agent);
       }
-      // Re-schedule agents with active schedules
       if (agent.schedule && agent.schedule.type !== "manual") {
         this.scheduleAgent(agent.id, agent.schedule);
         activated++;
@@ -255,114 +431,7 @@ export class AgentManager {
     logger.info(`Activated ${activated} agent schedules`);
   }
 
-  private async executeTask(
-    agent: Agent,
-    task: AgentTask,
-    cancelSignal: { cancelled: boolean }
-  ): Promise<string> {
-    // If task has a workflow, execute it
-    if (task.workflowId) {
-      return this.executeWorkflowTask(agent, task.workflowId, cancelSignal);
-    }
-
-    // Otherwise, use LLM to decide what to do
-    return this.executeLLMTask(agent, task);
-  }
-
-  private async executeWorkflowTask(
-    agent: Agent,
-    workflowId: string,
-    cancelSignal: { cancelled: boolean }
-  ): Promise<string> {
-    const automation = loadAutomation(workflowId, defaultStorageFolder);
-    if (!automation) throw new Error(`Workflow ${workflowId} not found`);
-
-    const executor = new AutomationExecutor();
-    executor.initVariables({
-      agentDataDir: this.store.getAgentDir(agent.id),
-      agentId: agent.id,
-      agentName: agent.name,
-    });
-    const result = await executeAutomationGraph({
-      nodes: automation.nodes as Parameters<typeof executeAutomationGraph>[0]["nodes"],
-      edges: (automation.edges || []) as Parameters<typeof executeAutomationGraph>[0]["edges"],
-      executor,
-      onNodeStatus: (nodeId: string, status: string, error?: string) => {
-        logger.debug("Agent workflow node status", { nodeId, status, error });
-      },
-      cancelSignal,
-      headless: true,
-    });
-
-    return result.success ? "Workflow completed successfully" : "Workflow failed";
-  }
-
-  private async executeLLMTask(agent: Agent, task: AgentTask): Promise<string> {
-    // Build a prompt that tells the LLM about the task and available workflows
-    const workflows = listAutomations(defaultStorageFolder);
-    const workflowList = workflows
-      .map((w) => `- ${w.name} (id: ${w.id}): ${w.description || "No description"}`)
-      .join("\n");
-
-    // Load custom instructions if available
-    const instructions = this.store.loadInstructions(agent.id);
-
-    const systemPrompt = `You are an AI agent named "${agent.name}" with the role: "${agent.role}".
-Your capabilities: ${agent.capabilities.join(", ")}.
-You have access to these existing workflows:
-${workflowList || "No workflows available."}
-${instructions ? `\n--- Agent Instructions ---\n${instructions}\n--- End Instructions ---\n` : ""}
-
-Complete the following task. Respond with a clear summary of what you did or what needs to be done.
-
-Available actions (use EXACTLY one per response):
-- EXECUTE_WORKFLOW:<workflow_id> — Run an existing workflow by its ID
-- SEND_NOTIFICATION:<title>|<message> — Send a desktop notification to the user
-
-If no action is needed, just respond with a text summary.
-Keep your response concise.`;
-
-    const result = await callLLM({
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: task.description },
-      ],
-      provider: agent.model.provider,
-      model: agent.model.model,
-      credentialId: agent.model.credentialId,
-      apiKey: agent.model.apiKey,
-      baseUrl: agent.model.baseUrl,
-    });
-
-    if (!result.success) {
-      throw new Error(result.error || "LLM call failed");
-    }
-
-    // Check if the LLM wants to execute an action
-    const response = result.response || "";
-
-    // Check for SEND_NOTIFICATION action
-    const notifMatch = response.match(/SEND_NOTIFICATION:([^|]+)\|(.+)/s);
-    if (notifMatch) {
-      const title = notifMatch[1].trim();
-      const body = notifMatch[2].trim();
-      this.sendDesktopNotification(title, body);
-      this.addLog(agent, "info", `Sent desktop notification: ${title}`, task.id);
-      return `Notification sent: ${title}`;
-    }
-
-    // Check for EXECUTE_WORKFLOW action
-    const workflowMatch = response.match(/EXECUTE_WORKFLOW:(\S+)/);
-    if (workflowMatch) {
-      const wfId = workflowMatch[1];
-      this.addLog(agent, "info", `LLM requested workflow execution: ${wfId}`, task.id);
-      return this.executeWorkflowTask(agent, wfId, { cancelled: false });
-    }
-
-    return response;
-  }
-
-  private sendDesktopNotification(title: string, body: string): void {
+  sendDesktopNotification(title: string, body: string): void {
     try {
       const notification = new Notification({ title, body });
       notification.show();
@@ -417,23 +486,22 @@ Keep your response concise.`;
     lines.push(`Created: ${new Date(agent.createdAt).toLocaleString()}`);
     lines.push(`Created By: ${agent.createdBy || "user"}`);
     lines.push(``);
+    lines.push(`--- Goal ---`);
+    lines.push(agent.goal || "(no goal defined)");
+    lines.push(``);
     lines.push(`--- Capabilities ---`);
     for (const cap of agent.capabilities) {
       lines.push(`  - ${cap}`);
     }
     lines.push(``);
-    lines.push(`--- Model Configuration ---`);
+    lines.push(`--- Model ---`);
     lines.push(`  Provider: ${agent.model.provider}`);
     lines.push(`  Model: ${agent.model.model}`);
     lines.push(``);
-    if (agent.tasks.length > 0) {
-      lines.push(`--- Tasks ---`);
-      for (let i = 0; i < agent.tasks.length; i++) {
-        const task = agent.tasks[i];
-        lines.push(`  ${i + 1}. ${task.description}`);
-        if (task.workflowId) {
-          lines.push(`     Workflow ID: ${task.workflowId}`);
-        }
+    if (agent.workflowIds.length > 0) {
+      lines.push(`--- Assigned Workflows ---`);
+      for (const id of agent.workflowIds) {
+        lines.push(`  - ${id}`);
       }
       lines.push(``);
     }
@@ -449,31 +517,9 @@ Keep your response concise.`;
       }
       lines.push(``);
     }
-    lines.push(`--- Instructions ---`);
-    lines.push(`You are "${agent.name}", an AI agent with the role: "${agent.role}".`);
-    lines.push(`Your job is to complete the tasks assigned to you using your capabilities.`);
-    lines.push(``);
-    lines.push(`Behavior guidelines:`);
-    lines.push(`  - Execute each task sequentially and thoroughly`);
-    lines.push(`  - Use your assigned workflows to complete tasks`);
-    lines.push(`  - Report results clearly and concisely`);
-    lines.push(`  - If a task fails, log the error and continue to the next task`);
-    if (agent.capabilities.includes("desktop")) {
-      lines.push(`  - You have desktop control access (mouse, keyboard, screenshots)`);
-    }
-    if (agent.capabilities.includes("browser")) {
-      lines.push(`  - You have browser automation access (navigate, click, extract, etc.)`);
-    }
-    if (agent.capabilities.includes("api")) {
-      lines.push(`  - You can make API calls to external services`);
-    }
-    if (agent.capabilities.includes("filesystem")) {
-      lines.push(`  - You can read/write files on the local filesystem`);
-    }
-    lines.push(``);
-    lines.push(`========================================`);
-    lines.push(`NOTE: You can edit this file to customize the agent's behavior.`);
-    lines.push(`Changes will take effect on the next agent run.`);
+    lines.push(`--- Behaviour ---`);
+    lines.push(`After each workflow run, the reflection engine checks whether progress was made`);
+    lines.push(`toward the goal and auto-applies patches to the workflow graph when needed.`);
     lines.push(`========================================`);
     return lines.join("\n");
   }
@@ -482,13 +528,13 @@ Keep your response concise.`;
     agent: Agent,
     level: AgentLogEntry["level"],
     message: string,
-    taskId?: string
+    workflowId?: string
   ): void {
     agent.logs.push({
       timestamp: new Date().toISOString(),
       level,
       message,
-      taskId,
+      workflowId,
     });
   }
 }

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { OnSelectionChangeParams, useEdgesState, useNodesState } from "reactflow";
-import "reactflow/dist/base.css";
+import "reactflow/dist/style.css";
 import type {
   Automation,
   AutomationStep,

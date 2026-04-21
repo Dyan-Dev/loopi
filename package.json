@@ -1,6 +1,6 @@
 {
   "name": "loopi",
-  "version": "1.9.0",
+  "version": "1.9.1",
   "description": "Loopi — Visual Browser & Desktop Automation for humans and teams",
   "author": "Dyan-Dev",
   "main": ".webpack/main",

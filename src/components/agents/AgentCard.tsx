@@ -13,12 +13,18 @@ interface AgentCardProps {
 }
 
 const STATUS_COLORS: Record<string, string> = {
-  idle: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300",
+  active: "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300",
   running: "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300",
-  completed: "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300",
+  stopped: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300",
   failed: "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300",
-  paused: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300",
 };
+
+function displayStatus(agent: Agent): string {
+  if (agent.status === "running") return "running";
+  if (agent.status === "failed") return "failed";
+  if (agent.schedule && agent.schedule.type !== "manual") return "active";
+  return "stopped";
+}
 
 const CAPABILITY_LABELS: Record<string, string> = {
   browser: "Browser",
@@ -31,8 +37,10 @@ const CAPABILITY_LABELS: Record<string, string> = {
 };
 
 export function AgentCard({ agent, onStart, onStop, onDelete, onClick }: AgentCardProps) {
-  const completedTasks = agent.tasks.filter((t) => t.status === "completed").length;
-  const totalTasks = agent.tasks.length;
+  const status = displayStatus(agent);
+  const isScheduled = !!agent.schedule && agent.schedule.type !== "manual";
+  const workflowCount = agent.workflowIds?.length ?? 0;
+  const reflectionCount = agent.reflections?.length ?? 0;
 
   return (
     <Card
@@ -44,31 +52,22 @@ export function AgentCard({ agent, onStart, onStop, onDelete, onClick }: AgentCa
           <h3 className="font-semibold text-sm truncate">{agent.name}</h3>
           <p className="text-xs text-muted-foreground truncate">{agent.role}</p>
         </div>
-        <Badge className={`ml-2 text-xs ${STATUS_COLORS[agent.status] || ""}`}>
-          {agent.status}
-        </Badge>
+        <Badge className={`ml-2 text-xs ${STATUS_COLORS[status] || ""}`}>{status}</Badge>
       </div>
 
-      {agent.description && (
-        <p className="text-xs text-muted-foreground mb-3 line-clamp-2">{agent.description}</p>
+      {agent.goal && (
+        <p className="text-xs text-muted-foreground mb-3 line-clamp-2">{agent.goal}</p>
       )}
 
-      {totalTasks > 0 && (
-        <div className="mb-3">
-          <div className="flex justify-between text-xs text-muted-foreground mb-1">
-            <span>Tasks</span>
-            <span>
-              {completedTasks}/{totalTasks}
-            </span>
-          </div>
-          <div className="w-full bg-muted rounded-full h-1.5">
-            <div
-              className="bg-primary rounded-full h-1.5 transition-all"
-              style={{ width: `${totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0}%` }}
-            />
-          </div>
-        </div>
-      )}
+      <div className="flex gap-3 text-[10px] text-muted-foreground mb-3">
+        <span>
+          {workflowCount} workflow{workflowCount === 1 ? "" : "s"}
+        </span>
+        <span>·</span>
+        <span>
+          {reflectionCount} reflection{reflectionCount === 1 ? "" : "s"}
+        </span>
+      </div>
 
       <div className="flex flex-wrap gap-1 mb-3">
         {agent.capabilities.slice(0, 4).map((cap) => (
@@ -94,7 +93,7 @@ export function AgentCard({ agent, onStart, onStop, onDelete, onClick }: AgentCa
       )}
 
       <div className="flex gap-1.5" onClick={(e) => e.stopPropagation()}>
-        {agent.status === "running" ? (
+        {agent.status === "running" || (isScheduled && status === "active") ? (
           <Button
             size="sm"
             variant="outline"

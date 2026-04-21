@@ -87,7 +87,8 @@ export class AgentStore {
   load(agentId: string): Agent | null {
     const agentPath = this.getAgentPath(agentId);
     if (!fs.existsSync(agentPath)) return null;
-    return JSON.parse(fs.readFileSync(agentPath, "utf-8"));
+    const raw = JSON.parse(fs.readFileSync(agentPath, "utf-8"));
+    return this.migrate(raw);
   }
 
   list(): Agent[] {
@@ -96,13 +97,39 @@ export class AgentStore {
     for (const file of files) {
       if (file.endsWith(".json")) {
         try {
-          agents.push(JSON.parse(fs.readFileSync(path.join(this.agentsPath, file), "utf-8")));
+          const raw = JSON.parse(fs.readFileSync(path.join(this.agentsPath, file), "utf-8"));
+          agents.push(this.migrate(raw));
         } catch {
           // Skip corrupted files
         }
       }
     }
     return agents.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }
+
+  private migrate(raw: Record<string, unknown>): Agent {
+    const legacyTasks = raw.tasks as
+      | Array<{ description?: string; workflowId?: string }>
+      | undefined;
+    if (legacyTasks && !raw.workflowIds) {
+      const ids = legacyTasks
+        .map((t) => t.workflowId)
+        .filter((id): id is string => typeof id === "string" && id.length > 0);
+      raw.workflowIds = Array.from(new Set(ids));
+      if (!raw.goal) {
+        const descriptions = legacyTasks
+          .map((t) => t.description)
+          .filter((d): d is string => typeof d === "string" && d.length > 0);
+        raw.goal =
+          descriptions.join("\n\n") || (raw.description as string) || (raw.role as string) || "";
+      }
+    }
+    if (!raw.workflowIds) raw.workflowIds = [];
+    if (!raw.reflections) raw.reflections = [];
+    if (!raw.goal) raw.goal = (raw.description as string) || (raw.role as string) || "";
+    if (raw.status === "completed" || raw.status === "paused") raw.status = "idle";
+    delete raw.tasks;
+    return raw as unknown as Agent;
   }
 
   delete(agentId: string): boolean {

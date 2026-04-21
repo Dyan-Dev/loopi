@@ -867,8 +867,16 @@ export function registerIPCHandlers(
     return agentManager.getAgentLogs(id);
   });
 
-  ipcMain.handle("agents:addTask", async (_event, agentId: string, task: unknown) => {
-    return agentManager.addTask(agentId, task as { description: string; workflowId?: string });
+  ipcMain.handle("agents:addWorkflow", async (_event, agentId: string, workflowId: string) => {
+    return agentManager.addWorkflow(agentId, workflowId);
+  });
+
+  ipcMain.handle("agents:removeWorkflow", async (_event, agentId: string, workflowId: string) => {
+    return agentManager.removeWorkflow(agentId, workflowId);
+  });
+
+  ipcMain.handle("agents:getReflections", async (_event, id: string) => {
+    return agentManager.getAgentReflections(id);
   });
 
   ipcMain.handle("agents:validateModel", async (_event, provider: string, model: string) => {
