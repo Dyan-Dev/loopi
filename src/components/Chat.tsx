@@ -1423,14 +1423,24 @@ export function Chat() {
       {/* Messages area */}
       <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
         {messages.length === 0 && (
-          <div className="flex items-center justify-center h-full">
-            <div className="text-center space-y-3 max-w-md">
-              <MessageSquare className="h-12 w-12 text-muted-foreground/30 mx-auto" />
-              <h3 className="text-lg font-medium text-muted-foreground">Start a conversation</h3>
-              <p className="text-sm text-muted-foreground/70">
-                Ask Loopi anything about automations, get help debugging workflows, or request
-                assistance with building new ones.
-              </p>
+          <div className="relative flex items-center justify-center h-full grain overflow-hidden">
+            <div className="absolute inset-0 mesh-warm opacity-30 pointer-events-none" aria-hidden />
+            <div className="relative text-center space-y-4 max-w-md px-6">
+              <div className="relative mx-auto w-16 h-16">
+                <div className="absolute inset-0 bg-primary/25 blur-2xl rounded-full" aria-hidden />
+                <div className="relative w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-[0_1px_0_rgba(255,255,255,0.25)_inset,0_8px_24px_-8px_rgba(193,95,54,0.5)]">
+                  <MessageSquare className="h-7 w-7 text-primary-foreground" />
+                </div>
+              </div>
+              <div>
+                <h3 className="font-serif text-2xl tracking-tight mb-2">
+                  Ask Loopi <em className="not-italic ink-gradient">anything</em>.
+                </h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  Ask about automations, get help debugging workflows, request a new one, or tell
+                  Loopi to spin up an agent for you.
+                </p>
+              </div>
             </div>
           </div>
         )}

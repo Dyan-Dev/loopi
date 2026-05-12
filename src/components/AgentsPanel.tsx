@@ -90,22 +90,36 @@ export function AgentsPanel({ onOpenWorkflow }: AgentsPanelProps) {
   return (
     <div className="container mx-auto p-6 max-w-6xl">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h2 className="text-2xl font-bold">Agents</h2>
-          <p className="text-sm text-muted-foreground">
-            AI agents that execute tasks using workflows, APIs, and desktop controls
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={loadAgents}>
-            <RefreshCw className="h-4 w-4 mr-1" />
-            Refresh
-          </Button>
-          <Button size="sm" onClick={() => setCreateOpen(true)}>
-            <Plus className="h-4 w-4 mr-1" />
-            Create Agent
-          </Button>
+      <div className="relative overflow-hidden rounded-2xl border border-border/70 bg-card p-6 sm:p-7 mb-6 grain">
+        <div className="absolute inset-0 mesh-warm opacity-35 pointer-events-none" aria-hidden />
+        <div className="relative flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+          <div className="max-w-xl">
+            <span className="inline-flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.18em] text-primary mb-3">
+              <span className="w-5 h-px bg-primary/60" />
+              Agents
+            </span>
+            <h2 className="font-serif text-3xl leading-[1.05] tracking-tight mb-2">
+              Goal‑driven workers that{" "}
+              <em className="not-italic ink-gradient">patch themselves</em>.
+            </h2>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              AI agents that execute tasks using workflows, APIs, and desktop controls. Reflection rewrites failing workflows in place.
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={loadAgents} className="backdrop-blur bg-card/80">
+              <RefreshCw className="h-4 w-4 mr-1" />
+              Refresh
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => setCreateOpen(true)}
+              className="shadow-premium hover:shadow-premium-hover hover:-translate-y-0.5 active:translate-y-0 transition-all"
+            >
+              <Plus className="h-4 w-4 mr-1" />
+              Create Agent
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -115,18 +129,29 @@ export function AgentsPanel({ onOpenWorkflow }: AgentsPanelProps) {
           Loading agents...
         </div>
       ) : agents.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 text-center">
-          <Bot className="h-16 w-16 text-muted-foreground/30 mb-4" />
-          <h3 className="text-lg font-medium mb-2">No agents yet</h3>
-          <p className="text-sm text-muted-foreground mb-4 max-w-md">
-            Create agents to automate complex tasks. Agents can run workflows, make API calls,
-            control your desktop, and more. You can also ask Loopi in the Chat tab to create agents
-            for you.
-          </p>
-          <Button onClick={() => setCreateOpen(true)}>
-            <Plus className="h-4 w-4 mr-1" />
-            Create Your First Agent
-          </Button>
+        <div className="relative overflow-hidden rounded-2xl border border-dashed border-border/70 py-20 text-center grain">
+          <div className="absolute inset-0 surface-dotted opacity-25 pointer-events-none" aria-hidden />
+          <div className="relative flex flex-col items-center">
+            <div className="relative mb-5">
+              <div className="absolute inset-0 bg-primary/30 blur-2xl rounded-full" aria-hidden />
+              <div className="relative w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-[0_1px_0_rgba(255,255,255,0.25)_inset,0_8px_24px_-8px_rgba(193,95,54,0.5)]">
+                <Bot className="h-8 w-8 text-primary-foreground" />
+              </div>
+            </div>
+            <h3 className="font-serif text-xl mb-2">No agents yet</h3>
+            <p className="text-sm text-muted-foreground mb-6 max-w-md leading-relaxed">
+              Create agents to automate complex tasks. Agents can run workflows, make API calls,
+              control your desktop, and more. You can also ask Loopi in the Chat tab to create agents
+              for you.
+            </p>
+            <Button
+              onClick={() => setCreateOpen(true)}
+              className="shadow-premium hover:shadow-premium-hover hover:-translate-y-0.5 active:translate-y-0 transition-all"
+            >
+              <Plus className="h-4 w-4 mr-1" />
+              Create Your First Agent
+            </Button>
+          </div>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">

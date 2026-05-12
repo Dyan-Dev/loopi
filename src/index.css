@@ -3,81 +3,129 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --font-size: 16px;
-  --background: #ffffff;
-  --foreground: oklch(0.145 0 0);
+  --font-size: 14.5px;
+
+  /* Warm editorial palette — matches loopi.site */
+  --background: #faf8f3;           /* parchment */
+  --foreground: #1a1510;           /* warm ink */
   --card: #ffffff;
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: #030213;
-  --primary-foreground: oklch(1 0 0);
-  --secondary: oklch(0.95 0.0058 264.53);
-  --secondary-foreground: #030213;
-  --muted: #ececf0;
-  --muted-foreground: #717182;
-  --accent: #e9ebef;
-  --accent-foreground: #030213;
-  --destructive: #d4183d;
+  --card-foreground: #1a1510;
+  --popover: #ffffff;
+  --popover-foreground: #1a1510;
+
+  /* Primary — terracotta (#c15f36) */
+  --primary: #c15f36;
+  --primary-foreground: #ffffff;
+
+  /* Secondary — warm copper mid-tone */
+  --secondary: #f3efe6;
+  --secondary-foreground: #1a1510;
+
+  --muted: #f3efe6;
+  --muted-foreground: #75694f;
+  --accent: #f6e2d5;
+  --accent-foreground: #7f381d;
+
+  --destructive: #c94a3a;
   --destructive-foreground: #ffffff;
-  --border: rgba(0, 0, 0, 0.1);
+
+  --border: rgba(42, 19, 11, 0.09);
   --input: transparent;
-  --input-background: #f3f3f5;
-  --switch-background: #cbced4;
+  --input-background: #ffffff;
+  --switch-background: #d2c5ac;
+
   --font-weight-medium: 500;
   --font-weight-normal: 400;
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: #030213;
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+
+  --ring: rgba(193, 95, 54, 0.5);
+
+  --chart-1: #c15f36;   /* primary */
+  --chart-2: #9f6436;   /* secondary */
+  --chart-3: #c59818;   /* accent */
+  --chart-4: #d5814f;   /* primary-400 */
+  --chart-5: #b88158;   /* secondary-400 */
+
+  --radius: 0.75rem;
+
+  --sidebar: #faf8f3;
+  --sidebar-foreground: #1a1510;
+  --sidebar-primary: #c15f36;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #f3efe6;
+  --sidebar-accent-foreground: #1a1510;
+  --sidebar-border: rgba(42, 19, 11, 0.08);
+  --sidebar-ring: rgba(193, 95, 54, 0.5);
+
+  /* Design tokens for premium treatments */
+  --color-primary-50: #fbf2ed;
+  --color-primary-100: #f6e2d5;
+  --color-primary-200: #edc3a6;
+  --color-primary-300: #e2a278;
+  --color-primary-400: #d5814f;
+  --color-primary-500: #c15f36;
+  --color-primary-600: #a44a27;
+  --color-primary-700: #7f381d;
+  --color-accent-300: #ecca59;
+  --color-accent-500: #c59818;
+  --color-accent-600: #9e7912;
+  --color-secondary-300: #cca281;
+  --color-secondary-500: #9f6436;
+  --color-secondary-700: #603c20;
+  --color-ink-warm-300: #d2c5ac;
+  --color-ink-warm-700: #4c3f31;
+  --color-ink-warm-800: #2d261d;
+  --color-ink-warm-900: #1a1510;
+
+  /* Editorial font stack */
+  --font-serif: "Fraunces", "Tiempos Headline", "Charter", "Georgia", "Cambria", "Times New Roman", serif;
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.145 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.145 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.985 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.396 0.141 25.723);
-  --destructive-foreground: oklch(0.637 0.237 25.331);
-  --border: oklch(0.269 0 0);
-  --input: oklch(0.269 0 0);
-  --ring: oklch(0.439 0 0);
-  --font-weight-medium: 500;
-  --font-weight-normal: 400;
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(0.269 0 0);
-  --sidebar-ring: oklch(0.439 0 0);
+  --background: #100d0a;           /* deep warm ink */
+  --foreground: #f3efe6;
+  --card: #1a1510;
+  --card-foreground: #f3efe6;
+  --popover: #1a1510;
+  --popover-foreground: #f3efe6;
+
+  --primary: #d5814f;              /* terracotta 400 in dark */
+  --primary-foreground: #1a0a06;
+
+  --secondary: #2d261d;
+  --secondary-foreground: #f3efe6;
+
+  --muted: #2d261d;
+  --muted-foreground: #b09d7e;
+
+  --accent: #2d261d;
+  --accent-foreground: #edc3a6;
+
+  --destructive: #e06b5a;
+  --destructive-foreground: #1a0a06;
+
+  --border: rgba(243, 239, 230, 0.08);
+  --input: #2d261d;
+  --input-background: #1a1510;
+  --switch-background: #4c3f31;
+
+  --ring: rgba(213, 129, 79, 0.55);
+
+  --chart-1: #d5814f;
+  --chart-2: #b88158;
+  --chart-3: #e3b428;
+  --chart-4: #c15f36;
+  --chart-5: #9f6436;
+
+  --sidebar: #1a1510;
+  --sidebar-foreground: #f3efe6;
+  --sidebar-primary: #d5814f;
+  --sidebar-primary-foreground: #1a0a06;
+  --sidebar-accent: #2d261d;
+  --sidebar-accent-foreground: #f3efe6;
+  --sidebar-border: rgba(243, 239, 230, 0.08);
+  --sidebar-ring: rgba(213, 129, 79, 0.55);
 }
 
 @theme inline {
@@ -119,6 +167,10 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+
+  --font-serif: var(--font-serif);
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
 }
 
 @layer base {
@@ -128,6 +180,10 @@
 
   body {
     @apply bg-background text-foreground;
+    font-family: var(--font-sans);
+    font-feature-settings: "ss01", "cv11";
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 }
 
@@ -163,7 +219,7 @@
     p {
       font-size: var(--text-base);
       font-weight: var(--font-weight-normal);
-      line-height: 1.5;
+      line-height: 1.55;
     }
 
     label {
@@ -190,43 +246,257 @@ html {
   font-size: var(--font-size);
 }
 
-/* ReactFlow Dark Theme */
-.dark .react-flow {
-  background-color: oklch(0.145 0 0);
+/* Editorial serif utility — use sparingly for display moments */
+.font-serif {
+  font-family: var(--font-serif);
+  font-feature-settings: "ss01", "cv11", "liga", "dlig";
+  font-variation-settings: "SOFT" 30, "WONK" 0, "opsz" 96;
+  letter-spacing: -0.02em;
 }
 
+/* Film-grain overlay */
+.grain::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.28;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.55 0 0 0 0 0.35 0 0 0 0 0.18 0 0 0 0.9 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 180px 180px;
+}
+
+.dark .grain::before {
+  opacity: 0.14;
+  mix-blend-mode: soft-light;
+}
+
+/* Warm radial mesh — for hero/empty-state backdrops */
+.mesh-warm {
+  background-image:
+    radial-gradient(at 18% 22%, color-mix(in oklab, var(--color-primary-300) 55%, transparent) 0, transparent 55%),
+    radial-gradient(at 82% 12%, color-mix(in oklab, var(--color-accent-300) 45%, transparent) 0, transparent 50%),
+    radial-gradient(at 75% 88%, color-mix(in oklab, var(--color-secondary-300) 40%, transparent) 0, transparent 55%),
+    radial-gradient(at 12% 85%, color-mix(in oklab, var(--color-primary-200) 55%, transparent) 0, transparent 55%);
+}
+
+.dark .mesh-warm {
+  background-image:
+    radial-gradient(at 18% 22%, color-mix(in oklab, var(--color-primary-700) 50%, transparent) 0, transparent 55%),
+    radial-gradient(at 82% 12%, color-mix(in oklab, var(--color-accent-600) 45%, transparent) 0, transparent 50%),
+    radial-gradient(at 75% 88%, color-mix(in oklab, var(--color-secondary-700) 45%, transparent) 0, transparent 55%),
+    radial-gradient(at 12% 85%, color-mix(in oklab, var(--color-primary-700) 55%, transparent) 0, transparent 55%);
+}
+
+/* Dotted texture — for subtle depth */
+.surface-dotted {
+  background-image: radial-gradient(circle, color-mix(in oklab, var(--color-ink-warm-300) 70%, transparent) 1px, transparent 1px);
+  background-size: 22px 22px;
+}
+
+.dark .surface-dotted {
+  background-image: radial-gradient(circle, color-mix(in oklab, var(--color-ink-warm-700) 80%, transparent) 1px, transparent 1px);
+}
+
+/* Premium card — stacked soft shadow, lifts on hover */
+.card-premium {
+  background-color: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.65) inset,
+    0 1px 3px rgba(42, 19, 11, 0.05),
+    0 8px 24px -12px rgba(42, 19, 11, 0.1),
+    0 24px 48px -24px rgba(42, 19, 11, 0.08);
+  transition: box-shadow 0.3s ease, transform 0.3s ease, border-color 0.3s ease;
+}
+
+.card-premium:hover {
+  transform: translateY(-1px);
+  border-color: var(--color-primary-300);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.7) inset,
+    0 2px 4px rgba(193, 95, 54, 0.08),
+    0 14px 30px -14px rgba(193, 95, 54, 0.18),
+    0 34px 60px -28px rgba(42, 19, 11, 0.14);
+}
+
+.dark .card-premium {
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.04) inset,
+    0 1px 3px rgba(0, 0, 0, 0.5),
+    0 10px 28px -14px rgba(0, 0, 0, 0.6),
+    0 28px 56px -28px rgba(0, 0, 0, 0.5);
+}
+
+.dark .card-premium:hover {
+  border-color: var(--color-primary-700);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.05) inset,
+    0 2px 6px rgba(193, 95, 54, 0.18),
+    0 16px 36px -14px rgba(193, 95, 54, 0.28),
+    0 36px 64px -28px rgba(0, 0, 0, 0.65);
+}
+
+/* Terracotta → amber gradient ink — for display headings */
+.ink-gradient {
+  background: linear-gradient(110deg, var(--color-primary-600) 0%, var(--color-primary-500) 35%, var(--color-accent-600) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.dark .ink-gradient {
+  background: linear-gradient(110deg, #e2a278 0%, #ecca59 70%, #f3dd91 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Hairline gradient divider */
+.divider-warm {
+  height: 1px;
+  background: linear-gradient(to right, transparent, var(--color-ink-warm-300), transparent);
+}
+
+.dark .divider-warm {
+  background: linear-gradient(to right, transparent, var(--color-ink-warm-700), transparent);
+}
+
+/* Premium shadow helpers for buttons */
+.shadow-premium {
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.15) inset,
+    0 4px 12px -4px rgba(0, 0, 0, 0.2),
+    0 12px 28px -8px rgba(193, 95, 54, 0.35);
+}
+
+.shadow-premium-hover:hover {
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.2) inset,
+    0 6px 16px -4px rgba(0, 0, 0, 0.25),
+    0 18px 36px -8px rgba(193, 95, 54, 0.5);
+}
+
+/* Custom scrollbar — warm */
+::-webkit-scrollbar {
+  width: 11px;
+  height: 11px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: color-mix(in oklab, var(--color-ink-warm-300) 80%, transparent);
+  border-radius: 6px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in oklab, var(--color-primary-400) 80%, transparent);
+  background-clip: padding-box;
+  border: 2px solid transparent;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: color-mix(in oklab, var(--color-ink-warm-700) 80%, transparent);
+  background-clip: padding-box;
+  border: 2px solid transparent;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in oklab, var(--color-primary-500) 80%, transparent);
+  background-clip: padding-box;
+  border: 2px solid transparent;
+}
+
+/* ReactFlow theming — warm both light and dark */
+.react-flow {
+  background-color: var(--background);
+}
+
+.react-flow__background {
+  background-color: var(--background);
+}
+
+.react-flow__minimap {
+  background-color: var(--card);
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 14px -6px rgba(42, 19, 11, 0.1);
+}
+
+.react-flow__controls {
+  background-color: var(--card);
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.7) inset, 0 4px 14px -6px rgba(42, 19, 11, 0.1);
+  overflow: hidden;
+}
+
+.react-flow__controls-button {
+  background-color: var(--card);
+  color: var(--foreground);
+  border: none;
+  border-bottom: 1px solid var(--border);
+}
+
+.react-flow__controls-button:hover {
+  background-color: var(--muted);
+  color: var(--primary);
+}
+
+.react-flow__edge-path {
+  stroke: color-mix(in oklab, var(--color-primary-400) 60%, transparent);
+  stroke-width: 1.5;
+}
+
+.react-flow__handle {
+  background-color: var(--card);
+  border: 2px solid var(--color-primary-400);
+  width: 10px;
+  height: 10px;
+}
+
+.react-flow__handle.connectable:hover {
+  background-color: var(--color-primary-500);
+  border-color: var(--color-primary-600);
+}
+
+.dark .react-flow,
 .dark .react-flow__background {
-  background-color: oklch(0.145 0 0);
+  background-color: var(--background);
 }
 
 .dark .react-flow__minimap {
-  background-color: oklch(0.205 0 0);
+  background-color: var(--card);
 }
 
 .dark .react-flow__controls {
-  background-color: oklch(0.205 0 0);
-  box-shadow: 0 0 0 1px oklch(0.269 0 0);
+  background-color: var(--card);
+  box-shadow: 0 0 0 1px var(--border);
 }
 
 .dark .react-flow__controls-button {
-  background-color: oklch(0.269 0 0);
-  color: oklch(0.985 0 0);
-  border: none;
+  background-color: var(--card);
+  color: var(--foreground);
+  border-bottom-color: var(--border);
 }
 
 .dark .react-flow__controls-button:hover {
-  background-color: oklch(0.329 0 0);
+  background-color: var(--muted);
 }
 
 .dark .react-flow__edge-path {
-  stroke: oklch(0.5 0 0);
+  stroke: color-mix(in oklab, var(--color-primary-400) 50%, transparent);
 }
 
 .dark .react-flow__handle {
-  background-color: oklch(0.329 0 0);
-  border-color: oklch(0.5 0 0);
+  background-color: var(--card);
+  border-color: var(--color-primary-400);
 }
 
 .dark .react-flow__handle.connectable:hover {
-  background-color: oklch(0.438 0 0);
+  background-color: var(--color-primary-500);
 }

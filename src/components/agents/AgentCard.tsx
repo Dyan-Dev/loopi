@@ -13,10 +13,14 @@ interface AgentCardProps {
 }
 
 const STATUS_COLORS: Record<string, string> = {
-  active: "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300",
-  running: "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300",
-  stopped: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300",
-  failed: "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300",
+  active:
+    "bg-emerald-100 text-emerald-700 border-emerald-200/80 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-900/60",
+  running:
+    "bg-emerald-100 text-emerald-700 border-emerald-200/80 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-900/60",
+  stopped:
+    "bg-muted text-muted-foreground border-border",
+  failed:
+    "bg-red-100 text-red-700 border-red-200/80 dark:bg-red-950/50 dark:text-red-300 dark:border-red-900/60",
 };
 
 function displayStatus(agent: Agent): string {
@@ -44,15 +48,28 @@ export function AgentCard({ agent, onStart, onStop, onDelete, onClick }: AgentCa
 
   return (
     <Card
-      className="p-4 cursor-pointer hover:border-primary/50 transition-colors"
+      className="card-premium relative p-5 cursor-pointer overflow-hidden"
       onClick={() => onClick(agent)}
     >
-      <div className="flex items-start justify-between mb-3">
-        <div className="min-w-0 flex-1">
-          <h3 className="font-semibold text-sm truncate">{agent.name}</h3>
-          <p className="text-xs text-muted-foreground truncate">{agent.role}</p>
+      {status === "running" && (
+        <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-emerald-500 to-transparent" aria-hidden />
+      )}
+      <div className="flex items-start justify-between mb-3 gap-2">
+        <div className="flex items-start gap-3 min-w-0 flex-1">
+          <div className="shrink-0 w-9 h-9 rounded-lg bg-gradient-to-br from-primary to-primary/80 text-primary-foreground flex items-center justify-center font-serif text-sm shadow-[0_1px_0_rgba(255,255,255,0.2)_inset,0_4px_12px_-4px_rgba(193,95,54,0.45)]">
+            {agent.name.charAt(0).toUpperCase()}
+          </div>
+          <div className="min-w-0 flex-1">
+            <h3 className="font-semibold text-sm truncate leading-tight">{agent.name}</h3>
+            <p className="text-xs text-muted-foreground truncate mt-0.5">{agent.role}</p>
+          </div>
         </div>
-        <Badge className={`ml-2 text-xs ${STATUS_COLORS[status] || ""}`}>{status}</Badge>
+        <Badge variant="outline" className={`text-[10px] font-medium uppercase tracking-wider border ${STATUS_COLORS[status] || ""}`}>
+          {status === "running" && (
+            <span className="mr-1 inline-block w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+          )}
+          {status}
+        </Badge>
       </div>
 
       {agent.goal && (

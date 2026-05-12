@@ -114,14 +114,19 @@ export default function App() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="border-b border-border bg-card">
+      <header className="sticky top-0 z-40 border-b border-border/70 bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60">
         <div className="flex h-16 items-center justify-between px-6">
-          <div className="flex items-center space-x-2">
-            <img src={loopLogo} alt="Loopi" className="h-8 w-8" />
-            <h1 className="text-xl font-semibold">Loopi</h1>
+          <div className="flex items-center gap-2.5">
+            <div className="relative">
+              <div className="absolute inset-0 rounded-lg bg-primary/20 blur-md -z-10" aria-hidden />
+              <img src={loopLogo} alt="Loopi" className="h-8 w-8 relative" />
+            </div>
+            <h1 className="font-serif text-xl tracking-tight">
+              <span className="ink-gradient">Loopi</span>
+            </h1>
           </div>
 
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center gap-3">
             <Tabs
               value={currentView}
               onValueChange={(value: string) => {
@@ -139,25 +144,40 @@ export default function App() {
                 }
               }}
             >
-              <TabsList>
-                <TabsTrigger value="chat">
-                  <MessageSquare className="h-4 w-4 mr-1" />
+              <TabsList className="h-10 p-1 rounded-xl bg-muted/60 backdrop-blur">
+                <TabsTrigger
+                  value="chat"
+                  className="rounded-lg px-3 data-[state=active]:bg-card data-[state=active]:shadow-[0_1px_0_rgba(255,255,255,0.7)_inset,0_2px_6px_-2px_rgba(42,19,11,0.1)] data-[state=active]:text-primary"
+                >
+                  <MessageSquare className="h-4 w-4 mr-1.5" />
                   Chat
                 </TabsTrigger>
-                <TabsTrigger value="agents">
-                  <Users className="h-4 w-4 mr-1" />
+                <TabsTrigger
+                  value="agents"
+                  className="rounded-lg px-3 data-[state=active]:bg-card data-[state=active]:shadow-[0_1px_0_rgba(255,255,255,0.7)_inset,0_2px_6px_-2px_rgba(42,19,11,0.1)] data-[state=active]:text-primary"
+                >
+                  <Users className="h-4 w-4 mr-1.5" />
                   Agents
                 </TabsTrigger>
-                <TabsTrigger value="dashboard">
-                  <Grid className="h-4 w-4 mr-1" />
+                <TabsTrigger
+                  value="dashboard"
+                  className="rounded-lg px-3 data-[state=active]:bg-card data-[state=active]:shadow-[0_1px_0_rgba(255,255,255,0.7)_inset,0_2px_6px_-2px_rgba(42,19,11,0.1)] data-[state=active]:text-primary"
+                >
+                  <Grid className="h-4 w-4 mr-1.5" />
                   Dashboard
                 </TabsTrigger>
-                <TabsTrigger value="builder">
-                  <Bot className="h-4 w-4 mr-1" />
+                <TabsTrigger
+                  value="builder"
+                  className="rounded-lg px-3 data-[state=active]:bg-card data-[state=active]:shadow-[0_1px_0_rgba(255,255,255,0.7)_inset,0_2px_6px_-2px_rgba(42,19,11,0.1)] data-[state=active]:text-primary"
+                >
+                  <Bot className="h-4 w-4 mr-1.5" />
                   Builder
                 </TabsTrigger>
-                <TabsTrigger value="scheduler">
-                  <SettingsIcon className="h-4 w-4 mr-1" />
+                <TabsTrigger
+                  value="scheduler"
+                  className="rounded-lg px-3 data-[state=active]:bg-card data-[state=active]:shadow-[0_1px_0_rgba(255,255,255,0.7)_inset,0_2px_6px_-2px_rgba(42,19,11,0.1)] data-[state=active]:text-primary"
+                >
+                  <SettingsIcon className="h-4 w-4 mr-1.5" />
                   Scheduler
                 </TabsTrigger>
               </TabsList>
@@ -167,7 +187,11 @@ export default function App() {
               variant="ghost"
               size="icon"
               onClick={() => setCurrentView("settings")}
-              className={currentView === "settings" ? "bg-accent" : ""}
+              className={
+                currentView === "settings"
+                  ? "bg-accent text-primary rounded-xl"
+                  : "rounded-xl hover:text-primary"
+              }
               title="Settings"
             >
               <SettingsIcon className="h-5 w-5" />
