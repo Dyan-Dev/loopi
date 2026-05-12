@@ -23,9 +23,7 @@ jobs:
           node-version: 22
 
       - name: Enable Corepack and install pnpm
-        run: |
-          corepack enable
-          corepack prepare pnpm@latest --activate
+        run: corepack enable
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile --prefer-offline
@@ -55,9 +53,7 @@ jobs:
           node-version: 22
 
       - name: Enable Corepack and install pnpm
-        run: |
-          corepack enable
-          corepack prepare pnpm@latest --activate
+        run: corepack enable
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile --prefer-offline

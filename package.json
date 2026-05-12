@@ -3,6 +3,7 @@
   "version": "1.10.0",
   "description": "Loopi — Visual Browser & Desktop Automation for humans and teams",
   "author": "Dyan-Dev",
+  "packageManager": "pnpm@10.22.0",
   "main": ".webpack/main",
   "bin": {
     "loopi-cli": "bin/loopi"
