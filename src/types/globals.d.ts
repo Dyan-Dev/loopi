@@ -261,6 +261,7 @@ export interface ElectronAPI {
       stderr: string;
       exitCode: number;
     }>;
+    platform: string;
   };
   chat: {
     save: (

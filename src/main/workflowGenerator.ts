@@ -72,7 +72,12 @@ const VALID_STEP_TYPES = new Set([
   "mapArray",
   "codeExecute",
   "systemCommand",
-  "desktopControl",
+  "desktopKeyboard",
+  "desktopMouseMove",
+  "desktopMouseClick",
+  "desktopMouseDrag",
+  "desktopMouseScroll",
+  "desktopScreenshot",
   "discordSendMessage",
   "discordSendWebhook",
   "discordReactMessage",
@@ -218,7 +223,12 @@ Given a user's description, generate a JSON workflow with nodes and edges.
 - jsonParse: { type: "jsonParse", sourceVariable: "varName", path: "data.items[0].title", storeKey: "parsed" } - Extract fields from JSON. \`sourceVariable\` is the plain variable NAME (no \`{{}}\` wrapping). For apiCall outputs, paths must start with \`data.\` because that's where the body lives.
 - jsonStringify: { type: "jsonStringify", input: "{{obj}}", storeKey: "jsonStr" }
 - systemCommand: { type: "systemCommand", command: "notify-send \"Title\" \"Body\"", storeKey: "output" } - Run LOCAL shell commands only (open app, notify, mkdir). NEVER wrap {{var}} in single quotes — use double quotes.
-- desktopControl: { type: "desktopControl", action: "click"|"type"|"keyPress"|"screenshot", ... } - Mouse/keyboard control
+- desktopKeyboard: { type: "desktopKeyboard", text: "Hello world" } - Type text via keyboard. Use after opening an app with systemCommand + wait.
+- desktopKeyboard (key press): { type: "desktopKeyboard", key: "Enter", modifiers: ["ctrl"] } - Press a key combo. Keys: Enter, Escape, Tab, Space, Backspace, Delete, Up, Down, Left, Right, F1-F12, a-z, 0-9.
+- desktopMouseMove: { type: "desktopMouseMove", x: 100, y: 200 } - Move cursor to absolute screen coordinates
+- desktopMouseClick: { type: "desktopMouseClick", x: 100, y: 200, button: "left"|"right"|"middle", double: false } - Click at coordinates
+- desktopMouseScroll: { type: "desktopMouseScroll", x: 100, y: 200, direction: "up"|"down", amount: 3 } - Scroll
+- desktopScreenshot: { type: "desktopScreenshot", storeKey: "img" } - Take desktop screenshot
 - codeExecute: { type: "codeExecute", code: "return a + b", storeKey: "result" } - SANDBOXED JS only; NO require/fetch/Node APIs
 
 ### AI Steps

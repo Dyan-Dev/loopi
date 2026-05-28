@@ -591,7 +591,8 @@ export function registerIPCHandlers(
     // Check if claude CLI is installed
     let hasClaudeCli = false;
     try {
-      execSync("which claude", { stdio: "ignore", timeout: 3000 });
+      const whichCmd = process.platform === "win32" ? "where claude" : "which claude";
+      execSync(whichCmd, { stdio: "ignore", timeout: 3000 });
       hasClaudeCli = true;
     } catch {
       // not installed

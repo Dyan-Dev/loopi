@@ -118,6 +118,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
   system: {
     exec: (params: { command: string; cwd?: string; timeout?: number }) =>
       ipcRenderer.invoke("system:exec", params),
+    platform: process.platform,
   },
   chat: {
     save: (messages: unknown[], provider?: string, model?: string) =>
