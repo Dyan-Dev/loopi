@@ -106,16 +106,24 @@ export async function callLLM(params: LLMParams): Promise<LLMResult> {
       const fullPrompt = contextParts.join("\n\n");
 
       const { spawn: spawnProc } = await import("child_process");
-      let claudePath = "claude";
+      const isWindows = process.platform === "win32";
+      let claudePath = isWindows ? "claude.cmd" : "claude";
       try {
-        claudePath = execSync("which claude", { encoding: "utf-8" }).trim();
+        const whichCmd = isWindows ? "where claude" : "which claude";
+        claudePath = execSync(whichCmd, { encoding: "utf-8" }).trim().split(/\r?\n/)[0];
       } catch {
         const { existsSync } = await import("fs");
-        const candidates = [
-          `${process.env.HOME}/.local/bin/claude`,
-          "/usr/local/bin/claude",
-          `${process.env.HOME}/.npm-global/bin/claude`,
-        ];
+        const candidates = isWindows
+          ? [
+              `${process.env.APPDATA}\\npm\\claude.cmd`,
+              `${process.env.APPDATA}\\npm\\claude`,
+              `${process.env.LOCALAPPDATA}\\npm\\claude.cmd`,
+            ]
+          : [
+              `${process.env.HOME}/.local/bin/claude`,
+              "/usr/local/bin/claude",
+              `${process.env.HOME}/.npm-global/bin/claude`,
+            ];
         for (const c of candidates) {
           if (existsSync(c)) {
             claudePath = c;
@@ -125,7 +133,7 @@ export async function callLLM(params: LLMParams): Promise<LLMResult> {
       }
       const userShellEnv = { ...process.env };
       delete userShellEnv.ANTHROPIC_API_KEY;
-      if (!userShellEnv.PATH?.includes(".local/bin")) {
+      if (!isWindows && !userShellEnv.PATH?.includes(".local/bin")) {
         userShellEnv.PATH = `${process.env.HOME}/.local/bin:${userShellEnv.PATH}`;
       }
 

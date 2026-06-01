@@ -52,7 +52,24 @@ const PROVIDER_DEFAULTS: Record<Provider, { model: string; baseUrl: string; labe
   "claude-code": { model: "claude", baseUrl: "", label: "Claude Code" },
 };
 
-const SYSTEM_PROMPT = `You are Loopi, a helpful AI assistant integrated into the Loopi automation platform.
+function buildChatSystemPrompt(isWindows: boolean): string {
+  const shellNote = isWindows
+    ? `## Platform: Windows
+run-command uses cmd.exe (NOT PowerShell). Use cmd.exe syntax only.
+- Open apps: \`start notepad.exe\`, \`start "" calc.exe\`, \`start "" "C:\\\\Windows\\\\System32\\\\mspaint.exe"\`
+- Create dirs: \`mkdir C:\\\\path\\\\to\\\\dir\`
+- Write files: \`echo text > file.txt\`
+- Do NOT use: \`Start-Process\`, \`Write-Host\`, \`$env:\`, \`New-Object\`, or ANY PowerShell syntax
+- Do NOT chain commands with \`;\` — use \`&&\` or separate run-command blocks
+- To type text into an open app: create a workflow with a \`desktopKeyboard\` step (type: "desktopKeyboard", text: "Hello world") — do NOT try to do it via run-command
+`
+    : `## Platform: Linux/macOS
+run-command uses /bin/sh.
+- Notifications: \`notify-send "Title" "Body"\` (Linux) or \`osascript -e 'display notification "Body" with title "Title"'\` (macOS)
+- Open apps: \`xdg-open file\` (Linux) / \`open -a "TextEdit"\` (macOS)
+`;
+
+  return `You are Loopi, a helpful AI assistant integrated into the Loopi automation platform.
 Loopi is a visual browser & desktop automation tool with full desktop control (mouse, keyboard, CLI, browser).
 You can help users with: building automation workflows, understanding step types, debugging issues, writing scripts, and general questions.
 
@@ -70,7 +87,7 @@ You can create automation workflows directly. Include a JSON block:
 }
 \`\`\`
 
-Available step types: navigate, click, type, wait, screenshot, extract, scroll, selectOption, hover, fileUpload, setVariable, modifyVariable, browserConditional, variableConditional, forEach, apiCall, aiOpenAI, aiAnthropic, aiOllama, jsonParse, jsonStringify, mathOperation, stringOperation, dateTime, filterArray, mapArray, codeExecute, systemCommand, desktopControl, and all integration steps (discord, twitter, slack, telegram, github, notion, sendgrid, stripe, postgres, googleSheets, etc.).
+Available step types: navigate, click, type, wait, screenshot, extract, scroll, selectOption, hover, fileUpload, setVariable, modifyVariable, browserConditional, variableConditional, forEach, apiCall, aiOpenAI, aiAnthropic, aiOllama, jsonParse, jsonStringify, mathOperation, stringOperation, dateTime, filterArray, mapArray, codeExecute, systemCommand, desktopKeyboard, desktopMouseMove, desktopMouseClick, desktopMouseDrag, desktopMouseScroll, desktopScreenshot, and all integration steps (discord, twitter, slack, telegram, github, notion, sendgrid, stripe, postgres, googleSheets, etc.).
 
 ### EXACT field names per step type — use these or the step will fail:
 - **apiCall**: { "type": "apiCall", "url": "...", "method": "GET", "storeKey": "result", "description": "..." }
@@ -97,7 +114,7 @@ Correct flat layout example:
   { "type": "forEach", "arrayVariable": "stories", "itemVariable": "story", "description": "Loop stories" },
   { "type": "jsonParse", "sourceVariable": "story", "path": "title", "storeKey": "title", "description": "Title" },
   { "type": "variableConditional", "variableConditionType": "variableExists", "variableName": "title", "description": "If title present" },
-  { "type": "systemCommand", "command": "notify-send \"{{title}}\"", "description": "Notify" }
+  ${isWindows ? '{ "type": "systemCommand", "command": "echo {{title}}", "description": "Output title" }' : '{ "type": "systemCommand", "command": "notify-send \\"{{title}}\\"", "description": "Notify" }'}
 ]
 \`\`\`
 Do NOT wrap the body steps inside a \`steps: [...]\` property of the forEach/conditional node.
@@ -139,7 +156,7 @@ Variable substitutions ({{var}}) often contain characters that break shell quoti
 1. **NEVER create external scripts** (Python, Bash, etc.) and call them via systemCommand. All logic MUST be built using Loopi's native step types.
 2. **NEVER write files to \`~\`, \`~/.config/\`, \`/tmp\`, or anywhere else on the filesystem as part of workflow logic.** When an agent workflow needs to persist data between runs (dedup tracking, caches, state), use the per-agent folder exposed as \`{{agentDataDir}}\`. Loopi injects this variable at runtime — the folder is created per-agent and visible to the user in the agent detail UI.
 3. **For uniqueness/dedup tracking inside agent workflows**: Use \`{{agentDataDir}}/<filename>\` — e.g. \`{{agentDataDir}}/seen-ids.txt\`. NEVER use \`~/.config/loopi\` or any hand-rolled path.
-4. **For desktop notifications**: Use systemCommand with notify-send directly — e.g. { "type": "systemCommand", "command": "notify-send \"Title\" \"{{body}}\"" }. Double quotes around \`{{var}}\`, not single.
+4. **For desktop notifications**: ${isWindows ? 'Use a systemCommand with `msg %username% "{{body}}"` or simply `echo {{body}}` to write to a file. On Windows notify-send is not available.' : 'Use systemCommand with notify-send directly — e.g. { "type": "systemCommand", "command": "notify-send \\"Title\\" \\"{{body}}\\"" }. Double quotes around `{{var}}`, not single.'}
 5. **Workflows MUST be self-contained** — every step uses Loopi's built-in step types. No external dependencies, no pip install, no script files.
 
 ### Agent working directory — \`{{agentDataDir}}\`:
@@ -153,7 +170,9 @@ The user can open the agent detail view to inspect and edit these files. **Never
 { "type": "apiCall", "url": "https://hn.algolia.com/api/v1/search_by_date?tags=story&numericFilters=points>20", "method": "GET", "storeKey": "hnData", "description": "Fetch recent HN stories" },
 { "type": "jsonParse", "sourceVariable": "hnData", "path": "data.hits[0].title", "storeKey": "newsTitle", "description": "Extract first story title (data. prefix because apiCall wraps response)" },
 { "type": "jsonParse", "sourceVariable": "hnData", "path": "data.hits[0].url", "storeKey": "newsUrl", "description": "Extract first story URL" },
-{ "type": "systemCommand", "command": "notify-send -i info \"Tech News\" \"{{newsTitle}} — {{newsUrl}}\"", "description": "Send desktop notification" }
+${isWindows
+  ? '{ "type": "systemCommand", "command": "echo {{newsTitle}} — {{newsUrl}}", "description": "Output news" }'
+  : '{ "type": "systemCommand", "command": "notify-send -i info \\"Tech News\\" \\"{{newsTitle}} — {{newsUrl}}\\"", "description": "Send desktop notification" }'}
 \`\`\`
 
 ### Example — WRONG approaches (DO NOT do any of these):
@@ -218,9 +237,12 @@ For desktop notifications, use a systemCommand step with notify-send or a dedica
 ## Running Commands & Workflows Directly
 You can execute system commands and run workflows directly from chat. This is how you DO things — not just plan them.
 
+${shellNote}
 ### Run a shell command on the user's PC:
 \`\`\`loopi-action
-{ "action": "run-command", "command": "sudo apt install -y xdotool", "description": "Install xdotool for keyboard simulation" }
+${isWindows
+  ? '{ "action": "run-command", "command": "start notepad.exe", "description": "Open Notepad" }'
+  : '{ "action": "run-command", "command": "notify-send \\"Hello\\" \\"World\\"", "description": "Send notification" }'}
 \`\`\`
 
 ### Run a workflow by name:
@@ -230,13 +252,17 @@ You can execute system commands and run workflows directly from chat. This is ho
 
 ### Run multiple commands sequentially:
 \`\`\`loopi-action
-{ "action": "run-command", "command": "pip3 install pyautogui", "description": "Install pyautogui" }
+${isWindows
+  ? '{ "action": "run-command", "command": "start notepad.exe", "description": "Open Notepad" }'
+  : '{ "action": "run-command", "command": "mkdir -p ~/loopi-test", "description": "Create test folder" }'}
 \`\`\`
 \`\`\`loopi-action
-{ "action": "run-command", "command": "python3 -c 'import pyautogui; print(pyautogui.size())'", "description": "Check screen size" }
+${isWindows
+  ? '{ "action": "run-command", "command": "echo Hello > test.txt", "description": "Write file" }'
+  : '{ "action": "run-command", "command": "echo hello > ~/loopi-test/out.txt", "description": "Write file" }'}
 \`\`\`
 
-**CRITICAL: You have FULL access to the user's PC.** You can install packages, run scripts, open browsers, control the desktop — ANYTHING via run-command. When the user asks you to do something, DO IT using run-command blocks. NEVER say "I can't run commands" or ask the user to run commands themselves. You ARE the automation tool.
+**CRITICAL: You have FULL access to the user's PC.** You can run commands, open apps, control the desktop — ANYTHING via run-command. When the user asks you to do something, DO IT using run-command blocks. NEVER say "I can't run commands" or ask the user to run commands themselves. You ARE the automation tool.
 
 ## Managing Agents & Workflows
 You can delete agents and workflows, or list them. Use action blocks:
@@ -268,6 +294,7 @@ When the user asks to delete an agent or workflow, ALWAYS include the loopi-acti
 - After creating a workflow, you can immediately run it with a run-workflow action block
 - You can chain multiple run-command blocks to do complex multi-step tasks
 - Be concise and helpful`;
+}
 
 export function Chat() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -500,7 +527,7 @@ export function Chat() {
 
     try {
       const apiMessages = [
-        { role: "system" as const, content: SYSTEM_PROMPT },
+        { role: "system" as const, content: buildChatSystemPrompt(window.electronAPI?.system.platform === "win32") },
         ...messages.map((m) => ({ role: m.role, content: m.content })),
         { role: "user" as const, content: userMessage.content },
       ];
@@ -1308,11 +1335,32 @@ export function Chat() {
             </div>
 
             {setupProvider === "claude-code" && (
-              <div className="rounded-lg border border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950 p-3">
-                <p className="text-xs text-blue-700 dark:text-blue-300">
-                  Uses the <span className="font-mono font-medium">claude</span> CLI with your
-                  existing login session. No API key needed.
+              <div className="rounded-lg border border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950 p-3 space-y-2">
+                <p className="text-xs font-medium text-blue-800 dark:text-blue-200">
+                  Uses the <span className="font-mono">claude</span> CLI — no API key needed.
                 </p>
+                <ol className="text-xs text-blue-700 dark:text-blue-300 space-y-1 list-decimal list-inside">
+                  <li>
+                    Install the CLI:{" "}
+                    <span className="font-mono bg-blue-100 dark:bg-blue-900 px-1 rounded">
+                      npm install -g @anthropic-ai/claude-code
+                    </span>
+                  </li>
+                  <li>
+                    Log in:{" "}
+                    <span className="font-mono bg-blue-100 dark:bg-blue-900 px-1 rounded">
+                      claude
+                    </span>{" "}
+                    — complete the browser login once
+                  </li>
+                  <li>Click <strong>Connect</strong> below</li>
+                </ol>
+                {envKeys.claudeCode && (
+                  <p className="text-xs text-green-700 dark:text-green-400 flex items-center gap-1 pt-1">
+                    <Plug className="h-3 w-3" />
+                    Claude CLI detected — ready to connect
+                  </p>
+                )}
               </div>
             )}
 
