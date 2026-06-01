@@ -1,4 +1,5 @@
 import type { AppSettings, Credential } from "@app-types/globals";
+import { TelegramTab } from "@components/TelegramTab";
 import { Button } from "@components/ui/button";
 import { Card } from "@components/ui/card";
 import { Input } from "@components/ui/input";
@@ -18,6 +19,7 @@ import {
   MessageSquare,
   Plug,
   RotateCcw,
+  Send,
   Workflow,
   X,
 } from "lucide-react";
@@ -170,9 +172,11 @@ The user can open the agent detail view to inspect and edit these files. **Never
 { "type": "apiCall", "url": "https://hn.algolia.com/api/v1/search_by_date?tags=story&numericFilters=points>20", "method": "GET", "storeKey": "hnData", "description": "Fetch recent HN stories" },
 { "type": "jsonParse", "sourceVariable": "hnData", "path": "data.hits[0].title", "storeKey": "newsTitle", "description": "Extract first story title (data. prefix because apiCall wraps response)" },
 { "type": "jsonParse", "sourceVariable": "hnData", "path": "data.hits[0].url", "storeKey": "newsUrl", "description": "Extract first story URL" },
-${isWindows
-  ? '{ "type": "systemCommand", "command": "echo {{newsTitle}} — {{newsUrl}}", "description": "Output news" }'
-  : '{ "type": "systemCommand", "command": "notify-send -i info \\"Tech News\\" \\"{{newsTitle}} — {{newsUrl}}\\"", "description": "Send desktop notification" }'}
+${
+  isWindows
+    ? '{ "type": "systemCommand", "command": "echo {{newsTitle}} — {{newsUrl}}", "description": "Output news" }'
+    : '{ "type": "systemCommand", "command": "notify-send -i info \\"Tech News\\" \\"{{newsTitle}} — {{newsUrl}}\\"", "description": "Send desktop notification" }'
+}
 \`\`\`
 
 ### Example — WRONG approaches (DO NOT do any of these):
@@ -240,9 +244,11 @@ You can execute system commands and run workflows directly from chat. This is ho
 ${shellNote}
 ### Run a shell command on the user's PC:
 \`\`\`loopi-action
-${isWindows
-  ? '{ "action": "run-command", "command": "start notepad.exe", "description": "Open Notepad" }'
-  : '{ "action": "run-command", "command": "notify-send \\"Hello\\" \\"World\\"", "description": "Send notification" }'}
+${
+  isWindows
+    ? '{ "action": "run-command", "command": "start notepad.exe", "description": "Open Notepad" }'
+    : '{ "action": "run-command", "command": "notify-send \\"Hello\\" \\"World\\"", "description": "Send notification" }'
+}
 \`\`\`
 
 ### Run a workflow by name:
@@ -252,14 +258,18 @@ ${isWindows
 
 ### Run multiple commands sequentially:
 \`\`\`loopi-action
-${isWindows
-  ? '{ "action": "run-command", "command": "start notepad.exe", "description": "Open Notepad" }'
-  : '{ "action": "run-command", "command": "mkdir -p ~/loopi-test", "description": "Create test folder" }'}
+${
+  isWindows
+    ? '{ "action": "run-command", "command": "start notepad.exe", "description": "Open Notepad" }'
+    : '{ "action": "run-command", "command": "mkdir -p ~/loopi-test", "description": "Create test folder" }'
+}
 \`\`\`
 \`\`\`loopi-action
-${isWindows
-  ? '{ "action": "run-command", "command": "echo Hello > test.txt", "description": "Write file" }'
-  : '{ "action": "run-command", "command": "echo hello > ~/loopi-test/out.txt", "description": "Write file" }'}
+${
+  isWindows
+    ? '{ "action": "run-command", "command": "echo Hello > test.txt", "description": "Write file" }'
+    : '{ "action": "run-command", "command": "echo hello > ~/loopi-test/out.txt", "description": "Write file" }'
+}
 \`\`\`
 
 **CRITICAL: You have FULL access to the user's PC.** You can run commands, open apps, control the desktop — ANYTHING via run-command. When the user asks you to do something, DO IT using run-command blocks. NEVER say "I can't run commands" or ask the user to run commands themselves. You ARE the automation tool.
@@ -314,6 +324,8 @@ export function Chat() {
   const [setupApiKey, setSetupApiKey] = useState("");
   const [setupCredentialId, setSetupCredentialId] = useState("");
   const [setupBaseUrl, setSetupBaseUrl] = useState("");
+
+  const [activeTab, setActiveTab] = useState<"loopi" | "telegram">("loopi");
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -527,7 +539,10 @@ export function Chat() {
 
     try {
       const apiMessages = [
-        { role: "system" as const, content: buildChatSystemPrompt(window.electronAPI?.system.platform === "win32") },
+        {
+          role: "system" as const,
+          content: buildChatSystemPrompt(window.electronAPI?.system.platform === "win32"),
+        },
         ...messages.map((m) => ({ role: m.role, content: m.content })),
         { role: "user" as const, content: userMessage.content },
       ];
@@ -1353,7 +1368,9 @@ export function Chat() {
                     </span>{" "}
                     — complete the browser login once
                   </li>
-                  <li>Click <strong>Connect</strong> below</li>
+                  <li>
+                    Click <strong>Connect</strong> below
+                  </li>
                 </ol>
                 {envKeys.claudeCode && (
                   <p className="text-xs text-green-700 dark:text-green-400 flex items-center gap-1 pt-1">
@@ -1446,119 +1463,154 @@ export function Chat() {
       {/* Chat header */}
       <div className="flex items-center justify-between border-b border-border px-6 py-3">
         <div className="flex items-center gap-3">
-          <MessageSquare className="h-5 w-5 text-primary" />
-          <div>
-            <h2 className="font-semibold text-sm">Loopi Chat</h2>
-            <p className="text-xs text-muted-foreground">
-              Connected to {PROVIDER_DEFAULTS[config!.provider].label} &middot; {config!.model}
-              {!config!.apiKey && !config!.credentialId && config!.provider !== "ollama" && (
-                <span className="text-green-600 dark:text-green-400 ml-1">(via env key)</span>
-              )}
-            </p>
+          {/* Tab switcher */}
+          <div className="flex items-center gap-1 rounded-lg bg-muted p-1">
+            <button
+              onClick={() => setActiveTab("loopi")}
+              className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium transition-colors ${
+                activeTab === "loopi"
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <MessageSquare className="h-3.5 w-3.5" />
+              Loopi
+            </button>
+            <button
+              onClick={() => setActiveTab("telegram")}
+              className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium transition-colors ${
+                activeTab === "telegram"
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <Send className="h-3.5 w-3.5" />
+              Telegram
+            </button>
           </div>
         </div>
         <div className="flex items-center gap-1">
-          <Button variant="ghost" size="sm" onClick={handleResetChat} title="Clear chat history">
-            <RotateCcw className="h-4 w-4" />
-          </Button>
-          <Button variant="ghost" size="sm" onClick={handleDisconnect}>
-            <X className="h-4 w-4 mr-1" />
-            Disconnect
-          </Button>
+          {activeTab === "loopi" && (
+            <>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleResetChat}
+                title="Clear chat history"
+              >
+                <RotateCcw className="h-4 w-4" />
+              </Button>
+              <Button variant="ghost" size="sm" onClick={handleDisconnect}>
+                <X className="h-4 w-4 mr-1" />
+                Disconnect
+              </Button>
+            </>
+          )}
         </div>
       </div>
 
-      {/* Messages area */}
-      <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
-        {messages.length === 0 && (
-          <div className="relative flex items-center justify-center h-full grain overflow-hidden">
-            <div
-              className="absolute inset-0 mesh-warm opacity-30 pointer-events-none"
-              aria-hidden
-            />
-            <div className="relative text-center space-y-4 max-w-md px-6">
-              <div className="relative mx-auto w-16 h-16">
-                <div className="absolute inset-0 bg-primary/25 blur-2xl rounded-full" aria-hidden />
-                <div className="relative w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-[0_1px_0_rgba(255,255,255,0.25)_inset,0_8px_24px_-8px_rgba(193,95,54,0.5)]">
-                  <MessageSquare className="h-7 w-7 text-primary-foreground" />
+      {/* Telegram tab — always mounted so messages survive tab switches */}
+      <div className={activeTab === "telegram" ? "flex flex-col flex-1 min-h-0" : "hidden"}>
+        <TelegramTab providerConfig={config} />
+      </div>
+
+      {/* Loopi chat — always mounted, hidden when telegram is active */}
+      <div className={activeTab === "loopi" ? "flex flex-col flex-1 min-h-0" : "hidden"}>
+        {/* Messages area */}
+        <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
+          {messages.length === 0 && (
+            <div className="relative flex items-center justify-center h-full grain overflow-hidden">
+              <div
+                className="absolute inset-0 mesh-warm opacity-30 pointer-events-none"
+                aria-hidden
+              />
+              <div className="relative text-center space-y-4 max-w-md px-6">
+                <div className="relative mx-auto w-16 h-16">
+                  <div
+                    className="absolute inset-0 bg-primary/25 blur-2xl rounded-full"
+                    aria-hidden
+                  />
+                  <div className="relative w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-[0_1px_0_rgba(255,255,255,0.25)_inset,0_8px_24px_-8px_rgba(193,95,54,0.5)]">
+                    <MessageSquare className="h-7 w-7 text-primary-foreground" />
+                  </div>
+                </div>
+                <div>
+                  <h3 className="font-serif text-2xl tracking-tight mb-2">
+                    Ask Loopi <em className="not-italic ink-gradient">anything</em>.
+                  </h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    Ask about automations, get help debugging workflows, request a new one, or tell
+                    Loopi to spin up an agent for you.
+                  </p>
                 </div>
               </div>
-              <div>
-                <h3 className="font-serif text-2xl tracking-tight mb-2">
-                  Ask Loopi <em className="not-italic ink-gradient">anything</em>.
-                </h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  Ask about automations, get help debugging workflows, request a new one, or tell
-                  Loopi to spin up an agent for you.
+            </div>
+          )}
+
+          {messages.map((msg) => (
+            <div
+              key={msg.id}
+              className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+            >
+              <div
+                className={`max-w-[75%] rounded-2xl px-4 py-3 text-sm ${
+                  msg.role === "user"
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted text-foreground"
+                }`}
+              >
+                {renderMessageContent(msg.content)}
+                <p
+                  className={`text-[10px] mt-1 ${
+                    msg.role === "user" ? "text-primary-foreground/60" : "text-muted-foreground"
+                  }`}
+                >
+                  {msg.timestamp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                 </p>
               </div>
             </div>
-          </div>
-        )}
+          ))}
 
-        {messages.map((msg) => (
-          <div
-            key={msg.id}
-            className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
-          >
-            <div
-              className={`max-w-[75%] rounded-2xl px-4 py-3 text-sm ${
-                msg.role === "user"
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-muted text-foreground"
-              }`}
-            >
-              {renderMessageContent(msg.content)}
-              <p
-                className={`text-[10px] mt-1 ${
-                  msg.role === "user" ? "text-primary-foreground/60" : "text-muted-foreground"
-                }`}
-              >
-                {msg.timestamp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-              </p>
+          {isLoading && (
+            <div className="flex justify-start">
+              <div className="bg-muted rounded-2xl px-4 py-3">
+                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+              </div>
             </div>
-          </div>
-        ))}
+          )}
 
-        {isLoading && (
-          <div className="flex justify-start">
-            <div className="bg-muted rounded-2xl px-4 py-3">
-              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+          {error && messages.length > 0 && (
+            <div className="flex justify-center">
+              <div className="flex items-center gap-2 text-sm text-destructive bg-destructive/10 rounded-lg px-3 py-2">
+                <AlertCircle className="h-4 w-4 shrink-0" />
+                {error}
+              </div>
             </div>
+          )}
+
+          <div ref={messagesEndRef} />
+        </div>
+
+        {/* Input area */}
+        <div className="border-t border-border px-6 py-4">
+          <div className="flex items-center gap-2 max-w-4xl mx-auto">
+            <Input
+              ref={inputRef}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Message Loopi..."
+              disabled={isLoading}
+              className="flex-1"
+            />
+            <Button onClick={handleSend} disabled={!input.trim() || isLoading} size="icon">
+              {isLoading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <ArrowUp className="h-4 w-4" />
+              )}
+            </Button>
           </div>
-        )}
-
-        {error && messages.length > 0 && (
-          <div className="flex justify-center">
-            <div className="flex items-center gap-2 text-sm text-destructive bg-destructive/10 rounded-lg px-3 py-2">
-              <AlertCircle className="h-4 w-4 shrink-0" />
-              {error}
-            </div>
-          </div>
-        )}
-
-        <div ref={messagesEndRef} />
-      </div>
-
-      {/* Input area */}
-      <div className="border-t border-border px-6 py-4">
-        <div className="flex items-center gap-2 max-w-4xl mx-auto">
-          <Input
-            ref={inputRef}
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="Message Loopi..."
-            disabled={isLoading}
-            className="flex-1"
-          />
-          <Button onClick={handleSend} disabled={!input.trim() || isLoading} size="icon">
-            {isLoading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <ArrowUp className="h-4 w-4" />
-            )}
-          </Button>
         </div>
       </div>
     </div>
