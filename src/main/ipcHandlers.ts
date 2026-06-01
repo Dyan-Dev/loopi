@@ -25,6 +25,7 @@ import { executeAutomationGraph } from "./graphExecutor";
 import { callLLM } from "./llmClient";
 import { SelectorPicker } from "./selectorPicker";
 import { loadSettings, saveSettings } from "./settingsStore";
+import { telegramBotService } from "./telegramBot";
 import {
   defaultStorageFolder,
   deleteAutomation,
@@ -966,5 +967,45 @@ export function registerIPCHandlers(
   ipcMain.handle("chat:clear", async () => {
     chatStore.clear();
     return true;
+  });
+
+  // ─── Telegram Bot ───────────────────────────────────────────────
+
+  ipcMain.handle(
+    "telegram:connect",
+    async (
+      _event,
+      params: {
+        token: string;
+        providerConfig: {
+          provider: "openai" | "anthropic" | "ollama" | "claude-code";
+          model?: string;
+          apiKey?: string;
+          credentialId?: string;
+          baseUrl?: string;
+        };
+      }
+    ) => {
+      return telegramBotService.connect({
+        token: params.token,
+        providerConfig: params.providerConfig,
+        agentManager,
+        onMessage: (message) => {
+          windowManager.getMainWindow()?.webContents.send("telegram:message", message);
+        },
+        onEvent: (event, data) => {
+          windowManager.getMainWindow()?.webContents.send(event, data);
+        },
+      });
+    }
+  );
+
+  ipcMain.handle("telegram:disconnect", async () => {
+    await telegramBotService.disconnect();
+    return { success: true };
+  });
+
+  ipcMain.handle("telegram:status", async () => {
+    return telegramBotService.getStatus();
   });
 }

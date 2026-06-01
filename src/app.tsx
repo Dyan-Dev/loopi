@@ -60,23 +60,34 @@ export default function App() {
     loadAndApplyTheme();
   }, []);
 
-  useEffect(() => {
-    const loadSavedTrees = async () => {
-      const savedAutomations = await window.electronAPI?.tree.list();
-      if (savedAutomations && savedAutomations.length > 0)
-        savedAutomations.sort(
-          (a: StoredAutomation, b: StoredAutomation) =>
-            new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
-        );
-      setAutomations(savedAutomations || []);
-    };
+  const loadSavedTrees = async () => {
+    const savedAutomations = await window.electronAPI?.tree.list();
+    if (savedAutomations && savedAutomations.length > 0)
+      savedAutomations.sort(
+        (a: StoredAutomation, b: StoredAutomation) =>
+          new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+      );
+    setAutomations(savedAutomations || []);
+  };
 
+  useEffect(() => {
     try {
       loadSavedTrees();
     } catch (err) {
       console.error(err);
       toast.error("Failed to load saved automations");
     }
+  }, []);
+
+  // Refresh when Telegram bot creates a workflow or agent
+  useEffect(() => {
+    window.electronAPI?.telegram.onWorkflowSaved(() => {
+      loadSavedTrees();
+      toast.success("New workflow created via Telegram");
+    });
+    window.electronAPI?.telegram.onAgentCreated(() => {
+      toast.success("New agent created via Telegram");
+    });
   }, []);
 
   useEffect(() => {

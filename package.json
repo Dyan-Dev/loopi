@@ -62,6 +62,7 @@
   "dependencies": {
     "@nut-tree-fork/nut-js": "^4.2.6",
     "@tailwindcss/postcss": "^4.1.12",
+    "@types/node-telegram-bot-api": "^0.64.14",
     "autoprefixer": "^10.4.21",
     "axios": "^1.13.5",
     "class-variance-authority": "^0.7.1",
@@ -73,6 +74,7 @@
     "lucide-react": "0.544.0",
     "next-themes": "^0.4.6",
     "node-cron": "^3.0.3",
+    "node-telegram-bot-api": "^0.67.0",
     "postcss": "^8.5.3",
     "puppeteer": "^24.34.0",
     "radix-ui": "^1.4.3",

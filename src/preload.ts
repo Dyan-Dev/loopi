@@ -120,6 +120,27 @@ contextBridge.exposeInMainWorld("electronAPI", {
       ipcRenderer.invoke("system:exec", params),
     platform: process.platform,
   },
+  telegram: {
+    connect: (params: {
+      token: string;
+      providerConfig: {
+        provider: string;
+        model?: string;
+        apiKey?: string;
+        credentialId?: string;
+        baseUrl?: string;
+      };
+    }) => ipcRenderer.invoke("telegram:connect", params),
+    disconnect: () => ipcRenderer.invoke("telegram:disconnect"),
+    status: () => ipcRenderer.invoke("telegram:status"),
+    onMessage: (callback: (message: unknown) => void) =>
+      ipcRenderer.on("telegram:message", (_event, message) => callback(message)),
+    removeMessageListener: () => ipcRenderer.removeAllListeners("telegram:message"),
+    onWorkflowSaved: (callback: () => void) =>
+      ipcRenderer.on("telegram:workflowSaved", () => callback()),
+    onAgentCreated: (callback: () => void) =>
+      ipcRenderer.on("telegram:agentCreated", () => callback()),
+  },
   chat: {
     save: (messages: unknown[], provider?: string, model?: string) =>
       ipcRenderer.invoke("chat:save", messages, provider, model),

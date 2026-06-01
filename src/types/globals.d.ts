@@ -11,6 +11,15 @@ import type {
 import type { LogEntry } from "@main/debugLogger";
 import type { ConditionalConfig, ConditionalResult } from "./conditions";
 
+export interface TelegramMessage {
+  id: string;
+  chatId: number;
+  role: "user" | "assistant";
+  content: string;
+  senderName: string;
+  timestamp: string;
+}
+
 export interface WorkflowSchedule {
   id: string;
   workflowId: string;
@@ -262,6 +271,24 @@ export interface ElectronAPI {
       exitCode: number;
     }>;
     platform: string;
+  };
+  telegram: {
+    connect: (params: {
+      token: string;
+      providerConfig: {
+        provider: string;
+        model?: string;
+        apiKey?: string;
+        credentialId?: string;
+        baseUrl?: string;
+      };
+    }) => Promise<{ success: boolean; username?: string; error?: string }>;
+    disconnect: () => Promise<{ success: boolean }>;
+    status: () => Promise<{ connected: boolean; username?: string }>;
+    onMessage: (callback: (message: TelegramMessage) => void) => void;
+    removeMessageListener: () => void;
+    onWorkflowSaved: (callback: () => void) => void;
+    onAgentCreated: (callback: () => void) => void;
   };
   chat: {
     save: (
