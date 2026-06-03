@@ -1,3 +1,4 @@
+import { buildPlatformShellNote } from "@utils/platformPrompt";
 import { exec } from "child_process";
 import TelegramBot from "node-telegram-bot-api";
 import type { AgentManager } from "./agentManager";
@@ -37,23 +38,7 @@ interface BotConfig {
 // ─── System prompt ────────────────────────────────────────────────────────────
 
 function buildSystemPrompt(): string {
-  const isWindows = process.platform === "win32";
-  const shellNote = isWindows
-    ? `## Platform: Windows — PowerShell
-run-command uses PowerShell. Use PowerShell syntax only.
-- ALWAYS write files to $env:TEMP or $env:APPDATA — NEVER to C:\\ (access denied)
-- Write a script: \`Set-Content "$env:TEMP\\\\loopi-script.ps1" 'your script'\`
-- Run a script: \`powershell -ExecutionPolicy Bypass -File "$env:TEMP\\\\loopi-script.ps1"\`
-- Windows notification: \`Add-Type -AssemblyName System.Windows.Forms; $n = New-Object System.Windows.Forms.NotifyIcon; $n.Icon = [System.Drawing.SystemIcons]::Information; $n.Visible = $true; $n.ShowBalloonTip(5000,'Loopi','{{message}}',[System.Windows.Forms.ToolTipIcon]::Info)\`
-- Schedule task: \`schtasks /create /tn "TaskName" /tr "powershell -File $env:TEMP\\\\script.ps1" /sc MINUTE /mo 5 /f\`
-- Read file: \`Get-Content "$env:TEMP\\\\data.txt"\`
-- Delete scheduled task: \`schtasks /delete /tn "TaskName" /f\`
-`
-    : `## Platform: Linux/macOS — /bin/sh
-run-command uses /bin/sh.
-- Notifications: \`notify-send "Title" "Body"\` (Linux) or \`osascript -e 'display notification "Body" with title "Title"'\` (macOS)
-- Schedule: use cron via \`crontab -e\`
-`;
+  const shellNote = buildPlatformShellNote(process.platform);
 
   return `You are Loopi AI, accessible via Telegram. You have FULL capabilities — create workflows, run commands, build automations. Users message from their phone but you execute real actions on their computer.
 
@@ -182,7 +167,12 @@ function stepsToAutomation(wfConfig: Record<string, unknown>) {
 
 function runCommand(command: string): Promise<string> {
   return new Promise((resolve) => {
-    const shell = process.platform === "win32" ? "powershell.exe" : "/bin/sh";
+    const shell =
+      process.platform === "win32"
+        ? "powershell.exe"
+        : process.platform === "darwin"
+          ? "/bin/zsh"
+          : "/bin/bash";
     exec(command, { timeout: 30000, shell }, (_err, stdout, stderr) => {
       const out = stdout?.trim();
       const err = stderr?.trim();

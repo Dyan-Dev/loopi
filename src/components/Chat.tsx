@@ -11,6 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@components/ui/select";
+import { buildPlatformShellNote } from "@utils/platformPrompt";
 import {
   AlertCircle,
   ArrowUp,
@@ -54,22 +55,43 @@ const PROVIDER_DEFAULTS: Record<Provider, { model: string; baseUrl: string; labe
   "claude-code": { model: "claude", baseUrl: "", label: "Claude Code" },
 };
 
-function buildChatSystemPrompt(isWindows: boolean): string {
-  const shellNote = isWindows
-    ? `## Platform: Windows
-run-command uses cmd.exe (NOT PowerShell). Use cmd.exe syntax only.
-- Open apps: \`start notepad.exe\`, \`start "" calc.exe\`, \`start "" "C:\\\\Windows\\\\System32\\\\mspaint.exe"\`
-- Create dirs: \`mkdir C:\\\\path\\\\to\\\\dir\`
-- Write files: \`echo text > file.txt\`
-- Do NOT use: \`Start-Process\`, \`Write-Host\`, \`$env:\`, \`New-Object\`, or ANY PowerShell syntax
-- Do NOT chain commands with \`;\` — use \`&&\` or separate run-command blocks
-- To type text into an open app: create a workflow with a \`desktopKeyboard\` step (type: "desktopKeyboard", text: "Hello world") — do NOT try to do it via run-command
-`
-    : `## Platform: Linux/macOS
-run-command uses /bin/sh.
-- Notifications: \`notify-send "Title" "Body"\` (Linux) or \`osascript -e 'display notification "Body" with title "Title"'\` (macOS)
-- Open apps: \`xdg-open file\` (Linux) / \`open -a "TextEdit"\` (macOS)
-`;
+function buildChatSystemPrompt(platform: string): string {
+  const shellNote = buildPlatformShellNote(platform);
+  const isWindows = platform === "win32";
+  const isMac = platform === "darwin";
+
+  // Pre-built per-OS example snippets — use template literals so single quotes need no escaping
+  const exForEachOutput = isWindows
+    ? `{ "type": "systemCommand", "command": "Write-Host \\"{{title}}\\"", "description": "Output title" }`
+    : isMac
+      ? `{ "type": "systemCommand", "command": "osascript -e 'display notification \\"{{title}}\\" with title \\"Loopi\\"'", "description": "Notify" }`
+      : `{ "type": "systemCommand", "command": "notify-send \\"{{title}}\\"", "description": "Notify" }`;
+
+  const exDesktopNotif = isWindows
+    ? "Use PowerShell: `Write-Host '{{body}}'` or `Out-File` to write to a file. notify-send is not available on Windows."
+    : isMac
+      ? 'Use systemCommand with osascript: `osascript -e \'display notification "{{body}}" with title "Loopi"\'`'
+      : 'Use systemCommand with notify-send: `notify-send "Title" "{{body}}"`. Double quotes around `{{var}}`, not single.';
+
+  const exNewsNotify = isWindows
+    ? `{ "type": "systemCommand", "command": "Write-Host \\"{{newsTitle}} — {{newsUrl}}\\"", "description": "Output news" }`
+    : isMac
+      ? `{ "type": "systemCommand", "command": "osascript -e 'display notification \\"{{newsUrl}}\\" with title \\"{{newsTitle}}\\"'", "description": "Send desktop notification" }`
+      : `{ "type": "systemCommand", "command": "notify-send -i info \\"Tech News\\" \\"{{newsTitle}} — {{newsUrl}}\\"", "description": "Send desktop notification" }`;
+
+  const exRunCmd = isWindows
+    ? `{ "action": "run-command", "command": "Start-Process notepad", "description": "Open Notepad" }`
+    : isMac
+      ? `{ "action": "run-command", "command": "open -a TextEdit", "description": "Open TextEdit" }`
+      : `{ "action": "run-command", "command": "notify-send \\"Hello\\" \\"World\\"", "description": "Send notification" }`;
+
+  const exMkdir = isWindows
+    ? `{ "action": "run-command", "command": "New-Item -ItemType Directory -Force \\"$env:TEMP\\\\loopi-test\\"", "description": "Create test folder" }`
+    : `{ "action": "run-command", "command": "mkdir -p ~/loopi-test", "description": "Create test folder" }`;
+
+  const exWriteFile = isWindows
+    ? `{ "action": "run-command", "command": "Set-Content \\"$env:TEMP\\\\loopi-test\\\\out.txt\\" \\"hello\\"", "description": "Write file" }`
+    : `{ "action": "run-command", "command": "echo hello > ~/loopi-test/out.txt", "description": "Write file" }`;
 
   return `You are Loopi, a helpful AI assistant integrated into the Loopi automation platform.
 Loopi is a visual browser & desktop automation tool with full desktop control (mouse, keyboard, CLI, browser).
@@ -116,7 +138,7 @@ Correct flat layout example:
   { "type": "forEach", "arrayVariable": "stories", "itemVariable": "story", "description": "Loop stories" },
   { "type": "jsonParse", "sourceVariable": "story", "path": "title", "storeKey": "title", "description": "Title" },
   { "type": "variableConditional", "variableConditionType": "variableExists", "variableName": "title", "description": "If title present" },
-  ${isWindows ? '{ "type": "systemCommand", "command": "echo {{title}}", "description": "Output title" }' : '{ "type": "systemCommand", "command": "notify-send \\"{{title}}\\"", "description": "Notify" }'}
+  ${exForEachOutput}
 ]
 \`\`\`
 Do NOT wrap the body steps inside a \`steps: [...]\` property of the forEach/conditional node.
@@ -158,7 +180,7 @@ Variable substitutions ({{var}}) often contain characters that break shell quoti
 1. **NEVER create external scripts** (Python, Bash, etc.) and call them via systemCommand. All logic MUST be built using Loopi's native step types.
 2. **NEVER write files to \`~\`, \`~/.config/\`, \`/tmp\`, or anywhere else on the filesystem as part of workflow logic.** When an agent workflow needs to persist data between runs (dedup tracking, caches, state), use the per-agent folder exposed as \`{{agentDataDir}}\`. Loopi injects this variable at runtime — the folder is created per-agent and visible to the user in the agent detail UI.
 3. **For uniqueness/dedup tracking inside agent workflows**: Use \`{{agentDataDir}}/<filename>\` — e.g. \`{{agentDataDir}}/seen-ids.txt\`. NEVER use \`~/.config/loopi\` or any hand-rolled path.
-4. **For desktop notifications**: ${isWindows ? 'Use a systemCommand with `msg %username% "{{body}}"` or simply `echo {{body}}` to write to a file. On Windows notify-send is not available.' : 'Use systemCommand with notify-send directly — e.g. { "type": "systemCommand", "command": "notify-send \\"Title\\" \\"{{body}}\\"" }. Double quotes around `{{var}}`, not single.'}
+4. **For desktop notifications**: ${exDesktopNotif}
 5. **Workflows MUST be self-contained** — every step uses Loopi's built-in step types. No external dependencies, no pip install, no script files.
 
 ### Agent working directory — \`{{agentDataDir}}\`:
@@ -172,11 +194,7 @@ The user can open the agent detail view to inspect and edit these files. **Never
 { "type": "apiCall", "url": "https://hn.algolia.com/api/v1/search_by_date?tags=story&numericFilters=points>20", "method": "GET", "storeKey": "hnData", "description": "Fetch recent HN stories" },
 { "type": "jsonParse", "sourceVariable": "hnData", "path": "data.hits[0].title", "storeKey": "newsTitle", "description": "Extract first story title (data. prefix because apiCall wraps response)" },
 { "type": "jsonParse", "sourceVariable": "hnData", "path": "data.hits[0].url", "storeKey": "newsUrl", "description": "Extract first story URL" },
-${
-  isWindows
-    ? '{ "type": "systemCommand", "command": "echo {{newsTitle}} — {{newsUrl}}", "description": "Output news" }'
-    : '{ "type": "systemCommand", "command": "notify-send -i info \\"Tech News\\" \\"{{newsTitle}} — {{newsUrl}}\\"", "description": "Send desktop notification" }'
-}
+${exNewsNotify}
 \`\`\`
 
 ### Example — WRONG approaches (DO NOT do any of these):
@@ -244,11 +262,7 @@ You can execute system commands and run workflows directly from chat. This is ho
 ${shellNote}
 ### Run a shell command on the user's PC:
 \`\`\`loopi-action
-${
-  isWindows
-    ? '{ "action": "run-command", "command": "start notepad.exe", "description": "Open Notepad" }'
-    : '{ "action": "run-command", "command": "notify-send \\"Hello\\" \\"World\\"", "description": "Send notification" }'
-}
+${exRunCmd}
 \`\`\`
 
 ### Run a workflow by name:
@@ -258,18 +272,10 @@ ${
 
 ### Run multiple commands sequentially:
 \`\`\`loopi-action
-${
-  isWindows
-    ? '{ "action": "run-command", "command": "start notepad.exe", "description": "Open Notepad" }'
-    : '{ "action": "run-command", "command": "mkdir -p ~/loopi-test", "description": "Create test folder" }'
-}
+${exMkdir}
 \`\`\`
 \`\`\`loopi-action
-${
-  isWindows
-    ? '{ "action": "run-command", "command": "echo Hello > test.txt", "description": "Write file" }'
-    : '{ "action": "run-command", "command": "echo hello > ~/loopi-test/out.txt", "description": "Write file" }'
-}
+${exWriteFile}
 \`\`\`
 
 **CRITICAL: You have FULL access to the user's PC.** You can run commands, open apps, control the desktop — ANYTHING via run-command. When the user asks you to do something, DO IT using run-command blocks. NEVER say "I can't run commands" or ask the user to run commands themselves. You ARE the automation tool.
@@ -308,6 +314,7 @@ When the user asks to delete an agent or workflow, ALWAYS include the loopi-acti
 
 export function Chat() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [sessionId, setSessionId] = useState(() => `app-chat-${Date.now()}`);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
@@ -516,6 +523,7 @@ export function Chat() {
 
   const handleResetChat = () => {
     setMessages([]);
+    setSessionId(`app-chat-${Date.now()}`);
     window.electronAPI?.chat?.clear().catch(() => {
       /* ignore */
     });
@@ -541,7 +549,7 @@ export function Chat() {
       const apiMessages = [
         {
           role: "system" as const,
-          content: buildChatSystemPrompt(window.electronAPI?.system.platform === "win32"),
+          content: buildChatSystemPrompt(window.electronAPI?.system.platform ?? "linux"),
         },
         ...messages.map((m) => ({ role: m.role, content: m.content })),
         { role: "user" as const, content: userMessage.content },
@@ -554,6 +562,7 @@ export function Chat() {
         credentialId: config.credentialId,
         model: config.model,
         baseUrl: config.baseUrl,
+        ...(config.provider === "claude-code" ? { sessionId } : {}),
       });
 
       if (result.success && result.response) {
@@ -705,6 +714,7 @@ export function Chat() {
                 if (savedId) {
                   createdWorkflowIds[wfConfig.name] = automation.id;
                   toast.success(`Workflow "${wfConfig.name}" created! View it in the Dashboard.`);
+                  window.dispatchEvent(new CustomEvent("loopi:workflowSaved"));
                 }
               }
             } catch (parseErr) {
@@ -792,6 +802,7 @@ export function Chat() {
                 });
                 if (agent) {
                   toast.success(`Agent "${agent.name}" created! View it in the Agents tab.`);
+                  window.dispatchEvent(new CustomEvent("loopi:agentCreated"));
                 }
               }
             } catch (parseErr) {

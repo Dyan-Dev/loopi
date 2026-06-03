@@ -34,6 +34,16 @@ export function AgentsPanel({ onOpenWorkflow }: AgentsPanelProps) {
     loadAgents();
   }, [loadAgents]);
 
+  // Refresh when Chat or Telegram bot creates an agent
+  useEffect(() => {
+    window.addEventListener("loopi:agentCreated", loadAgents);
+    window.electronAPI?.telegram.onAgentCreated(() => {
+      loadAgents();
+      toast.success("New agent created via Telegram");
+    });
+    return () => window.removeEventListener("loopi:agentCreated", loadAgents);
+  }, [loadAgents]);
+
   const handleCreate = async (
     config: Parameters<NonNullable<typeof window.electronAPI>["agents"]["create"]>[0]
   ) => {

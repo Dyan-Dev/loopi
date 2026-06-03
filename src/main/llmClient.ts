@@ -1,7 +1,7 @@
+import { claudeCodeWorker } from "@main/claudeCodeWorker";
 import { getCredential } from "@main/credentialsStore";
 import { createLogger } from "@utils/logger";
 import axios from "axios";
-import { execSync } from "child_process";
 
 const logger = createLogger("LLMClient");
 
@@ -12,6 +12,7 @@ export interface LLMParams {
   apiKey?: string;
   model?: string;
   baseUrl?: string;
+  sessionId?: string;
 }
 
 export interface LLMResult {
@@ -86,101 +87,8 @@ export async function callLLM(params: LLMParams): Promise<LLMResult> {
       const content = res.data.content;
       response = Array.isArray(content) && content.length > 0 ? content[0].text || "" : "";
     } else if (params.provider === "claude-code") {
-      const lastUserMsg = [...params.messages].reverse().find((m) => m.role === "user");
-      if (!lastUserMsg) throw new Error("No user message found");
-
-      const systemMsgs = params.messages.filter((m) => m.role === "system");
-      const contextParts: string[] = [];
-      if (systemMsgs.length > 0) {
-        contextParts.push(systemMsgs.map((m) => m.content).join("\n"));
-      }
-      const recentMsgs = params.messages.filter((m) => m.role !== "system").slice(-10);
-      if (recentMsgs.length > 1) {
-        const history = recentMsgs
-          .slice(0, -1)
-          .map((m) => `${m.role === "user" ? "Human" : "Assistant"}: ${m.content}`)
-          .join("\n\n");
-        contextParts.push("Previous conversation:\n" + history);
-      }
-      contextParts.push(lastUserMsg.content);
-      const fullPrompt = contextParts.join("\n\n");
-
-      const { spawn: spawnProc } = await import("child_process");
-      const isWindows = process.platform === "win32";
-      let claudePath = isWindows ? "claude.cmd" : "claude";
-      try {
-        const whichCmd = isWindows ? "where claude" : "which claude";
-        claudePath = execSync(whichCmd, { encoding: "utf-8" }).trim().split(/\r?\n/)[0];
-      } catch {
-        const { existsSync } = await import("fs");
-        const candidates = isWindows
-          ? [
-              `${process.env.APPDATA}\\npm\\claude.cmd`,
-              `${process.env.APPDATA}\\npm\\claude`,
-              `${process.env.LOCALAPPDATA}\\npm\\claude.cmd`,
-            ]
-          : [
-              `${process.env.HOME}/.local/bin/claude`,
-              "/usr/local/bin/claude",
-              `${process.env.HOME}/.npm-global/bin/claude`,
-            ];
-        for (const c of candidates) {
-          if (existsSync(c)) {
-            claudePath = c;
-            break;
-          }
-        }
-      }
-      const userShellEnv = { ...process.env };
-      delete userShellEnv.ANTHROPIC_API_KEY;
-      if (!isWindows && !userShellEnv.PATH?.includes(".local/bin")) {
-        userShellEnv.PATH = `${process.env.HOME}/.local/bin:${userShellEnv.PATH}`;
-      }
-
-      response = await new Promise<string>((resolve, reject) => {
-        const CLAUDE_CLI_TIMEOUT_MS = 600000;
-        let timedOut = false;
-        const proc = spawnProc(claudePath, ["-p"], {
-          stdio: ["pipe", "pipe", "pipe"],
-          env: userShellEnv,
-        });
-        const timer = setTimeout(() => {
-          timedOut = true;
-          proc.kill("SIGTERM");
-        }, CLAUDE_CLI_TIMEOUT_MS);
-        let stdout = "";
-        let stderr = "";
-        proc.stdout.on("data", (d: Buffer) => (stdout += d.toString()));
-        proc.stderr.on("data", (d: Buffer) => (stderr += d.toString()));
-        proc.on("error", (err) => {
-          clearTimeout(timer);
-          reject(new Error(err.message));
-        });
-        proc.on("close", (code) => {
-          clearTimeout(timer);
-          if (timedOut) {
-            logger.error("claude CLI timed out", {
-              timeoutMs: CLAUDE_CLI_TIMEOUT_MS,
-              stdout,
-              stderr,
-            });
-            reject(
-              new Error(
-                `Claude CLI did not respond within ${Math.round(CLAUDE_CLI_TIMEOUT_MS / 1000)}s. Try a shorter prompt, or switch providers in Settings.`
-              )
-            );
-            return;
-          }
-          if (code !== 0) {
-            logger.error("claude CLI failed", { code, stdout, stderr });
-            reject(new Error(stderr.trim() || stdout.trim() || `claude exited with code ${code}`));
-          } else {
-            resolve(stdout.trim());
-          }
-        });
-        proc.stdin.write(fullPrompt);
-        proc.stdin.end();
-      });
+      const sessionId = params.sessionId ?? `app-auto-${Date.now()}`;
+      response = await claudeCodeWorker.send(sessionId, params.messages);
     } else {
       // Ollama
       const baseUrl = (params.baseUrl || "http://localhost:11434").replace(/\/+$/, "");
