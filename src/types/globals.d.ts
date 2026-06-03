@@ -210,6 +210,7 @@ export interface ElectronAPI {
       apiKey?: string;
       model?: string;
       baseUrl?: string;
+      sessionId?: string;
     }) => Promise<{
       success: boolean;
       response?: string;

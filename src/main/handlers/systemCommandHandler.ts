@@ -21,7 +21,13 @@ export class SystemCommandHandler {
     const command = substituteVariables(step.command);
     const cwd = step.cwd ? substituteVariables(step.cwd) : undefined;
     const timeout = Math.min(Math.max(1000, Number(step.timeout ?? 30_000)), MAX_TIMEOUT);
-    const shell = step.shell ? substituteVariables(step.shell) : undefined;
+    const defaultShell =
+      process.platform === "win32"
+        ? "powershell.exe"
+        : process.platform === "darwin"
+          ? "/bin/zsh"
+          : "/bin/bash";
+    const shell = step.shell ? substituteVariables(step.shell) : defaultShell;
     const failOnNonZero = step.failOnNonZero !== false;
 
     debugLogger.debug("SystemCommand", "Executing command", { command, cwd, timeout });

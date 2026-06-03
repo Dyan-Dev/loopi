@@ -622,6 +622,7 @@ export function registerIPCHandlers(
         apiKey?: string;
         model?: string;
         baseUrl?: string;
+        sessionId?: string;
       }
     ) => {
       return callLLM(params);
@@ -922,20 +923,22 @@ export function registerIPCHandlers(
     async (_event, params: { command: string; cwd?: string; timeout?: number }) => {
       const { exec: execCmd } = await import("child_process");
       const timeout = Math.min(Math.max(1000, params.timeout || 30000), 300000);
+      const shell =
+        process.platform === "win32"
+          ? "powershell.exe"
+          : process.platform === "darwin"
+            ? "/bin/zsh"
+            : "/bin/bash";
       return new Promise((resolve) => {
-        execCmd(
-          params.command,
-          { cwd: params.cwd, timeout, shell: "/bin/bash" },
-          (error, stdout, stderr) => {
-            const exitCode = error ? ((error as unknown as { code?: number }).code ?? 1) : 0;
-            resolve({
-              success: !error,
-              stdout: stdout?.toString() || "",
-              stderr: stderr?.toString() || "",
-              exitCode,
-            });
-          }
-        );
+        execCmd(params.command, { cwd: params.cwd, timeout, shell }, (error, stdout, stderr) => {
+          const exitCode = error ? ((error as unknown as { code?: number }).code ?? 1) : 0;
+          resolve({
+            success: !error,
+            stdout: stdout?.toString() || "",
+            stderr: stderr?.toString() || "",
+            exitCode,
+          });
+        });
       });
     }
   );

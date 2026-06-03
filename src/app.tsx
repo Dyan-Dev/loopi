@@ -79,15 +79,15 @@ export default function App() {
     }
   }, []);
 
-  // Refresh when Telegram bot creates a workflow or agent
+  // Refresh dashboard when Chat or Telegram bot creates a workflow
   useEffect(() => {
+    const onWorkflow = () => loadSavedTrees();
+    window.addEventListener("loopi:workflowSaved", onWorkflow);
     window.electronAPI?.telegram.onWorkflowSaved(() => {
       loadSavedTrees();
       toast.success("New workflow created via Telegram");
     });
-    window.electronAPI?.telegram.onAgentCreated(() => {
-      toast.success("New agent created via Telegram");
-    });
+    return () => window.removeEventListener("loopi:workflowSaved", onWorkflow);
   }, []);
 
   useEffect(() => {
