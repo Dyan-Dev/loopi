@@ -1,3 +1,20 @@
 onlyBuiltDependencies:
   - electron
   - electron-winstaller
+
+overrides:
+  basic-ftp: "npm:empty-npm-package@1.0.0"
+  node-forge: ">=1.4.0"
+  tar: ">=7.5.11"
+  vite: ">=6.5.3"
+  tough-cookie: ">=6.0.1"
+  form-data: ">=4.0.5"
+  "@xmldom/xmldom": ">=0.9.10"
+  shell-quote: ">=1.8.4"
+  serialize-javascript: ">=7.0.3"
+  picomatch: ">=4.0.4"
+  fast-uri: ">=3.0.6"
+  tmp: ">=0.2.2"
+  "minimatch@3": ">=3.1.4"
+  "minimatch@9": ">=9.0.7"
+  "path-to-regexp@0": "0.1.13"
