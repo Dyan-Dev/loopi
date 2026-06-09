@@ -1,6 +1,6 @@
 {
   "name": "loopi",
-  "version": "1.10.3",
+  "version": "1.10.4",
   "description": "Loopi — Visual Browser & Desktop Automation for humans and teams",
   "author": "Dyan-Dev",
   "packageManager": "pnpm@10.22.0",
