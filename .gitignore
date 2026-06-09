@@ -141,5 +141,8 @@ vite.config.ts.timestamp-*
 # webpack
 .webpack
 
+# npm lock file (this is a pnpm project — package-lock.json should not be committed)
+package-lock.json
+
 # screenshots
 *.png
