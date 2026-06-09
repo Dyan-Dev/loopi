@@ -1,6 +1,6 @@
 import { buildPlatformShellNote } from "@utils/platformPrompt";
+import { Bot } from "grammy";
 import { exec } from "child_process";
-import TelegramBot from "node-telegram-bot-api";
 import type { AgentManager } from "./agentManager";
 import { callLLM } from "./llmClient";
 import {
@@ -243,7 +243,6 @@ async function executeBlocks(
                 ? agentConfig.description
                 : "";
 
-          // Resolve workflow IDs by name
           const workflowIds: string[] = [];
           if (Array.isArray(agentConfig.workflowNames)) {
             for (const name of agentConfig.workflowNames) {
@@ -323,7 +322,7 @@ async function executeBlocks(
 // ─── Bot service ──────────────────────────────────────────────────────────────
 
 class TelegramBotService {
-  private bot: TelegramBot | null = null;
+  private bot: Bot | null = null;
   private chatHistories = new Map<number, Array<{ role: string; content: string }>>();
   private botUsername: string | null = null;
   private config: BotConfig | null = null;
@@ -335,19 +334,18 @@ class TelegramBotService {
       if (this.bot) await this.disconnect();
 
       this.config = config;
-      this.bot = new TelegramBot(config.token, { polling: true });
+      this.bot = new Bot(config.token);
 
-      const me = await this.bot.getMe();
+      const me = await this.bot.api.getMe();
       this.botUsername = me.username ?? null;
 
-      this.bot.on("message", async (msg) => {
-        if (!msg.text || !this.config) return;
+      this.bot.on("message", async (ctx) => {
+        if (!ctx.message?.text || !this.config) return;
 
-        const chatId = msg.chat.id;
-        const senderName = msg.from?.first_name || msg.from?.username || "User";
-        const text = msg.text;
+        const chatId = ctx.chat.id;
+        const senderName = ctx.from?.first_name || ctx.from?.username || "User";
+        const text = ctx.message.text;
 
-        // Push user message to renderer
         this.config.onMessage({
           id: `tg-${Date.now()}-user`,
           chatId,
@@ -362,9 +360,9 @@ class TelegramBotService {
         history.push({ role: "user", content: text });
 
         const send = async (message: string) => {
-          await this.bot!.sendMessage(chatId, message, { parse_mode: "Markdown" }).catch(() =>
-            this.bot!.sendMessage(chatId, message)
-          );
+          await ctx.api
+            .sendMessage(chatId, message, { parse_mode: "Markdown" })
+            .catch(() => ctx.api.sendMessage(chatId, message));
         };
 
         try {
@@ -383,11 +381,9 @@ class TelegramBotService {
           if (result.success && result.response) {
             history.push({ role: "assistant", content: result.response });
 
-            // Send readable text to Telegram (code blocks stripped)
             const visibleText = stripBlocks(result.response);
             if (visibleText) await send(visibleText);
 
-            // Execute workflow-create / agent-create / loopi-action blocks
             await executeBlocks(
               result.response,
               send,
@@ -396,7 +392,6 @@ class TelegramBotService {
               this.config.onEvent
             );
 
-            // Push full response to renderer (Telegram tab)
             this.config.onMessage({
               id: `tg-${Date.now()}-assistant`,
               chatId,
@@ -412,8 +407,13 @@ class TelegramBotService {
         }
       });
 
-      this.bot.on("polling_error", (err) => {
-        console.error("[TelegramBot] Polling error:", err.message);
+      this.bot.catch((err) => {
+        console.error("[TelegramBot] Error:", err.message);
+      });
+
+      // Start polling without blocking
+      this.bot.start().catch((err) => {
+        console.error("[TelegramBot] Start error:", err);
       });
 
       return { success: true, username: this.botUsername ?? undefined };
@@ -427,7 +427,7 @@ class TelegramBotService {
   async disconnect(): Promise<void> {
     if (this.bot) {
       try {
-        await this.bot.stopPolling();
+        await this.bot.stop();
       } catch {
         // ignore
       }
