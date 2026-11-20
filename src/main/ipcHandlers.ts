@@ -617,7 +617,7 @@ export function registerIPCHandlers(
       _event,
       params: {
         messages: Array<{ role: "user" | "assistant" | "system"; content: string }>;
-        provider: "openai" | "anthropic" | "ollama" | "claude-code";
+        provider: "openai" | "anthropic" | "ollama" | "claude-code" | "openrouter";
         credentialId?: string;
         apiKey?: string;
         model?: string;
@@ -981,7 +981,7 @@ export function registerIPCHandlers(
       params: {
         token: string;
         providerConfig: {
-          provider: "openai" | "anthropic" | "ollama" | "claude-code";
+          provider: "openai" | "anthropic" | "ollama" | "claude-code" | "openrouter";
           model?: string;
           apiKey?: string;
           credentialId?: string;

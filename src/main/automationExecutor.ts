@@ -1,4 +1,4 @@
-import { AutomationStep, StepAIAnthropic, StepAIOllama, StepAIOpenAI } from "@app-types/steps";
+import { AutomationStep, StepAIAnthropic, StepAIOpenAI, StepAIOpenRouter, StepAIOllama } from "@app-types/steps";
 import { debugLogger } from "@main/debugLogger";
 import {
   AiStepHandler,
@@ -305,6 +305,20 @@ export class AutomationExecutor {
             debugLogger.debug(
               "AI Ollama",
               `Stored response in variable: ${(step as StepAIOllama).storeKey}`
+            );
+          }
+          break;
+
+        case "aiOpenRouter":
+          result = await this.aiHandler.executeAiOpenRouter(
+            step as StepAIOpenRouter,
+            this.substituteVariables.bind(this)
+          );
+          if ((step as StepAIOpenRouter).storeKey) {
+            variables[(step as StepAIOpenRouter).storeKey!] = result;
+            debugLogger.debug(
+              "AI OpenRouter",
+              `Stored response in variable: ${(step as StepAIOpenRouter).storeKey}`
             );
           }
           break;

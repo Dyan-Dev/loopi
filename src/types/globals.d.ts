@@ -42,6 +42,7 @@ export interface Credential {
     | "basic"
     | "openai"
     | "anthropic"
+    | "openrouter"
     | "telegram"
     | "github"
     | "notion"
@@ -124,11 +125,12 @@ export interface AppSettings {
   enableNotifications: boolean;
   downloadPath?: string;
   debugMode?: boolean;
-  aiProvider?: "openai" | "anthropic" | "ollama";
+  aiProvider?: "openai" | "anthropic" | "ollama" | "openrouter";
   aiModel?: string;
   aiApiKey?: string;
   aiCredentialId?: string;
   ollamaBaseUrl?: string;
+  openrouterBaseUrl?: string;
 }
 
 export interface ElectronAPI {
@@ -218,7 +220,7 @@ export interface ElectronAPI {
     }>;
     generateWorkflow: (params: {
       prompt: string;
-      provider: "openai" | "anthropic" | "ollama";
+      provider: "openai" | "anthropic" | "ollama" | "openrouter";
       credentialId?: string;
       apiKey?: string;
       model?: string;

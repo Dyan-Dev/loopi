@@ -33,7 +33,7 @@ interface CreateAgentDialogProps {
     workflowIds: string[];
     capabilities: AgentCapability[];
     model: {
-      provider: "openai" | "anthropic" | "ollama" | "claude-code";
+      provider: "openai" | "anthropic" | "ollama" | "claude-code" | "openrouter";
       model: string;
       credentialId?: string;
       baseUrl?: string;
@@ -73,6 +73,16 @@ const PROVIDER_MODELS: Record<string, { label: string; models: string[] }> = {
   ollama: {
     label: "Ollama (Local)",
     models: ["llama3", "mistral", "mixtral", "codellama", "qwen2", "deepseek-coder"],
+  },
+  openrouter: {
+    label: "OpenRouter (100+ models)",
+    models: [
+      "openrouter/auto",
+      "anthropic/claude-3.5-sonnet",
+      "meta-llama/llama-3.1-405b",
+      "google/gemini-2.0-flash-exp",
+      "mistralai/mistral-large-2411",
+    ],
   },
 };
 
@@ -153,7 +163,12 @@ export function CreateAgentDialog({ open, onClose, onCreate }: CreateAgentDialog
       workflowIds: selectedWorkflowIds,
       capabilities,
       model: {
-        provider: provider as "openai" | "anthropic" | "ollama" | "claude-code",
+        provider: provider as
+          | "openai"
+          | "anthropic"
+          | "ollama"
+          | "claude-code"
+          | "openrouter",
         model,
         credentialId: selectedCredentialId || undefined,
         baseUrl: baseUrl || undefined,
@@ -318,6 +333,19 @@ export function CreateAgentDialog({ open, onClose, onCreate }: CreateAgentDialog
                 value={baseUrl}
                 onChange={(e) => setBaseUrl(e.target.value)}
                 placeholder="http://localhost:11434"
+                className="mt-1"
+              />
+            </div>
+          )}
+
+          {/* OpenRouter base URL */}
+          {provider === "openrouter" && (
+            <div>
+              <Label className="text-xs">OpenRouter Base URL</Label>
+              <Input
+                value={baseUrl}
+                onChange={(e) => setBaseUrl(e.target.value)}
+                placeholder="https://openrouter.ai/api/v1"
                 className="mt-1"
               />
             </div>

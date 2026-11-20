@@ -14,6 +14,7 @@ export interface Credential {
     | "basic"
     | "openai"
     | "anthropic"
+    | "openrouter"
     | "telegram"
     | "github"
     | "notion"

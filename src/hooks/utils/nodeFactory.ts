@@ -176,6 +176,20 @@ export function createNode({
         storeKey: "aiResponse",
       } as AutomationStep;
       break;
+    case "aiOpenRouter":
+      step = {
+        id: newId,
+        type: "aiOpenRouter",
+        description: `${label} step`,
+        model: "openrouter/auto",
+        prompt: "",
+        systemPrompt: "You are a helpful assistant.",
+        temperature: 0,
+        maxTokens: 256,
+        baseUrl: "https://openrouter.ai/api/v1",
+        storeKey: "aiResponse",
+      } as AutomationStep;
+      break;
     case "discordSendMessage":
       step = {
         id: newId,

@@ -14,6 +14,13 @@ const ANTHROPIC_SUGGESTIONS = [
 const OPENAI_BLOCKED = ["gpt-3.5-turbo", "gpt-3.5", "davinci", "babbage", "ada"];
 const OPENAI_SUGGESTIONS = ["gpt-4o", "gpt-4o-mini", "gpt-4-turbo"];
 
+const OPENROUTER_BLOCKED = [];
+const OPENROUTER_SUGGESTIONS = [
+  "openrouter/auto",
+  "anthropic/claude-3.5-sonnet",
+  "meta-llama/llama-3.1-405b",
+];
+
 const OLLAMA_BLOCKED = [
   "tinyllama",
   "phi-2",
@@ -51,6 +58,17 @@ export function validateModelForAgents(provider: string, model: string): ModelVa
         valid: false,
         reason: `"${model}" is too small for agentic tasks. Agent orchestration requires stronger reasoning.`,
         suggestions: OPENAI_SUGGESTIONS,
+      };
+    }
+    return { valid: true };
+  }
+
+  if (provider === "openrouter") {
+    if (OPENROUTER_BLOCKED.some((b) => m.includes(b))) {
+      return {
+        valid: false,
+        reason: `"${model}" is too small for agentic tasks. Agent orchestration requires stronger reasoning.`,
+        suggestions: OPENROUTER_SUGGESTIONS,
       };
     }
     return { valid: true };

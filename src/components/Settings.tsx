@@ -294,15 +294,21 @@ export function Settings() {
               <div className="space-y-4">
                 <div>
                   <Label className="text-base mb-2 block">Provider</Label>
-                  <div className="flex gap-2">
-                    {(["openai", "anthropic", "ollama"] as const).map((p) => (
+                  <div className="flex flex-wrap gap-2">
+                    {(["openai", "anthropic", "ollama", "openrouter"] as const).map((p) => (
                       <Button
                         key={p}
                         variant={settings.aiProvider === p ? "default" : "outline"}
                         size="sm"
                         onClick={() => setSettings({ ...settings, aiProvider: p })}
                       >
-                        {p === "openai" ? "OpenAI" : p === "anthropic" ? "Anthropic" : "Ollama"}
+                        {p === "openai"
+                          ? "OpenAI"
+                          : p === "anthropic"
+                            ? "Anthropic"
+                            : p === "ollama"
+                              ? "Ollama"
+                              : "OpenRouter"}
                       </Button>
                     ))}
                   </div>
@@ -321,7 +327,9 @@ export function Settings() {
                         ? "claude-sonnet-4-5-20250929"
                         : settings.aiProvider === "ollama"
                           ? "mistral"
-                          : "gpt-4o-mini"
+                          : settings.aiProvider === "openrouter"
+                            ? "openrouter/auto"
+                            : "gpt-4o-mini"
                     }
                   />
                 </div>
@@ -361,7 +369,11 @@ export function Settings() {
                           value={settings.aiApiKey || ""}
                           onChange={(e) => setSettings({ ...settings, aiApiKey: e.target.value })}
                           placeholder={
-                            settings.aiProvider === "anthropic" ? "sk-ant-..." : "sk-..."
+                            settings.aiProvider === "anthropic"
+                              ? "sk-ant-..."
+                              : settings.aiProvider === "openrouter"
+                                ? "sk-or-..."
+                                : "sk-..."
                           }
                         />
                       </div>
@@ -382,6 +394,25 @@ export function Settings() {
                     />
                     <p className="text-xs text-muted-foreground mt-2">
                       Leave empty to use the default (http://localhost:11434)
+                    </p>
+                  </div>
+                )}
+
+                {settings.aiProvider === "openrouter" && (
+                  <div>
+                    <Label htmlFor="openrouterBaseUrl" className="text-base mb-2 block">
+                      OpenRouter Base URL
+                    </Label>
+                    <Input
+                      id="openrouterBaseUrl"
+                      value={settings.openrouterBaseUrl || ""}
+                      onChange={(e) =>
+                        setSettings({ ...settings, openrouterBaseUrl: e.target.value })
+                      }
+                      placeholder="https://openrouter.ai/api/v1"
+                    />
+                    <p className="text-xs text-muted-foreground mt-2">
+                      Leave empty to use the default (https://openrouter.ai/api/v1)
                     </p>
                   </div>
                 )}
