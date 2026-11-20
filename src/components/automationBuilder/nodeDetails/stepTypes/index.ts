@@ -27,6 +27,7 @@ import { DesktopScreenshotStep } from "./desktop/DesktopScreenshotStep";
 import { AiAnthropicStep } from "./integration/AiAnthropicStep";
 import { AiOllamaStep } from "./integration/AiOllamaStep";
 import { AiOpenAIStep } from "./integration/AiOpenAIStep";
+import { AiOpenRouterStep } from "./integration/AiOpenRouterStep";
 import { ApiCallStep } from "./integration/ApiCallStep";
 // Logic steps
 import { ForEachStep } from "./logic/ForEachStep";
@@ -62,6 +63,7 @@ export {
   // AI / API
   ApiCallStep,
   AiOpenAIStep,
+  AiOpenRouterStep,
   AiAnthropicStep,
   AiOllamaStep,
   // Variable

@@ -1,4 +1,4 @@
-import type { StepAIAnthropic, StepAIOllama, StepAIOpenAI } from "@app-types/steps";
+import type { StepAIAnthropic, StepAIOpenAI, StepAIOpenRouter, StepAIOllama } from "@app-types/steps";
 import { getCredential } from "@main/credentialsStore";
 import { debugLogger } from "@main/debugLogger";
 import axios from "axios";
@@ -211,6 +211,77 @@ export class AiStepHandler {
     return String(content).trim();
   }
 
+  /**
+   * Execute OpenRouter API call (OpenAI-compatible)
+   * Routes to 100+ models via OpenRouter's unified API.
+   * Defaults: temperature 0, maxTokens 256, no streaming.
+   */
+  async executeAiOpenRouter(
+    step: StepAIOpenRouter,
+    substituteVariables: (input?: string) => string
+  ): Promise<string> {
+    const prompt = substituteVariables(step.prompt || "").trim();
+    const systemPrompt = substituteVariables(step.systemPrompt || "").trim();
+    const model = substituteVariables(step.model || "openrouter/auto").trim();
+    const temperature = Math.max(0, Math.min(1, Number(step.temperature ?? 0)));
+    const maxTokens = Math.min(Math.max(1, Math.floor(Number(step.maxTokens ?? 256))), 4096);
+    const topPValue =
+      step.topP === undefined ? undefined : Math.max(0, Math.min(1, Number(step.topP)));
+    const timeoutMs = Math.min(Math.max(1000, Number(step.timeoutMs ?? 20000)), 120000);
+
+    if (!prompt) throw new Error("OpenRouter step requires a prompt");
+    if (!model) throw new Error("OpenRouter step requires a model");
+
+    const baseUrl = this.normalizeBaseUrl(
+      substituteVariables(step.baseUrl || ""),
+      "https://openrouter.ai/api/v1"
+    );
+    const apiKey = await this.resolveOpenRouterApiKey(step, substituteVariables);
+    if (!apiKey) {
+      throw new Error("API key is required for OpenRouter");
+    }
+
+    debugLogger.debug("AI OpenRouter", "Preparing request", {
+      model,
+      baseUrl,
+      promptLength: prompt.length,
+      hasSystemPrompt: !!systemPrompt,
+      temperature,
+      maxTokens,
+      topP: topPValue,
+    });
+
+    const systemMessage = systemPrompt ? [{ role: "system", content: systemPrompt }] : [];
+    const userMessage = { role: "user", content: prompt };
+
+    const url = `${baseUrl}/chat/completions`;
+    const payload: Record<string, unknown> = {
+      model,
+      messages: [...systemMessage, userMessage],
+      temperature,
+      max_tokens: maxTokens,
+      n: 1,
+      stream: false,
+    };
+    if (topPValue !== undefined) payload.top_p = topPValue;
+
+    const response = await axios.post(url, payload, {
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+        "HTTP-Referer": "https://loopi.dyan.live",
+        "X-Title": "Loopi",
+      },
+      timeout: timeoutMs,
+    });
+
+    const content = response.data?.choices?.[0]?.message?.content;
+    if (!content) {
+      throw new Error("OpenRouter returned an empty response");
+    }
+    return typeof content === "string" ? content.trim() : JSON.stringify(content);
+  }
+
   private normalizeBaseUrl(baseUrl: string, fallback: string): string {
     const value = baseUrl?.trim() || fallback;
     return value.replace(/\/+$/, "");
@@ -253,6 +324,29 @@ export class AiStepHandler {
         credential.data.accessToken;
       if (fromStore) return substituteVariables(fromStore);
       throw new Error("Anthropic credential is missing an API key value");
+    }
+
+    if (step.apiKey) {
+      return substituteVariables(step.apiKey);
+    }
+
+    return null;
+  }
+
+  private async resolveOpenRouterApiKey(
+    step: StepAIOpenRouter,
+    substituteVariables: (input?: string) => string
+  ): Promise<string | null> {
+    if (step.credentialId) {
+      const credential = await getCredential(step.credentialId);
+      if (!credential) throw new Error("OpenRouter credential not found");
+      const fromStore =
+        credential.data.apiKey ||
+        credential.data.key ||
+        credential.data.token ||
+        credential.data.accessToken;
+      if (fromStore) return substituteVariables(fromStore);
+      throw new Error("OpenRouter credential is missing an API key value");
     }
 
     if (step.apiKey) {

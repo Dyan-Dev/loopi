@@ -7,7 +7,7 @@ const logger = createLogger("LLMClient");
 
 export interface LLMParams {
   messages: Array<{ role: "user" | "assistant" | "system"; content: string }>;
-  provider: "openai" | "anthropic" | "ollama" | "claude-code";
+  provider: "openai" | "anthropic" | "ollama" | "claude-code" | "openrouter";
   credentialId?: string;
   apiKey?: string;
   model?: string;
@@ -35,6 +35,8 @@ export async function callLLM(params: LLMParams): Promise<LLMResult> {
         apiKey = process.env.ANTHROPIC_API_KEY || "";
       } else if (params.provider === "openai") {
         apiKey = process.env.OPENAI_API_KEY || "";
+      } else if (params.provider === "openrouter") {
+        apiKey = process.env.OPENROUTER_API_KEY || "";
       }
     }
 
@@ -89,6 +91,28 @@ export async function callLLM(params: LLMParams): Promise<LLMResult> {
     } else if (params.provider === "claude-code") {
       const sessionId = params.sessionId ?? `app-auto-${Date.now()}`;
       response = await claudeCodeWorker.send(sessionId, params.messages);
+    } else if (params.provider === "openrouter") {
+      const baseUrl = (params.baseUrl || "https://openrouter.ai/api/v1").replace(/\/+$/, "");
+      const model = params.model || "openrouter/auto";
+      const res = await axios.post(
+        `${baseUrl}/chat/completions`,
+        {
+          model,
+          messages: params.messages,
+          temperature: 0.7,
+          max_tokens: 2048,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${apiKey}`,
+            "Content-Type": "application/json",
+            "HTTP-Referer": "https://loopi.dyan.live",
+            "X-Title": "Loopi",
+          },
+          timeout: 60000,
+        }
+      );
+      response = res.data.choices[0]?.message?.content || "";
     } else {
       // Ollama
       const baseUrl = (params.baseUrl || "http://localhost:11434").replace(/\/+$/, "");
