@@ -1,7 +1,7 @@
 /**
  * AI Workflow Generator
  * Generates automation workflows from natural language descriptions
- * Supports OpenAI, Anthropic, and Ollama providers
+ * Supports OpenAI, Anthropic, Ollama, and OpenRouter providers
  */
 
 import { getCredential } from "@main/credentialsStore";
@@ -12,7 +12,7 @@ const logger = createLogger("WorkflowGenerator");
 
 export interface GenerateParams {
   prompt: string;
-  provider: "openai" | "anthropic" | "ollama";
+  provider: "openai" | "anthropic" | "ollama" | "openrouter";
   credentialId?: string;
   apiKey?: string;
   model?: string;
@@ -390,6 +390,8 @@ Notice: the forEach node has NO "steps" array. Its body (node 4 and beyond) is r
         return this.callAnthropic(params, systemPrompt, apiKey);
       case "ollama":
         return this.callOllama(params, systemPrompt);
+      case "openrouter":
+        return this.callOpenRouter(params, systemPrompt, apiKey);
       default:
         throw new Error(`Unsupported provider: ${params.provider}`);
     }
@@ -435,6 +437,39 @@ Notice: the forEach node has NO "steps" array. Its body (node 4 and beyond) is r
         headers: {
           Authorization: `Bearer ${apiKey}`,
           "Content-Type": "application/json",
+        },
+        timeout: 60000,
+      }
+    );
+
+    return response.data.choices[0]?.message?.content || "";
+  }
+
+  private async callOpenRouter(
+    params: GenerateParams,
+    systemPrompt: string,
+    apiKey: string
+  ): Promise<string> {
+    const baseUrl = params.baseUrl || "https://openrouter.ai/api/v1";
+    const model = params.model || "openrouter/auto";
+
+    const response = await axios.post(
+      `${baseUrl}/chat/completions`,
+      {
+        model,
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: params.prompt },
+        ],
+        temperature: 0,
+        max_tokens: 4096,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+          "HTTP-Referer": "https://loopi.dyan.live",
+          "X-Title": "Loopi",
         },
         timeout: 60000,
       }

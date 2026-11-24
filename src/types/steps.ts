@@ -684,6 +684,22 @@ export interface StepAIOllama extends StepBase {
   storeKey?: string;
 }
 
+/** OpenRouter (OpenAI-compatible API for 100+ models) */
+export interface StepAIOpenRouter extends StepBase {
+  type: "aiOpenRouter";
+  model: string;
+  prompt: string;
+  systemPrompt?: string;
+  temperature?: number;
+  maxTokens?: number;
+  topP?: number;
+  baseUrl?: string;
+  credentialId?: string;
+  apiKey?: string;
+  timeoutMs?: number;
+  storeKey?: string;
+}
+
 export type ScrollType = "toElement" | "byAmount";
 export interface StepScroll extends StepBase {
   type: "scroll";
@@ -992,6 +1008,7 @@ export type AutomationStep =
   | StepAIOpenAI
   | StepAIAnthropic
   | StepAIOllama
+  | StepAIOpenRouter
   | StepScroll
   | StepSelectOption
   | StepFileUpload
@@ -1527,6 +1544,12 @@ export const aiSteps: StepTypeOption[] = [
     label: "AI: Ollama",
     icon: Sparkles,
     description: "Send prompt to local Ollama model",
+  },
+  {
+    value: "aiOpenRouter",
+    label: "AI: OpenRouter",
+    icon: Sparkles,
+    description: "Send prompt via OpenRouter (100+ models)",
   },
 ];
 

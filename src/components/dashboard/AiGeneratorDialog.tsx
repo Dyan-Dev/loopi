@@ -43,7 +43,10 @@ export function AiGeneratorDialog({
   }, [open]);
 
   const isConfigured =
-    aiSettings?.aiProvider === "ollama" || aiSettings?.aiApiKey || aiSettings?.aiCredentialId;
+    aiSettings?.aiProvider === "ollama" ||
+    (aiSettings?.aiProvider === "openrouter" && (aiSettings?.aiApiKey || aiSettings?.aiCredentialId)) ||
+    aiSettings?.aiApiKey ||
+    aiSettings?.aiCredentialId;
 
   const handleGenerate = async () => {
     if (!prompt.trim() || !aiSettings?.aiProvider) return;
@@ -60,6 +63,9 @@ export function AiGeneratorDialog({
         ...(aiSettings.aiModel && { model: aiSettings.aiModel }),
         ...(aiSettings.aiProvider === "ollama" && {
           baseUrl: aiSettings.ollamaBaseUrl || "http://localhost:11434",
+        }),
+        ...(aiSettings.aiProvider === "openrouter" && {
+          baseUrl: aiSettings.openrouterBaseUrl || "https://openrouter.ai/api/v1",
         }),
       });
 
@@ -90,7 +96,9 @@ export function AiGeneratorDialog({
         ? "Anthropic"
         : aiSettings?.aiProvider === "ollama"
           ? "Ollama"
-          : null;
+          : aiSettings?.aiProvider === "openrouter"
+            ? "OpenRouter"
+            : null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

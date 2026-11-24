@@ -27,7 +27,7 @@ import {
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
-type Provider = "openai" | "anthropic" | "ollama" | "claude-code";
+type Provider = "openai" | "anthropic" | "ollama" | "claude-code" | "openrouter";
 
 interface ChatMessage {
   id: string;
@@ -53,6 +53,7 @@ const PROVIDER_DEFAULTS: Record<Provider, { model: string; baseUrl: string; labe
   },
   ollama: { model: "mistral", baseUrl: "http://localhost:11434", label: "Ollama (Local)" },
   "claude-code": { model: "claude", baseUrl: "", label: "Claude Code" },
+  openrouter: { model: "openrouter/auto", baseUrl: "https://openrouter.ai/api/v1", label: "OpenRouter" },
 };
 
 function buildChatSystemPrompt(platform: string): string {
@@ -396,6 +397,7 @@ export function Chat() {
               (c) =>
                 c.type === "openai" ||
                 c.type === "anthropic" ||
+                c.type === "openrouter" ||
                 c.type === "apiKey" ||
                 c.type === "custom"
             )
@@ -1346,6 +1348,7 @@ export function Chat() {
                   <SelectItem value="claude-code">Claude Code (CLI)</SelectItem>
                   <SelectItem value="anthropic">Anthropic (API Key)</SelectItem>
                   <SelectItem value="openai">OpenAI</SelectItem>
+                  <SelectItem value="openrouter">OpenRouter (100+ models)</SelectItem>
                   <SelectItem value="ollama">Ollama (Local)</SelectItem>
                 </SelectContent>
               </Select>
@@ -1431,7 +1434,13 @@ export function Chat() {
                       type="password"
                       value={setupApiKey}
                       onChange={(e) => setSetupApiKey(e.target.value)}
-                      placeholder={setupProvider === "anthropic" ? "sk-ant-..." : "sk-..."}
+                      placeholder={
+                        setupProvider === "anthropic"
+                          ? "sk-ant-..."
+                          : setupProvider === "openrouter"
+                            ? "sk-or-..."
+                            : "sk-..."
+                      }
                     />
                   </div>
                 )}
@@ -1448,6 +1457,20 @@ export function Chat() {
                 />
                 <p className="text-xs text-muted-foreground">
                   Make sure Ollama is running locally. No API key needed.
+                </p>
+              </div>
+            )}
+
+            {setupProvider === "openrouter" && (
+              <div className="space-y-2">
+                <Label>Base URL</Label>
+                <Input
+                  value={setupBaseUrl}
+                  onChange={(e) => setSetupBaseUrl(e.target.value)}
+                  placeholder="https://openrouter.ai/api/v1"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Defaults to https://openrouter.ai/api/v1
                 </p>
               </div>
             )}

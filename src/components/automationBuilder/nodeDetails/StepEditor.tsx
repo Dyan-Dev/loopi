@@ -5,6 +5,7 @@ import {
   AiAnthropicStep,
   AiOllamaStep,
   AiOpenAIStep,
+  AiOpenRouterStep,
   ApiCallStep,
   ClickStep,
   CodeExecuteStep,
@@ -106,6 +107,8 @@ export default function StepEditor({
         return <AiAnthropicStep step={step} id={id} onUpdate={onUpdate} />;
       case "aiOllama":
         return <AiOllamaStep step={step} id={id} onUpdate={onUpdate} />;
+      case "aiOpenRouter":
+        return <AiOpenRouterStep step={step} id={id} onUpdate={onUpdate} />;
 
       // ─── Variable steps ───────────────────────────────────────
       case "modifyVariable":
